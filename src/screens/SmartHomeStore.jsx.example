@@ -1,0 +1,367 @@
+// Exemplo de como implementar a página SmartHome com a mesma arquitetura
+// Este é um template que pode ser adaptado
+
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { allProducts } from '../data/lojaData'
+
+export default function SmartHomeStore({ onBack }) {
+  const navigate = useNavigate()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [cartItemsCount, setCartItemsCount] = useState(0)
+  const productsPerPage = 8
+
+  // Categorias de SmartHome
+  const categories = ['Todos', 'Iluminação', 'Energia', 'Segurança', 'Central', 'Sensores', 'Controle']
+
+  // Obter todos os produtos (loja única)
+  const allAvailableProducts = allProducts
+
+  // Filtrar produtos
+  const filteredProducts = allAvailableProducts.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === 'Todos' || product.type === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  // Paginação
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage)
+  const indexOfLastProduct = currentPage * productsPerPage
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory])
+
+  const updateCartCount = () => {
+    const storedCart = localStorage.getItem('cyberlife_cart')
+    if (storedCart) {
+      const cart = JSON.parse(storedCart)
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+      setCartItemsCount(totalItems)
+    }
+  }
+
+  useEffect(() => {
+    updateCartCount()
+  }, [])
+
+  const handleAddToCart = (product) => {
+    const storedCart = localStorage.getItem('cyberlife_cart')
+    let cart = storedCart ? JSON.parse(storedCart) : []
+
+    const existingItemIndex = cart.findIndex(item => item.id === product.id)
+
+    if (existingItemIndex !== -1) {
+      cart[existingItemIndex].quantity += 1
+    } else {
+      cart.push({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        category: product.category,
+        quantity: 1
+      })
+    }
+
+    localStorage.setItem('cyberlife_cart', JSON.stringify(cart))
+    updateCartCount()
+  }
+
+  return (
+    <div className="smarthome-store" style={{ overflowX: 'hidden', width: '100%' }}>
+      <header className="header">
+        <div className="logo" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img src="/cyberlife-icone2.png" alt="CyberLife Logo" style={{ height: '80px' }} />
+          <span style={{ fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '2rem', color: '#00d9ff', letterSpacing: '2px' }}>
+            CyberLife
+          </span>
+        </div>
+        <nav className="nav">
+          <button className="nav-button" onClick={onBack}>Início</button>
+          <button className="nav-button">Contato</button>
+          <button className="nav-button cart-button" onClick={() => navigate('/carrinho')}>
+            🛒 <span className="cart-badge">{cartItemsCount}</span>
+          </button>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <section className="hero-smartHome" style={{
+        padding: '80px 48px',
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #000 100%)',
+        textAlign: 'center',
+        color: '#fff'
+      }}>
+        <h1 style={{
+          fontFamily: 'Rajdhani, sans-serif',
+          fontSize: '3rem',
+          fontWeight: 900,
+          marginBottom: '20px',
+          letterSpacing: '2px',
+          background: 'linear-gradient(135deg, #00d9ff 0%, #00d9ff 50%, #00d9ff 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          SmartHome Store
+        </h1>
+        <p style={{
+          fontSize: '1.2rem',
+          opacity: 0.8,
+          marginBottom: '30px'
+        }}>
+          Casa Inteligente, Vida Simplificada
+        </p>
+      </section>
+
+      {/* Catálogo */}
+      <section style={{ padding: '60px 48px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '40px'
+        }}>
+          <h2 style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            fontSize: '2.5rem',
+            color: '#00d9ff',
+            marginBottom: '10px'
+          }}>
+            Catálogo Completo
+          </h2>
+          <p style={{
+            fontSize: '1rem',
+            opacity: 0.8,
+            color: '#fff'
+          }}>
+            Loja Única • Destaque em <span style={{ color: '#00d9ff', fontWeight: 700 }}>SmartHome</span>
+            <br />
+            <small>Explore também: Geek & Gamer</small>
+          </p>
+        </div>
+
+        {/* Filtros */}
+        <div style={{ marginBottom: '40px' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              placeholder="Buscar produtos..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                background: 'rgba(0, 217, 255, 0.05)',
+                border: '2px solid rgba(0, 217, 255, 0.3)',
+                borderRadius: '8px',
+                color: '#fff',
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '1rem',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                style={{
+                  padding: '8px 20px',
+                  background: selectedCategory === category ? '#00d9ff' : 'rgba(0, 217, 255, 0.1)',
+                  color: selectedCategory === category ? '#000' : '#00d9ff',
+                  border: '2px solid #00d9ff',
+                  borderRadius: '20px',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Grid de Produtos */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: '30px',
+          marginBottom: '40px'
+        }}>
+          {currentProducts.map((product) => (
+            <div
+              key={product.id}
+              style={{
+                background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(0, 217, 255, 0.02) 100%)',
+                border: product.category === 'smarthome' ? '2px solid #00d9ff' : '1px solid rgba(0, 217, 255, 0.3)',
+                borderRadius: '12px',
+                padding: '20px',
+                position: 'relative',
+                boxShadow: product.category === 'smarthome' ? '0 0 20px rgba(0, 217, 255, 0.3)' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-8px)'
+                e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 217, 255, 0.4)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = product.category === 'smarthome' ? '0 0 20px rgba(0, 217, 255, 0.3)' : 'none'
+              }}
+            >
+              {product.category === 'smarthome' && (
+                <div style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
+                  color: '#000',
+                  padding: '4px 12px',
+                  borderRadius: '15px',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  zIndex: 2
+                }}>
+                  ★ Destaque
+                </div>
+              )}
+
+              <img
+                src={product.image}
+                alt={product.name}
+                style={{
+                  width: '100%',
+                  height: '200px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  marginBottom: '15px'
+                }}
+              />
+
+              <h3 style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '1.2rem',
+                color: product.category === 'smarthome' ? '#00d9ff' : '#fff',
+                fontWeight: 700,
+                marginBottom: '10px'
+              }}>
+                {product.name}
+              </h3>
+
+              <p style={{
+                fontSize: '0.85rem',
+                color: '#aaa',
+                marginBottom: '10px'
+              }}>
+                {product.type}
+              </p>
+
+              <p style={{
+                fontSize: '1.5rem',
+                color: '#ff00ea',
+                fontWeight: 700,
+                marginBottom: '15px'
+              }}>
+                {product.price}
+              </p>
+
+              <button
+                onClick={() => handleAddToCart(product)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: '#000',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)'
+                  e.currentTarget.style.transform = 'scale(1.05)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)'
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                Adicionar ao Carrinho
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div style={{ textAlign: 'center', marginTop: '40px' }}>
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '10px 20px',
+                background: currentPage === 1 ? '#555' : '#00d9ff',
+                color: currentPage === 1 ? '#999' : '#000',
+                border: 'none',
+                borderRadius: '8px',
+                marginRight: '10px',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontWeight: 700
+              }}
+            >
+              Anterior
+            </button>
+
+            {[...Array(totalPages)].map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentPage(idx + 1)}
+                style={{
+                  padding: '8px 12px',
+                  margin: '0 5px',
+                  background: currentPage === idx + 1 ? '#00d9ff' : 'rgba(0, 217, 255, 0.2)',
+                  color: currentPage === idx + 1 ? '#000' : '#00d9ff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 700
+                }}
+              >
+                {idx + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '10px 20px',
+                background: currentPage === totalPages ? '#555' : '#00d9ff',
+                color: currentPage === totalPages ? '#999' : '#000',
+                border: 'none',
+                borderRadius: '8px',
+                marginLeft: '10px',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontWeight: 700
+              }}
+            >
+              Próximo
+            </button>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
