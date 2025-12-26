@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Instagram, Store, ShoppingBag, MessageCircle, Mail, MapPin, Phone, Zap, Heart, ArrowRight } from 'lucide-react'
 import geekConvention from '../imagens/Geek convention-rafiki.png'
 import { allProducts, defaultOffers, getProductsByCategory } from '../data/lojaData'
+import { stopAudio } from '../utils/audioPlayer'
 
 export default function LojaGeek({ onBack }){
   const navigate = useNavigate()
@@ -19,6 +20,11 @@ export default function LojaGeek({ onBack }){
   const catalogRef = useRef(null)
   const productsPerPage = 8
   
+  // Parar a música ao entrar nesta tela
+  useEffect(() => {
+    stopAudio()
+  }, [])
+  
   // Carregar dados do localStorage
   useEffect(() => {
     const storedOffers = localStorage.getItem('cyberlife_offers')
@@ -27,7 +33,6 @@ export default function LojaGeek({ onBack }){
     setOffers(storedOffers ? JSON.parse(storedOffers) : defaultOffers)
     // Usar produtos da categoria 'geek' do arquivo centralizado
     setProducts(storedProducts ? JSON.parse(storedProducts) : getProductsByCategory('geek'))
-    
     // Salvar dados padrão se não existirem
     if (!storedOffers) {
       localStorage.setItem('cyberlife_offers', JSON.stringify(defaultOffers))

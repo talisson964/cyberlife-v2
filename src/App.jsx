@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import { initAuthErrorHandler, checkAndCleanSession } from './utils/authErrorHandler'
@@ -10,6 +10,9 @@ import AdminPanel from './screens/AdminPanel'
 import CarrinhoPage from './screens/CarrinhoPage'
 import GameHouse from './screens/GameHouse'
 import ProductDetailPage from './screens/ProductDetailPage'
+import AudioVisualizer from './components/AudioVisualizer'
+import CommunityFab from './components/CommunityFab'
+import { isAudioPlaying } from './utils/audioPlayer'
 
 // Componente para registrar acessos
 function AccessLogger({ children }) {
@@ -101,10 +104,25 @@ function GameHouseWrapper() {
   return <GameHouse onBack={() => navigate('/menu')} />
 }
 
-export default function App(){
+
+export default function App() {
+  // Forçar atualização do AudioVisualizer quando o áudio começa
+  const [audioTick, setAudioTick] = useState(0)
+  const location = window.location.pathname
+  useEffect(() => {
+    const handler = () => setAudioTick(t => t + 1)
+    window.addEventListener('cyberlife-audio-tick', handler)
+    return () => window.removeEventListener('cyberlife-audio-tick', handler)
+  }, [])
   return (
     <BrowserRouter>
       <AccessLogger>
+        {/* Visualizador de áudio global, sempre visível */}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 9999, pointerEvents: 'none', background: 'rgba(0,0,0,0.15)' }}>
+          <AudioVisualizer key={audioTick} />
+        </div>
+        {/* CommunityFab aparece em todas as telas exceto na tela inicial */}
+        {location !== '/' && <CommunityFab />}
         <Routes>
           <Route path="/" element={<StartWrapper />} />
           <Route path="/menu" element={<MenuWrapper />} />

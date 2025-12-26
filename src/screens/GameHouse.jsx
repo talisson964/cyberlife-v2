@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CommunityFab from '../components/CommunityFab';
 import { Link } from 'react-router-dom';
 import img2 from '../imagens base/2.jpeg';
 import img3 from '../imagens base/3.jpeg';
@@ -12,6 +13,7 @@ import imgSubzero from '../imagens/subzero.png';
 import imgChunLi from '../imagens base/Chun-li.png';
 import caraJogando from '../imagens/cara-jogando.png';
 import { allProducts } from '../data/lojaData';
+import { stopAudio } from '../utils/audioPlayer';
 
 const images = [
   img2,
@@ -136,6 +138,11 @@ export default function GameHouse() {
   const [currentGame, setCurrentGame] = useState(0);
   const [searchGame, setSearchGame] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Parar a música ao entrar nesta tela
+  useEffect(() => {
+    stopAudio()
+  }, [])
 
   const totalGames = gamesData.length; // 20 jogos total
 
@@ -2828,6 +2835,7 @@ export default function GameHouse() {
           </div>
         </div>
       </section>
+      <CommunityFab />
     </div>
   );
 }

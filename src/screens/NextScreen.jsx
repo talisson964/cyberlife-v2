@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { LogOut } from 'lucide-react'
+import { Power } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import bgGif from '../imagens/1.gif'
 
@@ -21,7 +21,6 @@ export default function NextScreen({ onNavigate }){
         </div>
         <nav className="nav">
           <button className="nav-button">Início</button>
-          <button className="nav-button">Contato</button>
           <button 
             className="logout-button" 
             onClick={handleLogout}
@@ -29,7 +28,7 @@ export default function NextScreen({ onNavigate }){
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#ff1744',
+              color: '#00d9ff',
               cursor: 'pointer',
               padding: '8px',
               display: 'flex',
@@ -37,14 +36,11 @@ export default function NextScreen({ onNavigate }){
               justifyContent: 'center',
               borderRadius: '50%',
               transition: 'all 0.3s ease',
-              hover: {
-                backgroundColor: 'rgba(255, 23, 68, 0.1)'
-              }
             }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255, 23, 68, 0.1)'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            onMouseEnter={e => e.target.style.backgroundColor = 'rgba(0, 217, 255, 0.08)'}
+            onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
           >
-            <LogOut size={24} />
+            <Power size={24} color="#00d9ff" />
           </button>
         </nav>
       </header>

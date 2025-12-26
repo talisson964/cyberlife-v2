@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
+import { stopAudio } from '../utils/audioPlayer';
 
 export default function CarrinhoPage({ onBack }) {
   const [cartItems, setCartItems] = useState([]);
+
+  // Parar a música ao entrar nesta tela
+  useEffect(() => {
+    stopAudio()
+  }, [])
 
   useEffect(() => {
     // Carregar carrinho do localStorage

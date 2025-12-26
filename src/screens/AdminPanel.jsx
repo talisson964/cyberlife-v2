@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import AccessLogsView from '../components/AccessLogsView';
+import { stopAudio } from '../utils/audioPlayer';
 
 const AdminPanel = ({ onNavigate }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('products');
+  
+  // Parar a música ao entrar nesta tela
+  useEffect(() => {
+    stopAudio()
+  }, [])
   
   // Produtos
   const [products, setProducts] = useState([]);

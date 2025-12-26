@@ -6,6 +6,8 @@ import img2 from '../imagens/mascarado-com-controle.png'
 import img3 from '../imagens/um-homem-em-um-terno-de-neon-esta-sentado-em-uma-cadeira-com-um-letreiro-de-neon-que-diz-palavra.jpg'
 import img4 from '../imagens/maos-jogador-no-controlador.jpg'
 import emailjs from '@emailjs/browser'
+import { playRandomAudio } from '../utils/audioPlayer'
+import AudioVisualizer from '../components/AudioVisualizer'
 
 // Inicializar EmailJS
 emailjs.init('SxPIIDojWJxViW_q_')
@@ -16,6 +18,10 @@ export default function StartScreen({ onStart }){
   const [index, setIndex] = useState(0)
   const [fade, setFade] = useState(true)
   const [showLogin, setShowLogin] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
+  const [welcomeText, setWelcomeText] = useState('')
+  const [typedText, setTypedText] = useState('')
+  const [showLoading, setShowLoading] = useState(false)
   const [mode, setMode] = useState('login') // 'login', 'register', 'forgot', 'awaiting-confirmation'
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -265,13 +271,17 @@ export default function StartScreen({ onStart }){
         if (createError) {
           console.error('Erro ao criar perfil:', createError)
           // Continuar sem o perfil se falhar
-          setMessage({ type: 'success', text: 'Login realizado com sucesso!' })
-          setTimeout(() => onStart({ user: data.user, profile: null }), 1000)
+      setMessage({ type: 'success', text: 'Login realizado com sucesso!' })
+      setTimeout(() => {
+        onStart({ user: data.user, profile: null })
+      }, 1000)
           return
         }
 
         setMessage({ type: 'success', text: 'Login realizado com sucesso!' })
-        setTimeout(() => onStart({ user: data.user, profile: newProfile }), 1000)
+        setTimeout(() => {
+          onStart({ user: data.user, profile: newProfile })
+        }, 1000)
         return
       }
 
@@ -280,7 +290,9 @@ export default function StartScreen({ onStart }){
       }
 
       setMessage({ type: 'success', text: 'Login realizado com sucesso!' })
-      setTimeout(() => onStart({ user: data.user, profile }), 1000)
+      setTimeout(() => {
+        onStart({ user: data.user, profile })
+      }, 1000)
     } catch (error) {
       // Verificar se o erro é por email não confirmado
       if (error.message?.includes('Email not confirmed')) {
@@ -409,9 +421,207 @@ export default function StartScreen({ onStart }){
         className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
         style={{backgroundImage:`url(${images[index]})`}}
       />
-      
       {!showLogin ? (
-        <button className="start-button" onClick={() => setShowLogin(true)}>START</button>
+        <>
+          <button className="start-button" onClick={() => {
+            playRandomAudio()
+            setShowLoading(true)
+            setTimeout(() => {
+              setShowLoading(false)
+              // Mensagem animada tipo máquina de escrever
+              const frases = [
+                'Welcome to CyberLife',
+                'Bem Vindo á CyberLife'
+              ]
+              let frase = frases[Math.floor(Math.random() * frases.length)]
+              if (!frase.trim().endsWith('!')) frase = frase.trim() + '!'
+              setWelcomeText(frase)
+              setTypedText('')
+              setShowWelcome(true)
+              let i = 0
+              let current = ''
+              const typeInterval = setInterval(() => {
+                current += frase[i]
+                setTypedText(current)
+                i++
+                if (i >= frase.length) {
+                  clearInterval(typeInterval)
+                  setTimeout(() => {
+                    setShowWelcome(false)
+                    setShowLogin(true)
+                  }, 2500)
+                }
+              }, Math.max(50, Math.floor(1500 / frase.length)))
+            }, 4000)
+          }}>START</button>
+          {showLoading && (
+            <div
+              className="cyberlife-loading-overlay"
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10000,
+                pointerEvents: 'none',
+                background: 'rgba(0,0,0,0.85)',
+                flexDirection: 'column',
+                gap: 32,
+                padding: 0,
+                boxSizing: 'border-box',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 16,
+                  width: '100%',
+                  maxWidth: 400,
+                  margin: 0,
+                  padding: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    border: '6px solid #00d9ff',
+                    borderTop: '6px solid #e322bc',
+                    animation: 'cyberlife-spin 1.1s linear infinite',
+                    marginBottom: 16,
+                    boxShadow: '0 0 32px #00d9ff99, 0 0 16px #e322bc99',
+                  }}
+                />
+                <span
+                  style={{
+                    color: '#00d9ff',
+                    fontWeight: 700,
+                    fontSize: '2rem',
+                    letterSpacing: 1.5,
+                    textShadow: '0 0 16px #00d9ff, 0 0 8px #e322bc',
+                    fontFamily: 'inherit',
+                    marginBottom: 8,
+                    textAlign: 'center',
+                    width: '100%',
+                    maxWidth: '90vw',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  Carregando CyberLife...
+                </span>
+                <span
+                  style={{
+                    color: '#e322bc',
+                    fontWeight: 400,
+                    fontSize: '1.1rem',
+                    letterSpacing: 1,
+                    textShadow: '0 0 8px #e322bc',
+                    fontFamily: 'inherit',
+                    textAlign: 'center',
+                    width: '100%',
+                    maxWidth: '90vw',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  Preparando sua experiência digital
+                </span>
+              </div>
+              <style>{`
+                @keyframes cyberlife-spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                @media (max-width: 640px) {
+                  .cyberlife-loading-overlay span {
+                    font-size: 1.1rem !important;
+                    padding: 0 2vw;
+                  }
+                  .cyberlife-loading-overlay div[style*='width: 80px'] {
+                    width: 48px !important;
+                    height: 48px !important;
+                  }
+                }
+              `}</style>
+            </div>
+          )}
+          {showWelcome && (
+            <div
+              className="cyberlife-welcome-overlay"
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 10000,
+                pointerEvents: 'none',
+                background: 'rgba(10,10,20,0.88)',
+                boxShadow: '0 0 0 9999px rgba(0,0,0,0.55) inset',
+                transition: 'background 0.4s',
+                padding: 0,
+                boxSizing: 'border-box',
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 700,
+                  fontSize: '2.3rem',
+                  color: '#00d9ff',
+                  textShadow: '0 2px 12px #00334d, 0 0 8px #00d9ff99',
+                  fontFamily: 'inherit',
+                  letterSpacing: 1.5,
+                  filter: 'brightness(0.85) drop-shadow(0 0 4px #00d9ff88)',
+                  padding: 0,
+                  margin: 0,
+                  border: 'none',
+                  background: 'none',
+                  borderRadius: 0,
+                  animation: 'cyberlife-fade-in 0.5s, cyberlife-fade-out 0.7s 3.3s',
+                  transition: 'all 0.3s',
+                  whiteSpace: 'pre-line',
+                  textAlign: 'center',
+                  minWidth: 0,
+                  textRendering: 'optimizeLegibility',
+                  width: '100%',
+                  maxWidth: '90vw',
+                  wordBreak: 'break-word',
+                  lineHeight: 1.15,
+                  display: 'block',
+                }}
+              >
+                {typedText}
+              </span>
+              <style>{`
+                @keyframes cyberlife-fade-in {
+                  from { opacity: 0; transform: scale(0.95); }
+                  to { opacity: 1; transform: scale(1); }
+                }
+                @keyframes cyberlife-fade-out {
+                  from { opacity: 1; transform: scale(1); }
+                  to { opacity: 0; transform: scale(1.08); }
+                }
+                @media (max-width: 640px) {
+                  .cyberlife-welcome-overlay span {
+                    font-size: 1.2rem !important;
+                    padding: 0 2vw;
+                    line-height: 1.2;
+                  }
+                }
+              `}</style>
+            </div>
+          )}
+        </>
       ) : (
         <div className="login-card">
           <div className="login-card-content">

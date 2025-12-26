@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ShoppingCart, ArrowLeft, MessageCircle, Truck, Package } from 'lucide-react'
+import { stopAudio } from '../utils/audioPlayer'
 import './ProductDetailPage.css'
 
 export default function ProductDetailPage() {
@@ -12,6 +13,11 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [cartItemsCount, setCartItemsCount] = useState(0)
+
+  // Parar a música ao entrar nesta tela
+  useEffect(() => {
+    stopAudio()
+  }, [])
 
   useEffect(() => {
     // Carregar produto do localStorage
