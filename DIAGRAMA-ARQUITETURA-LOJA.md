@@ -27,7 +27,7 @@
                    │                │                │
                    ▼                ▼                ▼
          ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
-         │  LojaGeek.jsx    │  │ GameHouse.jsx    │  │ SmartHome.jsx    │
+         │  LojaGeek.jsx    │  │ GamerWorld.jsx    │  │ SmartHome.jsx    │
          │  (GEEK)          │  │ (GAMER)          │  │ (SMARTHOME)      │
          │                  │  │                  │  │                  │
          │ ★ Importa:       │  │ ★ Importa:       │  │ ★ Importa:       │
@@ -134,7 +134,7 @@ GameHouse mostra produtos com destaque GAMER
    Glow effect roxo
 ```
 
-### GAMER (GameHouse.jsx)
+### GAMER (GamerWorld.jsx)
 ```
 ┌─────────────────────────────────┐
 │  ★ DESTAQUE (Cyan)              │  ← Badge #00d9ff

@@ -129,7 +129,7 @@ const gamesData = [
   },
 ];
 
-export default function GameHouse() {
+export default function GamerWorld() {
   const [current, setCurrent] = useState(0);
   const [textVisible, setTextVisible] = useState(false);
   const [hoveredEvent, setHoveredEvent] = useState(null);
@@ -245,7 +245,7 @@ export default function GameHouse() {
   }, []);
 
   return (
-    <div className="gamehouse-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
+    <div className="gamer-world-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
       <header className="header" style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -459,7 +459,7 @@ export default function GameHouse() {
         </div>
       </nav>
       
-      <section id="hero" className="gamehouse-hero" style={{
+      <section id="hero" className="gamer-world-hero" style={{
         position: 'relative', 
         height: 'calc(100vh - 68px)', 
         width: '100vw',
@@ -473,7 +473,7 @@ export default function GameHouse() {
           <img
             key={index}
             src={img}
-            alt="GameHouse Banner"
+            alt="Gamer World Banner"
             style={{
               width: '100%',
               height: '100%',

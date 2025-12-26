@@ -8,7 +8,7 @@ import NextScreen from './screens/NextScreen'
 import LojaGeek from './screens/LojaGeek'
 import AdminPanel from './screens/AdminPanel'
 import CarrinhoPage from './screens/CarrinhoPage'
-import GameHouse from './screens/GameHouse'
+import GameHouse from './screens/GamerWorld'
 import ProductDetailPage from './screens/ProductDetailPage'
 import AudioVisualizer from './components/AudioVisualizer'
 import CommunityFab from './components/CommunityFab'
@@ -131,7 +131,7 @@ export default function App() {
           <Route path="/carrinho" element={<CarrinhoWrapper />} />
           <Route path="/admin" element={<AdminWrapper />} />
           <Route path="/loja-geek/admin" element={<AdminWrapper />} />
-          <Route path="/game-house" element={<GameHouseWrapper />} />
+          <Route path="/gamer-world" element={<GameHouseWrapper />} />
         </Routes>
       </AccessLogger>
     </BrowserRouter>

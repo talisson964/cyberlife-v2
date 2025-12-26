@@ -48,8 +48,8 @@ export default function NextScreen({ onNavigate }){
         <div className="menu-item" onClick={() => onNavigate('loja-geek')}>
           <h2>Loja Geek</h2>
         </div>
-        <div className="menu-item" onClick={() => onNavigate('game-house')}>
-          <h2>Game House</h2>
+        <div className="menu-item" onClick={() => onNavigate('gamer-world')}>
+          <h2>Gamer World</h2>
         </div>
         <div className="menu-item">
           <h2>Smart Home</h2>

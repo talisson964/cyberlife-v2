@@ -44,7 +44,7 @@ Contém todos os dados compartilhados entre todas as lojas:
 ))}
 ```
 
-### 2️⃣ **GameHouse.jsx** - Game House (Página de Games)
+### 2️⃣ **GamerWorld.jsx** - Gamer World (Página de Games)
 - **Categoria em Destaque:** GAMER
 - **Identificador Visual:** Badge "★ Destaque" com borda cyan (#00d9ff)
 - **Seção de Loja:** "Loja Única - Destaque em Gamer"
