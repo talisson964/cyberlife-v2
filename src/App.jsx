@@ -9,6 +9,10 @@ import LojaGeek from './screens/LojaGeek'
 import AdminPanel from './screens/AdminPanel'
 import CarrinhoPage from './screens/CarrinhoPage'
 import GameHouse from './screens/GamerWorld'
+import PerfilPage from './screens/PerfilPage'
+import EventoPage from './screens/EventoPage'
+import AtividadePage from './screens/AtividadePage'
+import JogoPage from './screens/JogoPage'
 import ProductDetailPage from './screens/ProductDetailPage'
 import AudioVisualizer from './components/AudioVisualizer'
 import CommunityFab from './components/CommunityFab'
@@ -132,6 +136,10 @@ export default function App() {
           <Route path="/admin" element={<AdminWrapper />} />
           <Route path="/loja-geek/admin" element={<AdminWrapper />} />
           <Route path="/gamer-world" element={<GameHouseWrapper />} />
+          <Route path="/perfil" element={<PerfilPage />} />
+          <Route path="/evento/:eventoId" element={<EventoPage />} />
+          <Route path="/atividade/:atividadeId" element={<AtividadePage />} />
+          <Route path="/jogo/:jogoId" element={<JogoPage />} />
         </Routes>
       </AccessLogger>
     </BrowserRouter>

@@ -29,101 +29,121 @@ const images = [
 const gamesData = [
   {
     title: 'A Plague Tale',
+    slug: 'a-plague-tale',
     image: imgPlague,
     description: 'Uma jornada emocionante através da França medieval devastada pela peste negra. Acompanhe Amicia e Hugo em sua luta pela sobrevivência.',
   },
   {
     title: 'Beyond: Two Souls',
+    slug: 'beyond-two-souls',
     image: imgBeyond,
     description: 'Uma experiência cinematográfica única que explora a conexão entre Jodie e uma entidade sobrenatural chamada Aiden.',
   },
   {
     title: 'Concrete Genie',
+    slug: 'concrete-genie',
     image: imgConcret,
     description: 'Use o poder da arte para transformar uma cidade cinzenta em um lugar cheio de vida e cor nesta aventura mágica.',
   },
   {
     title: 'Fortnite',
+    slug: 'fortnite',
     image: imgFortnite,
     description: 'O battle royale mais popular do mundo. Lute, construa e seja o último jogador em pé em partidas épicas com até 100 jogadores.',
   },
   {
     title: 'Hollow Knight',
+    slug: 'hollow-knight',
     image: imgHollow,
     description: 'Explore um reino vasto e em ruínas repleto de insetos e heróis neste desafiador jogo de ação e aventura em 2D.',
   },
   {
     title: 'Cyberpunk Series',
+    slug: 'cyberpunk-series',
     image: img2,
     description: 'Mergulhe em um mundo futurista de alta tecnologia e baixa vida, onde cada escolha molda seu destino em Night City.',
   },
   {
     title: 'The Last of Us',
+    slug: 'the-last-of-us',
     image: img3,
     description: 'Uma história comovente de sobrevivência em um mundo pós-apocalíptico infestado por infectados e a busca pela humanidade.',
   },
   {
     title: 'God of War',
+    slug: 'god-of-war',
     image: img5,
     description: 'Acompanhe Kratos e Atreus em uma jornada épica pela mitologia nórdica cheia de batalhas intensas e momentos emocionantes.',
   },
   {
     title: 'Red Dead Redemption 2',
+    slug: 'red-dead-redemption-2',
     image: imgPlague,
     description: 'Viva a vida de um fora da lei no Velho Oeste americano em uma das narrativas mais envolventes já criadas.',
   },
   {
     title: 'Spider-Man',
+    slug: 'spider-man',
     image: imgBeyond,
     description: 'Balance-se pelos arranha-céus de Nova York como o amigável vizinho Spider-Man e proteja a cidade dos vilões.',
   },
   {
     title: 'Ghost of Tsushima',
+    slug: 'ghost-of-tsushima',
     image: imgConcret,
     description: 'Explore a bela ilha de Tsushima como um samurai em uma jornada para libertar sua terra da invasão mongol.',
   },
   {
     title: 'Horizon Zero Dawn',
+    slug: 'horizon-zero-dawn',
     image: imgFortnite,
     description: 'Descubra os mistérios de um mundo pós-apocalíptico dominado por máquinas em forma de dinossauros.',
   },
   {
     title: 'Uncharted 4',
+    slug: 'uncharted-4',
     image: imgHollow,
     description: 'Junte-se a Nathan Drake em sua última aventura em busca do tesouro perdido do pirata Henry Avery.',
   },
   {
     title: 'Bloodborne',
+    slug: 'bloodborne',
     image: img2,
     description: 'Enfrente os horrores de Yharnam neste desafiador action RPG gótico dos criadores de Dark Souls.',
   },
   {
     title: 'Persona 5',
+    slug: 'persona-5',
     image: img3,
     description: 'Viva a vida dupla de um estudante do ensino médio e ladrão fantasma que muda os corações das pessoas corruptas.',
   },
   {
     title: 'Final Fantasy VII Remake',
+    slug: 'final-fantasy-vii-remake',
     image: img5,
     description: 'Reviva o clássico JRPG reimaginado com gráficos modernos e sistema de combate renovado.',
   },
   {
     title: 'Resident Evil Village',
+    slug: 'resident-evil-village',
     image: imgPlague,
     description: 'Continue a história de Ethan Winters em uma vila misteriosa cheia de criaturas aterrorizantes e segredos obscuros.',
   },
   {
     title: 'Elden Ring',
+    slug: 'elden-ring',
     image: imgBeyond,
     description: 'Explore as Terras Intermédias em um mundo aberto épico criado por FromSoftware e George R.R. Martin.',
   },
   {
     title: 'Assassins Creed Valhalla',
+    slug: 'assassins-creed-valhalla',
     image: imgConcret,
     description: 'Conduza seu clã viking da Noruega para a Inglaterra medieval e construa um novo lar através da conquista.',
   },
   {
     title: 'The Witcher 3',
+    slug: 'the-witcher-3',
     image: imgFortnite,
     description: 'Siga Geralt de Rivia em sua busca para encontrar Ciri enquanto navega por um mundo repleto de monstros e intrigas políticas.',
   },
@@ -161,36 +181,42 @@ export default function GamerWorld() {
       date: '20 de Janeiro, 2025',
       prize: 'R$ 15.000',
       inscription: 'Inscrições abertas até 15/01',
+      slug: 'league-of-legends',
     },
     {
       title: 'Torneio CS:GO Masters',
       date: '05 de Fevereiro, 2025',
       prize: 'R$ 20.000',
       inscription: 'Inscrições abertas até 25/01',
+      slug: 'csgo-masters',
     },
     {
       title: 'Valorant Championship',
       date: '15 de Fevereiro, 2025',
       prize: 'R$ 12.000',
       inscription: 'Inscrições abertas até 05/02',
+      slug: 'valorant-championship',
     },
     {
       title: 'Free Fire Battle Royale',
       date: '28 de Fevereiro, 2025',
       prize: 'R$ 8.000',
       inscription: 'Inscrições abertas até 20/02',
+      slug: 'free-fire-battle',
     },
     {
       title: 'Fortnite Arena Cup',
       date: '10 de Março, 2025',
       prize: 'R$ 10.000',
       inscription: 'Inscrições abertas até 01/03',
+      slug: 'fortnite-arena',
     },
     {
       title: 'Rocket League Tournament',
       date: '22 de Março, 2025',
       prize: 'R$ 7.500',
       inscription: 'Inscrições abertas até 15/03',
+      slug: 'rocket-league',
     },
   ];
 
@@ -397,26 +423,28 @@ export default function GamerWorld() {
           gap: '6px',
         }}>
           {[
-            { name: 'Início', id: 'hero' },
-            { name: 'CyberHouse', id: 'cyberhouse' },
-            { name: 'Eventos', id: 'eventos' },
-            { name: 'Explore Jogos', id: 'galeria' },
-            { name: 'Loja Gamer', id: 'loja' },
+            { name: 'Início', id: 'hero', isScroll: true },
+            { name: 'CyberHouse', id: 'cyberhouse', isScroll: true },
+            { name: 'Eventos', id: 'eventos', isScroll: true },
+            { name: 'Explore Jogos', id: 'galeria', isScroll: true },
+            { name: 'Loja Gamer', id: 'loja', isScroll: true },
+            { name: 'Perfil', id: 'perfil', isScroll: false },
           ].map((item, idx) => (
-            <a
-              key={idx}
-              href={`#${item.id}`}
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById(item.id)?.scrollIntoView({
-                  behavior: 'smooth',
-                  block: 'start',
-                });
-              }}
-              style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '0.95rem',
-                fontWeight: 600,
+            item.isScroll ? (
+              <a
+                key={idx}
+                href={`#${item.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById(item.id)?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                  });
+                }}
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
                 color: '#00d9ff',
                 textDecoration: 'none',
                 padding: '12px 16px',
@@ -455,6 +483,53 @@ export default function GamerWorld() {
                 boxShadow: '0 0 10px #ff00ea',
               }} />
             </a>
+            ) : (
+              <Link
+                key={idx}
+                to={`/${item.id}`}
+                style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  color: '#00d9ff',
+                  textDecoration: 'none',
+                  padding: '12px 16px',
+                  position: 'relative',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '0.5px',
+                  borderRadius: '8px',
+                  background: 'rgba(0, 217, 255, 0.05)',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  animation: menuOpen ? `slideInMenu 0.4s ease-out ${idx * 0.1}s both` : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.paddingLeft = '24px';
+                  e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.05)';
+                  e.currentTarget.style.color = '#00d9ff';
+                  e.currentTarget.style.paddingLeft = '16px';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                {item.name}
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '3px',
+                  height: '0%',
+                  background: 'linear-gradient(180deg, #ff00ea 0%, #00d9ff 100%)',
+                  transition: 'height 0.3s ease',
+                  boxShadow: '0 0 10px #ff00ea',
+                }} />
+              </Link>
+            )
           ))}
         </div>
       </nav>
@@ -1602,40 +1677,42 @@ export default function GamerWorld() {
                   </div>
                   
                   {/* Botão Saiba Mais */}
-                  <button style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: isMobile ? '0.95rem' : '1.1rem',
-                    fontWeight: 700,
-                    color: '#000',
-                    background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
-                    border: '2px solid #00d9ff',
-                    padding: isMobile ? '12px 28px' : '16px 40px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    letterSpacing: isMobile ? '1px' : '2px',
-                    textTransform: 'uppercase',
-                    boxShadow: '0 5px 20px rgba(0, 217, 255, 0.4)',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    position: 'relative',
-                    zIndex: 20,
-                    whiteSpace: 'nowrap',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateX(10px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.6)';
-                    e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateX(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 217, 255, 0.4)';
-                    e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
-                  }}>
-                    Saiba Mais
-                    <span style={{ fontSize: '1.2rem' }}>▶</span>
-                  </button>
+                  <Link to={`/evento/${event.slug}`} style={{ textDecoration: 'none' }}>
+                    <button style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: isMobile ? '0.95rem' : '1.1rem',
+                      fontWeight: 700,
+                      color: '#000',
+                      background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                      border: '2px solid #00d9ff',
+                      padding: isMobile ? '12px 28px' : '16px 40px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      letterSpacing: isMobile ? '1px' : '2px',
+                      textTransform: 'uppercase',
+                      boxShadow: '0 5px 20px rgba(0, 217, 255, 0.4)',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      position: 'relative',
+                      zIndex: 20,
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateX(10px) scale(1.05)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.6)';
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateX(0) scale(1)';
+                      e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 217, 255, 0.4)';
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
+                    }}>
+                      Saiba Mais
+                      <span style={{ fontSize: '1.2rem' }}>▶</span>
+                    </button>
+                  </Link>
                 </div>
               ))}
               
@@ -1770,6 +1847,7 @@ export default function GamerWorld() {
                 details: 'Sextas e Sábados • 22h às 6h',
                 color: '#ff00ea',
                 gradient: 'linear-gradient(135deg, rgba(255, 0, 234, 0.15) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                slug: 'corujoes',
               },
               { 
                 icon: '🏆',
@@ -1778,6 +1856,7 @@ export default function GamerWorld() {
                 details: 'Quinzenalmente • Premiação de até R$ 5.000',
                 color: '#00d9ff',
                 gradient: 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 100%)',
+                slug: 'torneios',
               },
               { 
                 icon: '⚡',
@@ -1786,6 +1865,7 @@ export default function GamerWorld() {
                 details: 'Domingos • 14h - Game até zerar',
                 color: '#ffea00',
                 gradient: 'linear-gradient(135deg, rgba(255, 234, 0, 0.15) 0%, rgba(255, 234, 0, 0.05) 100%)',
+                slug: 'rush-play',
               },
             ].map((event, idx) => (
               <div key={idx} style={{
@@ -1813,38 +1893,6 @@ export default function GamerWorld() {
                 e.currentTarget.style.borderWidth = '2px';
                 setHoveredEvent(null);
               }}>
-                {/* Vídeo do Instagram para o card Torneios */}
-                {idx === 1 && hoveredEvent === 1 && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    background: 'rgba(0, 0, 0, 0.85)',
-                    backdropFilter: 'blur(5px)',
-                    zIndex: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '20px',
-                    animation: 'fadeIn 0.3s ease-out',
-                  }}>
-                    <iframe
-                      src="https://www.instagram.com/p/DFutEy-R7zi/embed"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                        borderRadius: '20px',
-                      }}
-                      frameBorder="0"
-                      scrolling="no"
-                      allowTransparency="true"
-                      allow="encrypted-media"
-                    />
-                  </div>
-                )}
                 {/* Efeito de luz rotativa */}
                 <div style={{
                   position: 'absolute',
@@ -1941,31 +1989,33 @@ export default function GamerWorld() {
                   position: 'relative',
                   zIndex: 2,
                 }}>
-                  <button style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: isMobile ? '0.8rem' : '0.9rem',
-                    fontWeight: 700,
-                    color: '#000',
-                    background: event.color,
-                    border: 'none',
-                    padding: isMobile ? '6px 18px' : '8px 22px',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    letterSpacing: isMobile ? '1px' : '2px',
-                    textTransform: 'uppercase',
-                    boxShadow: `0 5px 20px ${event.color}60`,
-                    transition: 'all 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                    e.currentTarget.style.boxShadow = `0 8px 30px ${event.color}80`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
-                  }}>
-                    Saiba Mais
-                  </button>
+                  <Link to={`/atividade/${event.slug}`} style={{ textDecoration: 'none' }}>
+                    <button style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: isMobile ? '0.8rem' : '0.9rem',
+                      fontWeight: 700,
+                      color: '#000',
+                      background: event.color,
+                      border: 'none',
+                      padding: isMobile ? '6px 18px' : '8px 22px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      letterSpacing: isMobile ? '1px' : '2px',
+                      textTransform: 'uppercase',
+                      boxShadow: `0 5px 20px ${event.color}60`,
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = `0 8px 30px ${event.color}80`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
+                    }}>
+                      Saiba Mais
+                    </button>
+                  </Link>
                 </div>
                 
                 {/* Linha decorativa inferior */}
@@ -2459,6 +2509,7 @@ export default function GamerWorld() {
                       overflowWrap: 'break-word',
                     }}>{gameCard.description}</p>
                     
+                    <Link to={`/jogo/${gameCard.slug}`} style={{ textDecoration: 'none' }}>
                     <button style={{
                       fontFamily: 'Rajdhani, sans-serif',
                       fontSize: isMobile ? '0.9rem' : '1.1rem',
@@ -2499,6 +2550,7 @@ export default function GamerWorld() {
                         animation: 'shimmerSlide 3s infinite',
                       }} />
                     </button>
+                    </Link>
                   </div>
                   )}
                 </div>
@@ -2835,6 +2887,7 @@ export default function GamerWorld() {
           </div>
         </div>
       </section>
+      
       <CommunityFab />
     </div>
   );
