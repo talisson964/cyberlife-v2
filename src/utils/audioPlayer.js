@@ -80,14 +80,19 @@ function playNextAudio() {
     if (!currentAudio) {
       currentAudio = new Audio()
       audioInitialized = true
-      currentAudio.onended = () => {
-        playNextAudio()
-      }
-      currentAudio.onerror = () => {
-        console.error('Erro ao carregar áudio')
-        playNextAudio()
-      }
     }
+    
+    // Sempre reconfigura os event listeners para garantir continuidade
+    currentAudio.onended = () => {
+      console.log('🎵 Faixa finalizada, tocando próxima...')
+      playNextAudio()
+    }
+    
+    currentAudio.onerror = () => {
+      console.error('Erro ao carregar áudio, tentando próxima faixa...')
+      playNextAudio()
+    }
+    
     currentAudio.src = audioPath
     currentAudio.currentTime = 0
     currentAudio.load()

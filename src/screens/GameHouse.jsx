@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CommunityFab from '../components/CommunityFab';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import img2 from '../imagens base/2.jpeg';
 import img3 from '../imagens base/3.jpeg';
 import img5 from '../imagens base/5.jpeg';
@@ -150,6 +150,7 @@ const gamesData = [
 ];
 
 export default function GamerWorld() {
+  const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const [textVisible, setTextVisible] = useState(false);
   const [hoveredEvent, setHoveredEvent] = useState(null);
@@ -158,11 +159,60 @@ export default function GamerWorld() {
   const [currentGame, setCurrentGame] = useState(0);
   const [searchGame, setSearchGame] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // Estado para produtos da loja centralizada
+  const [storeProducts, setStoreProducts] = useState([]);
+  const [searchProduct, setSearchProduct] = useState('');
+  const [addedToCart, setAddedToCart] = useState(null);
+  
+  // Função para adicionar ao carrinho
+  const handleAddToCart = (product, e) => {
+    e.stopPropagation();
+    const cart = JSON.parse(localStorage.getItem('cyberlife_cart') || '[]');
+    const existingProduct = cart.find(item => item.id === product.id);
+    
+    if (existingProduct) {
+      existingProduct.quantity += 1;
+    } else {
+      cart.push({ ...product, quantity: 1 });
+    }
+    
+    localStorage.setItem('cyberlife_cart', JSON.stringify(cart));
+    setAddedToCart(product.id);
+    
+    setTimeout(() => setAddedToCart(null), 2000);
+  };
 
   // Parar a música ao entrar nesta tela
   useEffect(() => {
     stopAudio()
   }, [])
+  
+  // Carregar produtos do localStorage (loja centralizada)
+  useEffect(() => {
+    const loadProducts = () => {
+      const storedProducts = localStorage.getItem('cyberlife_products');
+      if (storedProducts) {
+        const parsedProducts = JSON.parse(storedProducts);
+        // Carregar TODOS os produtos para permitir busca em todas as categorias
+        setStoreProducts(parsedProducts);
+      } else {
+        // Se não houver produtos no localStorage, usar os padrão e salvar
+        localStorage.setItem('cyberlife_products', JSON.stringify(allProducts));
+        setStoreProducts(allProducts);
+      }
+    };
+    
+    loadProducts();
+    
+    // Recarregar produtos quando a aba voltar ao foco
+    const handleFocus = () => {
+      loadProducts();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const totalGames = gamesData.length; // 20 jogos total
 
@@ -182,52 +232,81 @@ export default function GamerWorld() {
       prize: 'R$ 15.000',
       inscription: 'Inscrições abertas até 15/01',
       slug: 'league-of-legends',
+      type: 'Torneio',
     },
     {
-      title: 'Torneio CS:GO Masters',
+      title: 'Corujão CS:GO Noturno',
       date: '05 de Fevereiro, 2025',
-      prize: 'R$ 20.000',
       inscription: 'Inscrições abertas até 25/01',
-      slug: 'csgo-masters',
+      slug: 'csgo-corujao',
+      type: 'Corujão',
     },
     {
-      title: 'Valorant Championship',
+      title: 'Rush Play Valorant',
       date: '15 de Fevereiro, 2025',
-      prize: 'R$ 12.000',
       inscription: 'Inscrições abertas até 05/02',
-      slug: 'valorant-championship',
+      slug: 'valorant-rush',
+      type: 'Rush Play',
     },
     {
-      title: 'Free Fire Battle Royale',
+      title: 'Torneio Free Fire Masters',
       date: '28 de Fevereiro, 2025',
-      prize: 'R$ 8.000',
+      prize: 'R$ 12.000',
       inscription: 'Inscrições abertas até 20/02',
       slug: 'free-fire-battle',
+      type: 'Torneio',
     },
     {
-      title: 'Fortnite Arena Cup',
+      title: 'Corujão Fortnite Night',
       date: '10 de Março, 2025',
-      prize: 'R$ 10.000',
       inscription: 'Inscrições abertas até 01/03',
-      slug: 'fortnite-arena',
+      slug: 'fortnite-corujao',
+      type: 'Corujão',
     },
     {
-      title: 'Rocket League Tournament',
+      title: 'Rush Play Rocket League',
       date: '22 de Março, 2025',
-      prize: 'R$ 7.500',
       inscription: 'Inscrições abertas até 15/03',
-      slug: 'rocket-league',
+      slug: 'rocket-league-rush',
+      type: 'Rush Play',
     },
   ];
+
+  // Carregar eventos do localStorage ou usar dados padrão
+  const [displayEvents, setDisplayEvents] = useState(eventsData);
+  const [displayEventImages, setDisplayEventImages] = useState(eventImages);
+
+  useEffect(() => {
+    const storedEvents = localStorage.getItem('cyberlife_events');
+    if (storedEvents) {
+      const parsed = JSON.parse(storedEvents);
+      // Se não houver eventos cadastrados, usa os eventos fictícios
+      if (parsed.length === 0) {
+        setDisplayEvents(eventsData);
+        setDisplayEventImages(eventImages);
+      } else {
+        setDisplayEvents(parsed);
+        // Usar as imagens dos eventos personalizados se houver
+        const customImages = parsed.map(event => event.image).filter(Boolean);
+        if (customImages.length > 0) {
+          setDisplayEventImages(customImages);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length);
     }, 6000);
     
-    const eventTimer = setInterval(() => {
-      setCurrentEvent((prev) => (prev + 1) % eventImages.length);
-    }, 4000);
+    // Só iniciar timer se houver mais de 1 evento
+    let eventTimer;
+    if (displayEventImages.length > 1) {
+      eventTimer = setInterval(() => {
+        setCurrentEvent((prev) => (prev + 1) % displayEventImages.length);
+      }, 4000);
+    }
     
     const gameTimer = setInterval(() => {
       setCurrentGame((prev) => (prev + 1) % totalGames);
@@ -238,10 +317,10 @@ export default function GamerWorld() {
     
     return () => {
       clearInterval(timer);
-      clearInterval(eventTimer);
+      if (eventTimer) clearInterval(eventTimer);
       clearInterval(gameTimer);
     };
-  }, [images.length, totalGames]);
+  }, [images.length, totalGames, displayEventImages.length]);
 
   // Auto-fechar menu após 5 segundos
   useEffect(() => {
@@ -1504,7 +1583,7 @@ export default function GamerWorld() {
               ))}
               
               {/* Imagens do carrossel */}
-              {eventImages.map((img, index) => (
+              {displayEventImages.map((img, index) => (
                 <img
                   key={index}
                   src={img}
@@ -1538,7 +1617,7 @@ export default function GamerWorld() {
               }} />
               
               {/* Informações do Evento - Lado Esquerdo */}
-              {eventsData.map((event, index) => (
+              {displayEvents.map((event, index) => (
                 <div key={index} style={{
                   position: 'absolute',
                   left: '70px',
@@ -1564,6 +1643,44 @@ export default function GamerWorld() {
                     textTransform: 'uppercase',
                     opacity: 0.9,
                   }}>// Próximo Evento</div>
+                  
+                  {/* Tipo de evento */}
+                  {event.type && (
+                    <div style={{
+                      display: 'inline-block',
+                      background: event.type === 'Torneio' 
+                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
+                        : event.type === 'Corujão'
+                        ? 'linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2))'
+                        : 'linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 150, 255, 0.2))',
+                      border: `2px solid ${
+                        event.type === 'Torneio' ? '#FFD700'
+                        : event.type === 'Corujão' ? '#8a2be2'
+                        : '#00d9ff'
+                      }`,
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      marginBottom: '15px',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      color: event.type === 'Torneio' ? '#FFD700'
+                        : event.type === 'Corujão' ? '#8a2be2'
+                        : '#00d9ff',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1.5px',
+                      boxShadow: `0 0 15px ${
+                        event.type === 'Torneio' ? 'rgba(255, 215, 0, 0.4)'
+                        : event.type === 'Corujão' ? 'rgba(138, 43, 226, 0.4)'
+                        : 'rgba(0, 217, 255, 0.4)'
+                      }`,
+                    }}>
+                      {event.type === 'Torneio' && '🏆'}
+                      {event.type === 'Corujão' && '🦉'}
+                      {event.type === 'Rush Play' && '⚡'}
+                      {' '}{event.type}
+                    </div>
+                  )}
                   
                   {/* Título */}
                   <h4 style={{
@@ -1622,32 +1739,34 @@ export default function GamerWorld() {
                       </div>
                     </div>
                     
-                    {/* Prêmio */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px',
-                    }}>
+                    {/* Prêmio - só exibir para Torneio */}
+                    {event.type === 'Torneio' && event.prize && (
                       <div style={{
-                        fontSize: '1.5rem',
-                      }}>🏆</div>
-                      <div>
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '15px',
+                      }}>
                         <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: '0.9rem',
-                          color: '#aaa',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                        }}>Prêmio</div>
-                        <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: isMobile ? '1.2rem' : '1.5rem',
-                          color: '#ffea00',
-                          fontWeight: 700,
-                          textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
-                        }}>{event.prize}</div>
+                          fontSize: '1.5rem',
+                        }}>🏆</div>
+                        <div>
+                          <div style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '0.9rem',
+                            color: '#aaa',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                          }}>Prêmio</div>
+                          <div style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: isMobile ? '1.2rem' : '1.5rem',
+                            color: '#ffea00',
+                            fontWeight: 700,
+                            textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
+                          }}>{event.prize}</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     
                     {/* Inscrição */}
                     <div style={{
@@ -1716,46 +1835,48 @@ export default function GamerWorld() {
                 </div>
               ))}
               
-              {/* Botões de navegação */}
-              <button
-                onClick={() => setCurrentEvent((prev) => (prev - 1 + eventImages.length) % eventImages.length)}
-                style={{
-                  position: 'absolute',
-                  left: '20px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(0, 217, 255, 0.15)',
-                  border: '1px solid rgba(0, 217, 255, 0.4)',
-                  color: '#00d9ff',
-                  width: '45px',
-                  height: '45px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1.2rem',
-                  fontWeight: 300,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 5,
-                  backdropFilter: 'blur(10px)',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
-                  e.currentTarget.style.transform = 'translateY(-50%) translateX(-5px)';
-                  e.currentTarget.style.borderColor = '#00d9ff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
-                  e.currentTarget.style.transform = 'translateY(-50%)';
-                  e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
-                }}
-              >&lt;</button>
-              
-              <button
-                onClick={() => setCurrentEvent((prev) => (prev + 1) % eventImages.length)}
-                style={{
+              {/* Botões de navegação - só mostrar se houver mais de 1 evento */}
+              {displayEventImages.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentEvent((prev) => (prev - 1 + displayEventImages.length) % displayEventImages.length)}
+                    style={{
+                      position: 'absolute',
+                      left: '20px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'rgba(0, 217, 255, 0.15)',
+                      border: '1px solid rgba(0, 217, 255, 0.4)',
+                      color: '#00d9ff',
+                      width: '45px',
+                      height: '45px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '1.2rem',
+                      fontWeight: 300,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 5,
+                      backdropFilter: 'blur(10px)',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(-50%) translateX(-5px)';
+                      e.currentTarget.style.borderColor = '#00d9ff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(-50%)';
+                      e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
+                    }}
+                  >&lt;</button>
+                  
+                  <button
+                    onClick={() => setCurrentEvent((prev) => (prev + 1) % displayEventImages.length)}
+                    style={{
                   position: 'absolute',
                   right: '20px',
                   top: '50%',
@@ -1788,39 +1909,42 @@ export default function GamerWorld() {
                   e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
                 }}
               >&gt;</button>
+                </>
+              )}
               
-              {/* Indicadores */}
-              <div style={{
-                position: 'absolute',
-                bottom: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                gap: '12px',
-                zIndex: 5,
-                animation: 'fadeIn 1s ease-out 0.8s both',
-              }}>
-                {eventImages.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentEvent(index)}
-                    style={{
-                      width: index === currentEvent ? '40px' : '12px',
-                      height: '12px',
-                      borderRadius: '6px',
-                      background: index === currentEvent ? '#ff00ea' : 'rgba(255, 255, 255, 0.3)',
-                      border: index === currentEvent ? '2px solid #ff00ea' : '2px solid rgba(255, 255, 255, 0.5)',
-                      cursor: 'pointer',
-                      transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                      boxShadow: index === currentEvent ? '0 0 15px #ff00ea' : 'none',
-                      animation: index === currentEvent ? 'indicatorPulse 1s ease-in-out infinite' : 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (index !== currentEvent) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.6)';
-                        e.currentTarget.style.transform = 'scale(1.3)';
-                      }
-                    }}
+              {/* Indicadores - só mostrar se houver mais de 1 evento */}
+              {displayEventImages.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '20px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'flex',
+                  gap: '12px',
+                  zIndex: 5,
+                  animation: 'fadeIn 1s ease-out 0.8s both',
+                }}>
+                  {displayEventImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentEvent(index)}
+                      style={{
+                        width: index === currentEvent ? '40px' : '12px',
+                        height: '12px',
+                        borderRadius: '6px',
+                        background: index === currentEvent ? '#ff00ea' : 'rgba(255, 255, 255, 0.3)',
+                        border: index === currentEvent ? '2px solid #ff00ea' : '2px solid rgba(255, 255, 255, 0.5)',
+                        cursor: 'pointer',
+                        transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                        boxShadow: index === currentEvent ? '0 0 15px #ff00ea' : 'none',
+                        animation: index === currentEvent ? 'indicatorPulse 1s ease-in-out infinite' : 'none',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (index !== currentEvent) {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.6)';
+                          e.currentTarget.style.transform = 'scale(1.3)';
+                        }
+                      }}
                     onMouseLeave={(e) => {
                       if (index !== currentEvent) {
                         e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
@@ -1829,7 +1953,8 @@ export default function GamerWorld() {
                     }}
                   />
                 ))}
-              </div>
+                </div>
+              )}
             </div>
           </div>
           
@@ -2446,22 +2571,21 @@ export default function GamerWorld() {
                     </div>
                   )}
 
-                  {/* Hover Overlay - apenas no card central */}
+                  {/* Hover Overlay - Design Moderno com Glassmorphism */}
                   {isCenter && (
                   <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.98) 0%, rgba(0, 5, 16, 0.98) 50%, rgba(0, 217, 255, 0.95) 100%)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
+                    background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.75) 0%, rgba(0, 5, 16, 0.85) 30%, rgba(0, 16, 32, 0.9) 100%)',
+                    backdropFilter: 'blur(20px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: isMobile ? '20px' : '35px',
-                    gap: isMobile ? '12px' : '20px',
+                    justifyContent: 'flex-end',
+                    alignItems: 'flex-start',
+                    padding: isMobile ? '25px' : '40px',
                     opacity: 0,
-                    transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                     zIndex: 3,
                     boxSizing: 'border-box',
                   }}
@@ -2471,86 +2595,142 @@ export default function GamerWorld() {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.opacity = '0';
                   }}>
-                    {/* Borda interna animada */}
+                    {/* Efeitos de luz ambiente */}
                     <div style={{
                       position: 'absolute',
-                      inset: '12px',
-                      border: '2px solid rgba(0, 217, 255, 0.5)',
-                      borderRadius: '15px',
+                      top: '-50%',
+                      right: '-20%',
+                      width: '400px',
+                      height: '400px',
+                      background: 'radial-gradient(circle, rgba(138, 43, 226, 0.4) 0%, transparent 70%)',
+                      filter: 'blur(80px)',
+                      animation: 'float 6s ease-in-out infinite',
                       pointerEvents: 'none',
-                      animation: 'borderPulseCarousel 2s ease-in-out infinite',
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-30%',
+                      left: '-10%',
+                      width: '350px',
+                      height: '350px',
+                      background: 'radial-gradient(circle, rgba(0, 217, 255, 0.3) 0%, transparent 70%)',
+                      filter: 'blur(80px)',
+                      animation: 'float 8s ease-in-out infinite reverse',
+                      pointerEvents: 'none',
                     }} />
                     
-                    <h3 style={{
+                    {/* Barra de categoria/tag */}
+                    <div style={{
+                      position: 'absolute',
+                      top: isMobile ? '20px' : '30px',
+                      left: isMobile ? '20px' : '30px',
+                      background: 'rgba(138, 43, 226, 0.25)',
+                      border: '1px solid rgba(138, 43, 226, 0.5)',
+                      backdropFilter: 'blur(10px)',
+                      padding: isMobile ? '6px 14px' : '8px 18px',
+                      borderRadius: '25px',
                       fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: isMobile ? '1.4rem' : '1.9rem',
-                      fontWeight: 800,
+                      fontSize: isMobile ? '0.75rem' : '0.85rem',
+                      fontWeight: 700,
                       color: '#00d9ff',
-                      marginBottom: '5px',
-                      textAlign: 'center',
-                      textShadow: '0 0 30px rgba(0, 217, 255, 1), 0 0 60px rgba(0, 217, 255, 0.5)',
                       textTransform: 'uppercase',
-                      letterSpacing: isMobile ? '1px' : '2px',
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      maxWidth: '100%',
-                    }}>{gameCard.title}</h3>
-                    
-                    <p style={{
-                      fontFamily: 'Roboto, sans-serif',
-                      fontSize: isMobile ? '0.85rem' : '1rem',
-                      color: '#fff',
-                      textAlign: 'center',
-                      lineHeight: isMobile ? '1.5' : '1.7',
-                      marginBottom: '5px',
-                      maxWidth: '90%',
-                      textShadow: '0 2px 10px rgba(0, 0, 0, 0.8)',
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                    }}>{gameCard.description}</p>
-                    
-                    <Link to={`/jogo/${gameCard.slug}`} style={{ textDecoration: 'none' }}>
-                    <button style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: isMobile ? '0.9rem' : '1.1rem',
-                      fontWeight: 800,
-                      color: '#fff',
-                      background: 'linear-gradient(135deg, #00d9ff 0%, #8a2be2 100%)',
-                      border: '2px solid rgba(255, 255, 255, 0.3)',
-                      padding: isMobile ? '10px 28px' : '15px 40px',
-                      borderRadius: isMobile ? '20px' : '30px',
-                      cursor: 'pointer',
-                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      textTransform: 'uppercase',
-                      letterSpacing: isMobile ? '1px' : '2px',
-                      boxShadow: '0 8px 25px rgba(0, 217, 255, 0.6), 0 0 40px rgba(138, 43, 226, 0.4)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.15) translateY(-3px)';
-                      e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 217, 255, 1), 0 0 60px rgba(138, 43, 226, 0.8)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.8)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6), 0 0 40px rgba(138, 43, 226, 0.4)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      letterSpacing: '1.5px',
+                      boxShadow: '0 4px 15px rgba(138, 43, 226, 0.3)',
                     }}>
-                      <span style={{ position: 'relative', zIndex: 1 }}>Conheça o Jogo</span>
-                      {/* Efeito shimmer no botão */}
+                      🎮 Jogo em Destaque
+                    </div>
+                    
+                    {/* Container de conteúdo */}
+                    <div style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      width: '100%',
+                    }}>
+                      {/* Título do jogo */}
+                      <h3 style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: isMobile ? '1.6rem' : '2.2rem',
+                        fontWeight: 900,
+                        color: '#fff',
+                        marginBottom: isMobile ? '12px' : '16px',
+                        textShadow: '0 4px 20px rgba(0, 0, 0, 0.9), 0 0 40px rgba(138, 43, 226, 0.8)',
+                        textTransform: 'uppercase',
+                        letterSpacing: isMobile ? '1.5px' : '2.5px',
+                        lineHeight: '1.2',
+                        background: 'linear-gradient(135deg, #fff 0%, #00d9ff 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }}>{gameCard.title}</h3>
+                      
+                      {/* Linha decorativa */}
                       <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: '-100%',
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
-                        animation: 'shimmerSlide 3s infinite',
+                        width: isMobile ? '60px' : '80px',
+                        height: '3px',
+                        background: 'linear-gradient(90deg, #8a2be2 0%, #00d9ff 100%)',
+                        marginBottom: isMobile ? '12px' : '16px',
+                        borderRadius: '2px',
+                        boxShadow: '0 0 20px rgba(138, 43, 226, 0.8)',
                       }} />
-                    </button>
-                    </Link>
+                      
+                      {/* Descrição do jogo */}
+                      <p style={{
+                        fontFamily: 'Roboto, sans-serif',
+                        fontSize: isMobile ? '0.9rem' : '1.05rem',
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        lineHeight: isMobile ? '1.6' : '1.75',
+                        marginBottom: isMobile ? '18px' : '24px',
+                        textShadow: '0 2px 10px rgba(0, 0, 0, 0.9)',
+                        fontWeight: 400,
+                        maxWidth: '95%',
+                      }}>{gameCard.description}</p>
+                      
+                      {/* Botão de ação */}
+                      <Link to={`/jogo/${gameCard.slug}`} style={{ textDecoration: 'none' }}>
+                        <button style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: isMobile ? '0.95rem' : '1.15rem',
+                          fontWeight: 800,
+                          color: '#0a0015',
+                          background: 'linear-gradient(135deg, #00d9ff 0%, #8a2be2 50%, #ff00ea 100%)',
+                          backgroundSize: '200% 100%',
+                          backgroundPosition: '0% 0%',
+                          border: 'none',
+                          padding: isMobile ? '12px 32px' : '16px 45px',
+                          borderRadius: '50px',
+                          cursor: 'pointer',
+                          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          textTransform: 'uppercase',
+                          letterSpacing: isMobile ? '1.5px' : '2.5px',
+                          boxShadow: '0 8px 30px rgba(0, 217, 255, 0.5), 0 0 50px rgba(138, 43, 226, 0.3)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundPosition = '100% 0%';
+                          e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 15px 50px rgba(0, 217, 255, 0.9), 0 0 80px rgba(138, 43, 226, 0.6), 0 0 100px rgba(255, 0, 234, 0.4)';
+                          e.currentTarget.style.color = '#fff';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundPosition = '0% 0%';
+                          e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.5), 0 0 50px rgba(138, 43, 226, 0.3)';
+                          e.currentTarget.style.color = '#0a0015';
+                        }}>
+                          <span style={{ position: 'relative', zIndex: 1 }}>Ver Detalhes</span>
+                          <span style={{ 
+                            fontSize: isMobile ? '1.2rem' : '1.4rem',
+                            position: 'relative', 
+                            zIndex: 1,
+                            transition: 'transform 0.3s ease',
+                          }}>→</span>
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                   )}
                 </div>
@@ -2745,145 +2925,355 @@ export default function GamerWorld() {
             <small style={{fontSize: '0.85rem'}}>Explore também: Geek & SmartHome</small>
           </p>
           
-          {/* Caixa de Pesquisa */}
+          {/* Barra de Pesquisa e Carrinho */}
           <div style={{
-            maxWidth: isMobile ? '100%' : '600px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: isMobile ? '10px' : '15px',
+            maxWidth: isMobile ? '100%' : '700px',
             margin: isMobile ? '0 auto 25px' : '0 auto 40px',
-            position: 'relative',
             padding: isMobile ? '0 10px' : '0',
             boxSizing: 'border-box',
           }}>
-            <input
-              type="text"
-              placeholder={isMobile ? 'Buscar...' : 'Buscar produtos...'}
+            <div style={{
+              flex: 1,
+              position: 'relative',
+            }}>
+              <input
+                type="text"
+                placeholder={isMobile ? 'Buscar...' : 'Buscar produtos...'}
+                value={searchProduct}
+                onChange={(e) => setSearchProduct(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: isMobile ? '12px 45px 12px 15px' : '15px 50px 15px 20px',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: isMobile ? '1rem' : '1.1rem',
+                  color: '#fff',
+                  background: 'rgba(0, 217, 255, 0.05)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '12px',
+                  outline: 'none',
+                  transition: 'all 0.3s ease',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#00d9ff';
+                  e.target.style.boxShadow = '0 0 20px rgba(0, 217, 255, 0.4)';
+                  e.target.style.background = 'rgba(0, 217, 255, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.background = 'rgba(0, 217, 255, 0.05)';
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                right: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '1.5rem',
+                color: '#00d9ff',
+                pointerEvents: 'none',
+              }}>🔍</div>
+            </div>
+            
+            {/* Botão do Carrinho */}
+            <button
+              onClick={() => navigate('/carrinho')}
               style={{
-                width: '100%',
-                padding: isMobile ? '12px 45px 12px 15px' : '15px 50px 15px 20px',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: isMobile ? '1rem' : '1.1rem',
-                color: '#fff',
-                background: 'rgba(0, 217, 255, 0.05)',
-                border: '2px solid rgba(0, 217, 255, 0.3)',
+                padding: isMobile ? '12px 16px' : '15px 24px',
+                background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
+                border: '2px solid rgba(255, 0, 234, 0.4)',
                 borderRadius: '12px',
-                outline: 'none',
+                color: '#fff',
+                fontFamily: 'Rajdhani, sans-serif',
+                fontWeight: 'bold',
+                fontSize: isMobile ? '0.9rem' : '1rem',
+                cursor: 'pointer',
                 transition: 'all 0.3s ease',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
                 boxSizing: 'border-box',
               }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#00d9ff';
-                e.target.style.boxShadow = '0 0 20px rgba(0, 217, 255, 0.4)';
-                e.target.style.background = 'rgba(0, 217, 255, 0.1)';
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ff 0%, #ff00ea 100%)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 10px 30px rgba(255, 0, 234, 0.4)';
               }}
-              onBlur={(e) => {
-                e.target.style.borderColor = 'rgba(0, 217, 255, 0.3)';
-                e.target.style.boxShadow = 'none';
-                e.target.style.background = 'rgba(0, 217, 255, 0.05)';
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)';
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
               }}
-            />
-            <div style={{
-              position: 'absolute',
-              right: '15px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '1.5rem',
-              color: '#00d9ff',
-              pointerEvents: 'none',
-            }}>🔍</div>
+            >
+              🛒 {isMobile ? '' : 'Carrinho'}
+            </button>
           </div>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 350px))',
             gap: isMobile ? '20px' : '30px',
             padding: isMobile ? '0 10px' : '0',
+            justifyContent: 'center',
           }}>
-            {allProducts.filter(p => p.category === 'gamer').slice(0, 4).map((product) => (
-              <div key={product.id} style={{
-                background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-                border: '2px solid rgba(0, 217, 255, 0.4)',
-                borderRadius: '12px',
-                padding: isMobile ? '18px' : '25px',
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                boxSizing: 'border-box',
-                position: 'relative',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-8px)';
-                e.currentTarget.style.borderColor = '#00d9ff';
-                e.currentTarget.style.boxShadow = '0 15px 40px rgba(0, 217, 255, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}>
+            {storeProducts
+              .filter(p => {
+                // Se houver busca, procurar em TODAS as categorias
+                if (searchProduct !== '') {
+                  return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                         (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
+                }
+                // Sem busca, mostrar apenas categoria 'gamer'
+                return p.category === 'gamer';
+              })
+              .slice(0, 4)
+              .length === 0 ? (
                 <div style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
-                  color: '#000',
-                  padding: '4px 10px',
-                  borderRadius: '15px',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  zIndex: 2,
-                }}>★ Destaque</div>
+                  gridColumn: '1 / -1',
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '1.2rem',
+                }}>
+                  {searchProduct ? '🔍 Nenhum produto encontrado' : '📦 Nenhum produto disponível'}
+                  <p style={{fontSize: '0.9rem', marginTop: '10px'}}>
+                    {searchProduct ? 'Tente outra busca' : 'Adicione produtos no painel admin'}
+                  </p>
+                </div>
+              ) : (
+                storeProducts
+                  .filter(p => {
+                    // Se houver busca, procurar em TODAS as categorias
+                    if (searchProduct !== '') {
+                      return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                             (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
+                    }
+                    // Sem busca, mostrar apenas categoria 'gamer'
+                    return p.category === 'gamer';
+                  })
+                  .slice(0, 4)
+                  .map((product) => (
+              <div 
+                key={product.id} 
+                onClick={() => navigate(`/produto/${product.id}`)}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '16px',
+                  padding: isMobile ? '20px' : '28px',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-10px)';
+                  e.currentTarget.style.borderColor = '#00d9ff';
+                  e.currentTarget.style.boxShadow = '0 20px 50px rgba(0, 217, 255, 0.5)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(255, 0, 234, 0.15) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)';
+                }}>
+                
+                {/* Badge de categoria */}
+                {product.category !== 'gamer' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '15px',
+                    left: '15px',
+                    background: product.category === 'geek' 
+                      ? 'linear-gradient(135deg, #ff00ea, #cc00ba)'
+                      : product.category === 'smarthome'
+                      ? 'linear-gradient(135deg, #00ff88, #00cc66)'
+                      : 'linear-gradient(135deg, #ff00ea, #cc00ba)',
+                    color: '#fff',
+                    padding: '5px 12px',
+                    borderRadius: '20px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    zIndex: 2,
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                  }}>
+                    {product.category === 'geek' ? '🎮 Geek' : product.category === 'smarthome' ? '🏠 Smart' : '🎮 Geek'}
+                  </div>
+                )}
+                
+                {/* Feedback de adicionado ao carrinho */}
+                {addedToCart === product.id && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '15px',
+                    right: '15px',
+                    background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+                    color: '#000',
+                    padding: '8px 15px',
+                    borderRadius: '25px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    fontFamily: 'Rajdhani, sans-serif',
+                    zIndex: 3,
+                    boxShadow: '0 4px 20px rgba(0, 255, 136, 0.6)',
+                    animation: 'pulse 0.5s ease-in-out',
+                  }}>
+                    ✓ Adicionado!
+                  </div>
+                )}
+                
+                {/* Imagem do produto */}
+                {product.image && (
+                  <div style={{
+                    width: '100%',
+                    height: isMobile ? '180px' : '220px',
+                    marginBottom: '20px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    />
+                  </div>
+                )}
+                
                 <h3 style={{
                   fontFamily: 'Rajdhani, sans-serif',
                   fontWeight: 700,
-                  fontSize: isMobile ? '1.2rem' : '1.4rem',
-                  color: '#00d9ff',
-                  marginBottom: '10px',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                }}>{product.name}</h3>
-                <p style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: isMobile ? '0.85rem' : '0.95rem',
-                  color: '#fff',
-                  opacity: 0.7,
-                  marginBottom: '15px',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                }}>{product.description}</p>
-                <p style={{
-                  fontFamily: 'Rajdhani, sans-serif',
                   fontSize: isMobile ? '1.3rem' : '1.5rem',
+                  color: '#00d9ff',
+                  marginBottom: '12px',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  lineHeight: '1.3',
+                }}>{product.name}</h3>
+                
+                <p style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  color: '#fff',
+                  opacity: 0.75,
+                  marginBottom: '18px',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
+                  lineHeight: '1.5',
+                  maxHeight: '4.5em',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                }}>{product.description}</p>
+                
+                <p style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: isMobile ? '1.5rem' : '1.8rem',
                   color: '#ff00ea',
                   fontWeight: 'bold',
-                  marginBottom: '15px',
-                  whiteSpace: 'nowrap',
+                  marginBottom: '18px',
+                  textShadow: '0 0 20px rgba(255, 0, 234, 0.5)',
                 }}>{product.price}</p>
-                <button style={{
-                  width: '100%',
-                  padding: isMobile ? '10px' : '12px',
-                  background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: '#000',
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontWeight: 'bold',
-                  fontSize: isMobile ? '0.9rem' : '1rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  whiteSpace: 'nowrap',
-                  boxSizing: 'border-box',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
-                  e.currentTarget.style.transform = 'scale(1)';
+                
+                {/* Botões de ação */}
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
                 }}>
-                  COMPRAR AGORA
-                </button>
+                  <button 
+                    onClick={(e) => handleAddToCart(product, e)}
+                    style={{
+                      flex: 1,
+                      padding: isMobile ? '12px' : '14px',
+                      background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      color: '#000',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 'bold',
+                      fontSize: isMobile ? '0.95rem' : '1.05rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      whiteSpace: 'nowrap',
+                      boxSizing: 'border-box',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}>
+                    🛒 Adicionar
+                  </button>
+                  
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/produto/${product.id}`);
+                    }}
+                    style={{
+                      padding: isMobile ? '12px 16px' : '14px 20px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      border: '2px solid rgba(255, 255, 255, 0.3)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 'bold',
+                      fontSize: isMobile ? '0.95rem' : '1.05rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxSizing: 'border-box',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                      e.currentTarget.style.borderColor = '#fff';
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.stopPropagation();
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}>
+                    👁️
+                  </button>
+                </div>
               </div>
-            ))}
+            ))
+          )}
           </div>
         </div>
       </section>
