@@ -6,7 +6,7 @@ import useAccessLog from './hooks/useAccessLog'
 import StartScreen from './screens/StartScreen'
 import NextScreen from './screens/NextScreen'
 import LojaGeek from './screens/LojaGeek'
-import AdminPanel from './screens/AdminPanel'
+import AdminPanel3 from './screens/AdminPanel3';
 import CarrinhoPage from './screens/CarrinhoPage'
 import GameHouse from './screens/GamerWorld'
 import PerfilPage from './screens/PerfilPage'
@@ -95,7 +95,7 @@ function LojaWrapper() {
 
 function AdminWrapper() {
   const navigate = useNavigate()
-  return <AdminPanel onNavigate={(page) => navigate(`/${page}`)} />
+  return <AdminPanel3 onNavigate={(page) => navigate(`/${page}`)} />
 }
 
 function CarrinhoWrapper() {

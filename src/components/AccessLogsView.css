@@ -158,11 +158,23 @@
 
 .logs-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .logs-table thead tr {
+  background: rgba(0, 217, 255, 0.1);
   border-bottom: 2px solid rgba(0, 217, 255, 0.3);
+}
+
+.logs-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .logs-table th {
@@ -171,9 +183,40 @@
   color: #00d9ff;
   font-weight: 600;
   font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  position: relative;
+  vertical-align: middle;
+  border-right: 1px solid rgba(0, 217, 255, 0.1);
+  white-space: nowrap;
+}
+
+.logs-table th:last-child {
+  border-right: none;
+}
+
+.logs-table th:nth-child(1) { 
+  width: 25%; 
+  min-width: 180px;
+} /* Usuário */
+
+.logs-table th:nth-child(2) { 
+  width: 20%; 
+  min-width: 140px;
+} /* Data/Hora */
+
+.logs-table th:nth-child(3) { 
+  width: 25%; 
+  min-width: 160px;
+} /* Local */
+
+.logs-table th:nth-child(4) { 
+  width: 30%; 
+  min-width: 200px;
+} /* Página */
+
+.logs-table th svg {
+  display: inline-block;
+  margin-right: 8px;
+  vertical-align: middle;
 }
 
 .logs-table tbody tr {
@@ -189,7 +232,35 @@
   padding: 15px 12px;
   color: #fff;
   font-size: 0.9rem;
+  vertical-align: top;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+.logs-table td:last-child {
+  border-right: none;
+}
+
+.logs-table td:nth-child(1) { 
+  width: 25%; 
+  min-width: 180px;
+} /* Usuário */
+
+.logs-table td:nth-child(2) { 
+  width: 20%; 
+  min-width: 140px;
+} /* Data/Hora */
+
+.logs-table td:nth-child(3) { 
+  width: 25%; 
+  min-width: 160px;
+} /* Local */
+
+.logs-table td:nth-child(4) { 
+  width: 30%; 
+  min-width: 200px;
+} /* Página */
 
 .user-cell {
   display: flex;
@@ -257,12 +328,38 @@
     grid-template-columns: 1fr;
   }
 
+  .logs-table-container {
+    overflow-x: auto;
+    padding: 15px;
+  }
+
   .logs-table {
+    min-width: 600px;
     font-size: 0.8rem;
   }
 
   .logs-table th,
   .logs-table td {
-    padding: 8px;
+    padding: 10px 8px;
+  }
+
+  .logs-table th:nth-child(1),
+  .logs-table td:nth-child(1) {
+    min-width: 150px;
+  }
+
+  .logs-table th:nth-child(2),
+  .logs-table td:nth-child(2) {
+    min-width: 120px;
+  }
+
+  .logs-table th:nth-child(3),
+  .logs-table td:nth-child(3) {
+    min-width: 140px;
+  }
+
+  .logs-table th:nth-child(4),
+  .logs-table td:nth-child(4) {
+    min-width: 180px;
   }
 }

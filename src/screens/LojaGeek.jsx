@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Instagram, Store, ShoppingBag, MessageCircle, Mail, MapPin, Phone, Zap, Heart, ArrowRight } from 'lucide-react'
 import geekConvention from '../imagens/Geek convention-rafiki.png'
-import { allProducts, defaultOffers, getProductsByCategory } from '../data/lojaData'
+import { defaultOffers } from '../data/lojaData'
+import { supabase } from '../supabaseClient'
 import { stopAudio } from '../utils/audioPlayer'
 
 export default function LojaGeek({ onBack }){
@@ -77,21 +78,78 @@ export default function LojaGeek({ onBack }){
   
   // Carregar dados do localStorage
   useEffect(() => {
-    const loadData = () => {
-      const storedOffers = localStorage.getItem('cyberlife_offers')
-      const storedProducts = localStorage.getItem('cyberlife_products')
-      
-      setOffers(storedOffers ? JSON.parse(storedOffers) : defaultOffers)
-      // Usar produtos da categoria 'geek' do arquivo centralizado
-      setProducts(storedProducts ? JSON.parse(storedProducts) : getProductsByCategory('geek'))
-      // Salvar dados padrão se não existirem
-      if (!storedOffers) {
-        localStorage.setItem('cyberlife_offers', JSON.stringify(defaultOffers))
+// Carregar produtos do banco de dados
+  const loadProducts = async () => {
+    try {
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', 'geek')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar produtos:', error);
+        // Fallback para localStorage se houver erro
+        const storedProducts = localStorage.getItem('cyberlife_products');
+        if (storedProducts) {
+          const allProducts = JSON.parse(storedProducts);
+          setProducts(allProducts.filter(p => p.category === 'geek'));
+        }
+        return;
       }
-      if (!storedProducts) {
-        // Salvar todos os produtos (para sincronização)
-        localStorage.setItem('cyberlife_products', JSON.stringify(allProducts))
+
+      setProducts(products || []);
+    } catch (error) {
+      console.error('Erro ao conectar com banco:', error);
+      // Fallback para localStorage
+      const storedProducts = localStorage.getItem('cyberlife_products');
+      if (storedProducts) {
+        const allProducts = JSON.parse(storedProducts);
+        setProducts(allProducts.filter(p => p.category === 'geek'));
       }
+    }
+  };
+
+// Carregar banners do banco de dados
+  const loadBanners = async () => {
+    try {
+      const { data: banners, error } = await supabase
+        .from('banners')
+        .select('*')
+        .order('order', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao carregar banners:', error);
+        // Fallback para localStorage e defaultOffers
+        const storedOffers = localStorage.getItem('cyberlife_offers');
+        setOffers(storedOffers ? JSON.parse(storedOffers) : defaultOffers);
+        return;
+      }
+
+      // Converter banners do banco para formato de ofertas
+      const offersFromBanners = banners.map(banner => ({
+        id: banner.id,
+        title: banner.title,
+        description: banner.description,
+        discount: banner.discount,
+        image: banner.image_url,
+        link: banner.link_url
+      }));
+
+      setOffers(offersFromBanners.length > 0 ? offersFromBanners : defaultOffers);
+    } catch (error) {
+      console.error('Erro ao conectar com banco:', error);
+      // Fallback para localStorage
+      const storedOffers = localStorage.getItem('cyberlife_offers');
+      setOffers(storedOffers ? JSON.parse(storedOffers) : defaultOffers);
+    }
+  };
+
+  const loadData = () => {
+    // Carregar banners do banco de dados
+    loadBanners();
+    // Carregar produtos do banco de dados
+    loadProducts();
 
       // Carregar quantidade de itens no carrinho
       updateCartCount()
@@ -172,10 +230,12 @@ export default function LojaGeek({ onBack }){
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'cyberlife_products' && e.newValue) {
-        setProducts(JSON.parse(e.newValue));
+        // Recarregar do banco quando há mudanças
+        loadProducts();
       }
       if (e.key === 'cyberlife_offers' && e.newValue) {
-        setOffers(JSON.parse(e.newValue));
+        // Recarregar banners do banco
+        loadBanners();
       }
       if (e.key === 'cyberlife_cart') {
         updateCartCount();

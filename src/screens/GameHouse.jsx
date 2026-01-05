@@ -12,7 +12,7 @@ import imgHollow from '../imagens base/hollow.webp';
 import imgSubzero from '../imagens/subzero.png';
 import imgChunLi from '../imagens base/Chun-li.png';
 import caraJogando from '../imagens/cara-jogando.png';
-import { allProducts } from '../data/lojaData';
+import { supabase } from '../supabaseClient';
 import { stopAudio } from '../utils/audioPlayer';
 
 const images = [
@@ -188,18 +188,33 @@ export default function GamerWorld() {
     stopAudio()
   }, [])
   
-  // Carregar produtos do localStorage (loja centralizada)
+  // Carregar produtos do banco de dados
   useEffect(() => {
-    const loadProducts = () => {
-      const storedProducts = localStorage.getItem('cyberlife_products');
-      if (storedProducts) {
-        const parsedProducts = JSON.parse(storedProducts);
-        // Carregar TODOS os produtos para permitir busca em todas as categorias
-        setStoreProducts(parsedProducts);
-      } else {
-        // Se não houver produtos no localStorage, usar os padrão e salvar
-        localStorage.setItem('cyberlife_products', JSON.stringify(allProducts));
-        setStoreProducts(allProducts);
+    const loadProducts = async () => {
+      try {
+        const { data: products, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao carregar produtos:', error);
+          // Fallback para localStorage se houver erro
+          const storedProducts = localStorage.getItem('cyberlife_products');
+          if (storedProducts) {
+            setStoreProducts(JSON.parse(storedProducts));
+          }
+          return;
+        }
+
+        setStoreProducts(products || []);
+      } catch (error) {
+        console.error('Erro ao conectar com banco:', error);
+        // Fallback para localStorage
+        const storedProducts = localStorage.getItem('cyberlife_products');
+        if (storedProducts) {
+          setStoreProducts(JSON.parse(storedProducts));
+        }
       }
     };
     
@@ -272,27 +287,67 @@ export default function GamerWorld() {
     },
   ];
 
-  // Carregar eventos do localStorage ou usar dados padrão
+  // Carregar eventos do banco de dados
   const [displayEvents, setDisplayEvents] = useState(eventsData);
   const [displayEventImages, setDisplayEventImages] = useState(eventImages);
 
-  useEffect(() => {
-    const storedEvents = localStorage.getItem('cyberlife_events');
-    if (storedEvents) {
-      const parsed = JSON.parse(storedEvents);
-      // Se não houver eventos cadastrados, usa os eventos fictícios
-      if (parsed.length === 0) {
+  const loadEvents = async () => {
+    try {
+      const { data: events, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao carregar eventos:', error);
+        // Fallback para dados padrão
         setDisplayEvents(eventsData);
         setDisplayEventImages(eventImages);
-      } else {
-        setDisplayEvents(parsed);
-        // Usar as imagens dos eventos personalizados se houver
-        const customImages = parsed.map(event => event.image).filter(Boolean);
-        if (customImages.length > 0) {
-          setDisplayEventImages(customImages);
-        }
+        return;
       }
+
+      if (events && events.length > 0) {
+        // Converter eventos do banco para o formato esperado
+        const formattedEvents = events.map(event => ({
+          title: event.title,
+          date: new Date(event.date).toLocaleDateString('pt-BR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+          }),
+          prize: event.prize || '',
+          inscription: `Inscrições abertas`,
+          slug: event.title.toLowerCase().replace(/\s+/g, '-'),
+          type: event.type || 'Torneio',
+        }));
+        
+        setDisplayEvents(formattedEvents);
+        
+        // Usar imagens dos eventos se existirem
+        const eventImageUrls = events
+          .map(event => event.image_url)
+          .filter(Boolean);
+        
+        if (eventImageUrls.length > 0) {
+          setDisplayEventImages(eventImageUrls);
+        } else {
+          setDisplayEventImages(eventImages);
+        }
+      } else {
+        // Se não há eventos no banco, usar dados padrão
+        setDisplayEvents(eventsData);
+        setDisplayEventImages(eventImages);
+      }
+    } catch (error) {
+      console.error('Erro ao conectar com banco:', error);
+      // Fallback para dados padrão
+      setDisplayEvents(eventsData);
+      setDisplayEventImages(eventImages);
     }
+  };
+
+  useEffect(() => {
+    loadEvents();
   }, []);
 
   useEffect(() => {
