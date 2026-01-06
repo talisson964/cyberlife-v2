@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { stopAudio } from '../utils/audioPlayer';
 
 export default function CarrinhoPage({ onBack }) {
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
 
   // Parar a música ao entrar nesta tela
@@ -45,7 +47,9 @@ export default function CarrinhoPage({ onBack }) {
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.price.replace('R$', '').replace(',', '.').trim());
+      const price = typeof item.price === 'string' 
+        ? parseFloat(item.price.replace('R$', '').replace(',', '.').trim())
+        : parseFloat(item.price);
       return total + (price * item.quantity);
     }, 0);
   };
@@ -62,7 +66,7 @@ export default function CarrinhoPage({ onBack }) {
           <span style={{fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '2rem', color: '#00d9ff', letterSpacing: '2px'}}>CyberLife</span>
         </div>
         <nav className="nav">
-          <button className="nav-button" onClick={onBack}>Voltar à Loja</button>
+          <button className="nav-button" onClick={() => onBack ? onBack() : navigate('/loja-geek')}>Voltar à Loja</button>
           <button className="nav-button">Contato</button>
         </nav>
       </header>
@@ -93,9 +97,12 @@ export default function CarrinhoPage({ onBack }) {
             <h2>Carrinho Vazio</h2>
             <p>Adicione produtos incríveis da nossa loja!</p>
             <button className="btn-back-shop" onClick={() => {
-              onBack();
-              // Sinalizar que deve rolar para o catálogo
-              sessionStorage.setItem('scrollToCatalog', 'true');
+              if (onBack) {
+                onBack();
+                sessionStorage.setItem('scrollToCatalog', 'true');
+              } else {
+                navigate('/loja-geek');
+              }
             }}>
               Explorar Produtos
             </button>
@@ -129,7 +136,9 @@ export default function CarrinhoPage({ onBack }) {
                     </button>
                   </div>
                   <div className="item-total">
-                    R$ {(parseFloat(item.price.replace('R$', '').replace(',', '.').trim()) * item.quantity).toFixed(2).replace('.', ',')}
+                    R$ {((typeof item.price === 'string' 
+                      ? parseFloat(item.price.replace('R$', '').replace(',', '.').trim())
+                      : parseFloat(item.price)) * item.quantity).toFixed(2).replace('.', ',')}
                   </div>
                   <button 
                     className="item-remove"

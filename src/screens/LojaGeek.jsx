@@ -98,7 +98,15 @@ export default function LojaGeek({ onBack }){
         return;
       }
 
-      setProducts(products || []);
+      // Mapear campos do banco para o formato esperado pelo frontend
+      const formattedProducts = products.map(p => ({
+        ...p,
+        image: p.image_url,
+        hoverImage: p.hover_image_url,
+        price: p.price ? `R$ ${p.price.toFixed(2).replace('.', ',')}` : 'R$ 0,00'
+      }));
+
+      setProducts(formattedProducts || []);
     } catch (error) {
       console.error('Erro ao conectar com banco:', error);
       // Fallback para localStorage
@@ -133,7 +141,9 @@ export default function LojaGeek({ onBack }){
         description: banner.description,
         discount: banner.discount,
         image: banner.image_url,
-        link: banner.link_url
+        link: banner.link_url,
+        originalPrice: banner.original_price,
+        finalPrice: banner.final_price
       }));
 
       setOffers(offersFromBanners.length > 0 ? offersFromBanners : defaultOffers);
@@ -456,7 +466,7 @@ export default function LojaGeek({ onBack }){
           </button>
           <button 
             className="nav-button cart-button" 
-            onClick={() => window.location.href = '/carrinho'}
+            onClick={() => navigate('/carrinho')}
             style={{
               background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
               border: '2px solid rgba(255, 0, 234, 0.4)',
@@ -699,56 +709,72 @@ export default function LojaGeek({ onBack }){
                     textShadow: '0 2px 10px rgba(0, 217, 255, 0.5)',
                   }}>{offer.title}</h3>
                   
-                  <div className="offer-prices" style={{
-                    display: 'flex',
-                    gap: '30px',
-                    marginBottom: '40px',
-                    flexWrap: 'wrap',
-                  }}>
-                    <div className="price-block" style={{
-                      flex: 1,
-                      minWidth: '150px',
+                  {offer.description && (
+                    <p style={{
+                      fontSize: '1.1rem',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      marginBottom: '30px',
+                      lineHeight: '1.6',
+                      fontFamily: 'Rajdhani, sans-serif',
+                    }}>{offer.description}</p>
+                  )}
+                  
+                  {(offer.originalPrice || offer.finalPrice) && (
+                    <div className="offer-prices" style={{
+                      display: 'flex',
+                      gap: '30px',
+                      marginBottom: '40px',
+                      flexWrap: 'wrap',
                     }}>
-                      <span className="price-label" style={{
-                        display: 'block',
-                        fontSize: '0.9rem',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        marginBottom: '8px',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '1px',
-                      }}>De:</span>
-                      <span className="price-original" style={{
-                        display: 'block',
-                        fontSize: '1.5rem',
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        textDecoration: 'line-through',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontWeight: 600,
-                      }}>{offer.originalPrice}</span>
+                      {offer.originalPrice && (
+                        <div className="price-block" style={{
+                          flex: 1,
+                          minWidth: '150px',
+                        }}>
+                          <span className="price-label" style={{
+                            display: 'block',
+                            fontSize: '0.9rem',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            marginBottom: '8px',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            letterSpacing: '1px',
+                          }}>De:</span>
+                          <span className="price-original" style={{
+                            display: 'block',
+                            fontSize: '1.5rem',
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            textDecoration: 'line-through',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 600,
+                          }}>{offer.originalPrice}</span>
+                        </div>
+                      )}
+                      {offer.finalPrice && (
+                        <div className="price-block" style={{
+                          flex: 1,
+                          minWidth: '150px',
+                        }}>
+                          <span className="price-label" style={{
+                            display: 'block',
+                            fontSize: '0.9rem',
+                            color: '#00ff88',
+                            marginBottom: '8px',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            letterSpacing: '1px',
+                            fontWeight: 700,
+                          }}>Por apenas:</span>
+                          <span className="price-final" style={{
+                            display: 'block',
+                            fontSize: '2.5rem',
+                            color: '#00ff88',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 900,
+                            textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
+                          }}>{offer.finalPrice}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="price-block" style={{
-                      flex: 1,
-                      minWidth: '150px',
-                    }}>
-                      <span className="price-label" style={{
-                        display: 'block',
-                        fontSize: '0.9rem',
-                        color: '#00ff88',
-                        marginBottom: '8px',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '1px',
-                        fontWeight: 700,
-                      }}>Por apenas:</span>
-                      <span className="price-final" style={{
-                        display: 'block',
-                        fontSize: '2.5rem',
-                        color: '#00ff88',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontWeight: 900,
-                        textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
-                      }}>{offer.finalPrice}</span>
-                    </div>
-                  </div>
+                  )}
                   
                   <button className="offer-button" style={{
                     width: '100%',
@@ -826,11 +852,6 @@ export default function LojaGeek({ onBack }){
       <section className={`catalog-section ${isCatalogVisible ? 'visible' : ''}`} ref={catalogRef}>
         <div className="section-header">
           <h2 className="section-title">Catálogo Completo</h2>
-          <p className="section-subtitle">
-            Loja Única • Destaque em <span style={{color: '#ff00ea', fontWeight: 700}}>Geek</span>
-            <br/>
-            <small style={{fontSize: '0.85rem', opacity: 0.8}}>Explore também: Gamer & SmartHome</small>
-          </p>
         </div>
 
         <div className="catalog-filters">
@@ -1180,7 +1201,7 @@ export default function LojaGeek({ onBack }){
                   WhatsApp
                   <ArrowRight size={16} style={{ marginLeft: 'auto', opacity: 0, transition: 'all 0.3s' }} className="arrow-icon" />
                 </a>
-                <a href="https://instagram.com/cyberlife" target="_blank" rel="noopener noreferrer" style={{
+                <a href="https://www.instagram.com/cyberlife_technology/" target="_blank" rel="noopener noreferrer" style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',

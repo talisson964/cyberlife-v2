@@ -35,13 +35,13 @@ const icons = [
   {
     name: 'whatsapp',
     color: '#25D366',
-    url: 'https://wa.me/',
+    url: 'https://wa.me/5517992212246',
     Icon: WhatsappIcon,
   },
   {
     name: 'instagram',
     color: '#E1306C',
-    url: 'https://instagram.com/',
+    url: 'https://www.instagram.com/cyberlife_technology/',
     Icon: Instagram,
   },
   {

@@ -207,7 +207,15 @@ export default function GamerWorld() {
           return;
         }
 
-        setStoreProducts(products || []);
+        // Mapear campos do banco para o formato esperado pelo frontend
+        const formattedProducts = products.map(p => ({
+          ...p,
+          image: p.image_url,
+          hoverImage: p.hover_image_url,
+          price: p.price ? `R$ ${p.price.toFixed(2).replace('.', ',')}` : 'R$ 0,00'
+        }));
+
+        setStoreProducts(formattedProducts || []);
       } catch (error) {
         console.error('Erro ao conectar com banco:', error);
         // Fallback para localStorage
@@ -2950,10 +2958,10 @@ export default function GamerWorld() {
 
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
-        padding: '10px 48px',
+        padding: '120px 48px 80px',
         background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
         borderTop: '1px solid rgba(0, 217, 255, 0.2)',
-        marginTop: '-5%',
+        marginTop: '0',
       }}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
           <h2 style={{
@@ -2966,7 +2974,7 @@ export default function GamerWorld() {
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
             wordWrap: 'break-word',
-          }}>Loja Única</h2>
+          }}>Loja Gamer</h2>
           <p style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: isMobile ? '0.95rem' : '1.1rem',

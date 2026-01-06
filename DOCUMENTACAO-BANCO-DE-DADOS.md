@@ -118,6 +118,8 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 | `description` | TEXT | Descrição da promoção | ❌ |
 | `image_url` | TEXT | URL da imagem do banner | ✅ |
 | `link_url` | TEXT | URL de destino ao clicar | ❌ |
+| `original_price` | TEXT | Preço original (ex: "R$ 299,99") | ❌ |
+| `final_price` | TEXT | Preço promocional (ex: "R$ 199,99") | ❌ |
 | `active` | BOOLEAN | Banner ativo/inativo | ✅ |
 | `order` | INTEGER | Ordem de exibição | ❌ |
 | `start_date` | DATE | Data de início da promoção | ❌ |
@@ -129,6 +131,10 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 - LojaGeek.jsx (carrossel de ofertas)
 
 **Imagens**: Armazenadas no Supabase Storage (bucket: `banners`)
+
+**Observações**:
+- Os campos `original_price` e `final_price` permitem criar ofertas com valores "De: / Por apenas:"
+- Se não informados, apenas o desconto percentual será exibido
 
 ---
 

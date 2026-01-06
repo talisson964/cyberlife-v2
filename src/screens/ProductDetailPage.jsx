@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ShoppingCart, ArrowLeft, MessageCircle, Truck, Package } from 'lucide-react'
 import { stopAudio } from '../utils/audioPlayer'
+import { supabase } from '../supabaseClient'
 import './ProductDetailPage.css'
 
 export default function ProductDetailPage() {
@@ -20,15 +21,36 @@ export default function ProductDetailPage() {
   }, [])
 
   useEffect(() => {
-    // Carregar produto do localStorage
-    const storedProducts = localStorage.getItem('cyberlife_products')
-    if (storedProducts) {
-      const products = JSON.parse(storedProducts)
-      const foundProduct = products.find(p => p.id === parseInt(id))
-      setProduct(foundProduct)
-    }
-    updateCartCount()
-  }, [id])
+    const loadProduct = async () => {
+      try {
+        // Carregar produto do Supabase
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', parseInt(id))
+          .single();
+
+        if (error) throw error;
+        
+        if (data) {
+          // Formatar o produto para compatibilidade com o código existente
+          const formattedProduct = {
+            ...data,
+            price: data.price ? `R$ ${data.price.toFixed(2).replace('.', ',')}` : 'R$ 0,00',
+            image: data.image_url,
+            hoverImage: data.hover_image_url
+          };
+          setProduct(formattedProduct);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar produto:', error);
+        setProduct(null);
+      }
+    };
+
+    loadProduct();
+    updateCartCount();
+  }, [id]);
 
   const updateCartCount = () => {
     const storedCart = localStorage.getItem('cyberlife_cart')
@@ -348,10 +370,76 @@ export default function ProductDetailPage() {
           <div className="product-description">
             <h3>Descrição do Produto</h3>
             <p>
-              {product.description || `${product.name} de alta qualidade. Produto exclusivo para colecionadores e entusiastas. 
-              Acabamento premium com atenção aos detalhes. Ideal para presentear ou adicionar à sua coleção. 
-              Produto original e com garantia de qualidade CyberLife.`}
+              {product.description || `${product.name} de alta qualidade.`}
             </p>
+            
+            {product.detailed_description && (
+              <div className="detailed-description">
+                <h4>Detalhes Completos</h4>
+                <p>{product.detailed_description}</p>
+              </div>
+            )}
+            
+            {product.features && (
+              <div className="product-features">
+                <h4>✨ Características</h4>
+                <ul>
+                  {product.features.split('\n').filter(f => f.trim()).map((feature, index) => (
+                    <li key={index}>{feature.trim()}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            <div className="product-specs">
+              <h4>📋 Especificações</h4>
+              <div className="specs-grid">
+                {product.brand && (
+                  <div className="spec-item">
+                    <span className="spec-label">🏷️ Marca:</span>
+                    <span className="spec-value">{product.brand}</span>
+                  </div>
+                )}
+                {product.dimensions && (
+                  <div className="spec-item">
+                    <span className="spec-label">📏 Dimensões:</span>
+                    <span className="spec-value">
+                      {product.dimensions.includes('x') 
+                        ? `${product.dimensions} cm`
+                        : `${product.dimensions.match(/.{1,2}/g)?.join(' x ') || product.dimensions} cm`}
+                    </span>
+                  </div>
+                )}
+                {product.weight && (
+                  <div className="spec-item">
+                    <span className="spec-label">⚖️ Peso:</span>
+                    <span className="spec-value">
+                      {product.weight.toString().includes('g') ? product.weight : `${product.weight}g`}
+                    </span>
+                  </div>
+                )}
+                {product.material && (
+                  <div className="spec-item">
+                    <span className="spec-label">🧱 Material:</span>
+                    <span className="spec-value">{product.material}</span>
+                  </div>
+                )}
+                {product.warranty && (
+                  <div className="spec-item">
+                    <span className="spec-label">🛡️ Garantia:</span>
+                    <span className="spec-value">{product.warranty}</span>
+                  </div>
+                )}
+                {product.stock !== undefined && (
+                  <div className="spec-item">
+                    <span className="spec-label">📦 Estoque:</span>
+                    <span className="spec-value" style={{color: product.stock > 0 ? '#00ff88' : '#ff4444'}}>
+                      {product.stock > 0 ? `${product.stock} unidades disponíveis` : 'Esgotado'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="quantity-selector">

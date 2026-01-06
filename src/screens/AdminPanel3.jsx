@@ -35,7 +35,14 @@ const AdminPanel3 = ({ onNavigate }) => {
     image_url: '',
     hover_image_url: '',
     description: '',
-    stock: 0
+    stock: 0,
+    detailed_description: '',
+    features: '',
+    dimensions: '',
+    weight: '',
+    brand: '',
+    warranty: '',
+    material: ''
   });
   
   // Banners
@@ -50,7 +57,9 @@ const AdminPanel3 = ({ onNavigate }) => {
     description: '',
     image_url: '',
     link_url: '',
-    order: 0
+    order: 0,
+    original_price: '',
+    final_price: ''
   });
 
   // Eventos
@@ -79,6 +88,11 @@ const AdminPanel3 = ({ onNavigate }) => {
   // Clientes
   const [customers, setCustomers] = useState([]);
   const [searchCustomer, setSearchCustomer] = useState('');
+
+  // Preview Modal
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewType, setPreviewType] = useState(null); // 'product', 'banner', 'event'
+  const [previewData, setPreviewData] = useState(null);
 
   // Parar música
   useEffect(() => {
@@ -128,6 +142,19 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setActiveTab('dashboard');
+  };
+
+  // Função para abrir o preview
+  const openPreview = (type, data) => {
+    setPreviewType(type);
+    setPreviewData(data);
+    setShowPreview(true);
+  };
+
+  const closePreview = () => {
+    setShowPreview(false);
+    setPreviewType(null);
+    setPreviewData(null);
   };
 
   // Recarregar dados quando muda de aba
@@ -277,7 +304,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         .from('products')
         .insert([{
           ...productForm,
-          price: parseFloat(productForm.price),
+          price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0
         }])
         .select();
@@ -301,7 +328,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         .from('products')
         .update({
           ...productForm,
-          price: parseFloat(productForm.price),
+          price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0
         })
         .eq('id', editingProduct);
@@ -347,8 +374,75 @@ const AdminPanel3 = ({ onNavigate }) => {
       image_url: '',
       hover_image_url: '',
       description: '',
-      stock: 0
+      stock: 0,
+      detailed_description: '',
+      features: '',
+      dimensions: '',
+      weight: '',
+      brand: '',
+      warranty: '',
+      material: ''
     });
+  };
+
+  // FORMATAÇÃO AUTOMÁTICA
+  const formatPrice = (value) => {
+    // Remove tudo exceto números
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+    
+    // Converte para número e formata
+    const numberValue = parseInt(numbers) / 100;
+    return numberValue.toLocaleString('pt-BR', { 
+      style: 'currency', 
+      currency: 'BRL' 
+    });
+  };
+
+  const parsePriceToNumber = (formattedPrice) => {
+    // Remove "R$", espaços, e converte vírgula para ponto
+    const cleaned = formattedPrice.replace(/[R$\s]/g, '').replace(',', '.');
+    const number = parseFloat(cleaned);
+    return isNaN(number) ? 0 : number;
+  };
+
+  const formatDimensions = (value) => {
+    // Remove tudo exceto números e x
+    const cleaned = value.replace(/[^\d]/g, '');
+    if (!cleaned) return '';
+    
+    // Divide em partes (até 3 números)
+    const parts = [];
+    for (let i = 0; i < cleaned.length && parts.length < 3; i += 2) {
+      parts.push(cleaned.substr(i, 2));
+    }
+    
+    return parts.join(' x ');
+  };
+
+  const formatWeight = (value) => {
+    // Remove tudo exceto números
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+    
+    return numbers + 'g';
+  };
+
+  const handlePriceChange = (value) => {
+    const formatted = formatPrice(value);
+    setProductForm({...productForm, price: formatted});
+  };
+
+  const handleDimensionsChange = (value) => {
+    // Permite apenas números e x, depois formata
+    const clean = value.replace(/[^\d]/g, '');
+    setProductForm({...productForm, dimensions: clean});
+  };
+
+  const handleWeightChange = (value) => {
+    // Remove tudo exceto números
+    const numbers = value.replace(/\D/g, '');
+    setProductForm({...productForm, weight: numbers});
   };
 
   // DRAG AND DROP FUNCTIONS
@@ -427,6 +521,8 @@ const AdminPanel3 = ({ onNavigate }) => {
         image_url: bannerForm.image_url,
         link_url: bannerForm.link_url,
         "order": parseInt(bannerForm.order || 0),
+        original_price: bannerForm.original_price,
+        final_price: bannerForm.final_price,
         active: true
       };
 
@@ -458,6 +554,8 @@ const AdminPanel3 = ({ onNavigate }) => {
         image_url: bannerForm.image_url,
         link_url: bannerForm.link_url,
         "order": parseInt(bannerForm.order || 0),
+        original_price: bannerForm.original_price,
+        final_price: bannerForm.final_price,
         active: true,
         updated_at: new Date().toISOString()
       };
@@ -506,7 +604,9 @@ const AdminPanel3 = ({ onNavigate }) => {
       description: '',
       image_url: '',
       link_url: '',
-      order: 0
+      order: 0,
+      original_price: '',
+      final_price: ''
     });
   };
 
@@ -539,14 +639,14 @@ const AdminPanel3 = ({ onNavigate }) => {
       const eventData = {
         title: eventForm.title,
         slug: eventForm.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-        description: eventForm.description,
+        description: eventForm.description || 'Evento sem descrição',
         type: eventForm.type || 'Torneio',
-        date: eventForm.date,
-        prize: eventForm.prize,
-        inscription_info: `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
+        date: eventForm.date, // Nome correto da coluna: date
+        prize: eventForm.prize || null,
+        inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
         max_participants: parseInt(eventForm.max_participants) || null,
-        image_url: eventForm.image_url,
-        active: true
+        image_url: eventForm.image_url || '/images/default-event.png',
+        active: true // Nome correto da coluna: active
       };
 
       const { data, error } = await supabase
@@ -572,15 +672,14 @@ const AdminPanel3 = ({ onNavigate }) => {
       // Mapear os dados do formulário para a estrutura do banco
       const eventData = {
         title: eventForm.title,
-        description: eventForm.description,
+        description: eventForm.description || 'Evento sem descrição',
         type: eventForm.type || 'Torneio',
-        date: eventForm.date,
-        prize: eventForm.prize,
-        inscription_info: `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
+        date: eventForm.date, // Nome correto da coluna: date
+        prize: eventForm.prize || null,
+        inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
         max_participants: parseInt(eventForm.max_participants) || null,
-        image_url: eventForm.image_url,
-        active: true,
-        updated_at: new Date().toISOString()
+        image_url: eventForm.image_url || '/images/default-event.png',
+        active: true // Nome correto da coluna: active
       };
 
       const { error } = await supabase
@@ -1007,15 +1106,17 @@ const AdminPanel3 = ({ onNavigate }) => {
                     
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Preço (R$)</label>
+                        <label>💰 Preço</label>
                         <input
-                          type="number"
-                          step="0.01"
-                          placeholder="0,00"
+                          type="text"
+                          placeholder="R$ 0,00"
                           value={productForm.price}
-                          onChange={(e) => setProductForm({...productForm, price: e.target.value})}
+                          onChange={(e) => handlePriceChange(e.target.value)}
                           required
                         />
+                        <small style={{color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem'}}>
+                          Digite apenas números (ex: 15000 = R$ 150,00)
+                        </small>
                       </div>
                       
                       <div className="form-group">
@@ -1072,13 +1173,91 @@ const AdminPanel3 = ({ onNavigate }) => {
                     </div>
                     
                     <div className="form-group">
-                      <label>Descrição</label>
+                      <label>Descrição Curta</label>
                       <textarea
-                        placeholder="Descreva o produto..."
+                        placeholder="Descrição breve do produto (exibida nos cards)..."
                         value={productForm.description}
                         onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-                        rows="4"
+                        rows="3"
                         required
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>📝 Descrição Detalhada</label>
+                      <textarea
+                        placeholder="Descrição completa com todos os detalhes do produto..."
+                        value={productForm.detailed_description}
+                        onChange={(e) => setProductForm({...productForm, detailed_description: e.target.value})}
+                        rows="6"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>✨ Características (separe por linha)</label>
+                      <textarea
+                        placeholder="Exemplo:\nMaterial premium\nEdição limitada\nArticulações móveis\nColecionável autêntico"
+                        value={productForm.features}
+                        onChange={(e) => setProductForm({...productForm, features: e.target.value})}
+                        rows="5"
+                      />
+                    </div>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>📏 Dimensões (A x L x P em cm)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 20 x 15 x 10"
+                          value={productForm.dimensions ? productForm.dimensions.match(/.{1,2}/g)?.join(' x ') || productForm.dimensions : ''}
+                          onChange={(e) => handleDimensionsChange(e.target.value)}
+                        />
+                        <small style={{color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem'}}>
+                          Digite apenas números (ex: 201510 = 20 x 15 x 10)
+                        </small>
+                      </div>
+                      <div className="form-group">
+                        <label>⚖️ Peso (gramas)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 500"
+                          value={productForm.weight ? productForm.weight + 'g' : ''}
+                          onChange={(e) => handleWeightChange(e.target.value)}
+                        />
+                        <small style={{color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem'}}>
+                          Digite apenas números (ex: 500 = 500g)
+                        </small>
+                      </div>
+                    </div>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>🏷️ Marca</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Hot Toys, Funko, etc."
+                          value={productForm.brand}
+                          onChange={(e) => setProductForm({...productForm, brand: e.target.value})}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>🧱 Material</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Plástico ABS, PVC, Resina"
+                          value={productForm.material}
+                          onChange={(e) => setProductForm({...productForm, material: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>🛡️ Garantia</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: 90 dias, 1 ano"
+                        value={productForm.warranty}
+                        onChange={(e) => setProductForm({...productForm, warranty: e.target.value})}
                       />
                     </div>
                     
@@ -1232,9 +1411,21 @@ const AdminPanel3 = ({ onNavigate }) => {
                           </div>
                           <div className="product-actions">
                             <button 
+                              onClick={() => openPreview('product', product)}
+                              className="btn-preview-modern"
+                              title="Visualizar"
+                            >
+                              👁️
+                            </button>
+                            <button 
                               onClick={() => {
                                 setEditingProduct(product.id);
-                                setProductForm(product);
+                                // Formatar price para exibição
+                                const formattedProduct = {
+                                  ...product,
+                                  price: product.price ? formatPrice((product.price * 100).toString()) : ''
+                                };
+                                setProductForm(formattedProduct);
                                 setShowProductForm(true);
                                 setProductFormPosition({ x: 30, y: 120 });
                               }}
@@ -1371,6 +1562,28 @@ const AdminPanel3 = ({ onNavigate }) => {
                       </div>
                     </div>
                     
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>💰 De: (Preço Original)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: R$ 299,99"
+                          value={bannerForm.original_price}
+                          onChange={(e) => setBannerForm({...bannerForm, original_price: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>✨ Por apenas: (Preço Final)</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: R$ 199,99"
+                          value={bannerForm.final_price}
+                          onChange={(e) => setBannerForm({...bannerForm, final_price: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
                     <div className="form-group">
                       <label>Descrição</label>
                       <textarea
@@ -1491,6 +1704,13 @@ const AdminPanel3 = ({ onNavigate }) => {
                           
                           <div className="banner-actions">
                             <button 
+                              onClick={() => openPreview('banner', banner)}
+                              className="btn-preview-modern"
+                              title="Visualizar"
+                            >
+                              👁️
+                            </button>
+                            <button 
                               onClick={() => {
                                 setEditingBanner(banner.id);
                                 setBannerForm({
@@ -1499,7 +1719,9 @@ const AdminPanel3 = ({ onNavigate }) => {
                                   description: banner.description || '',
                                   image_url: banner.image_url || '',
                                   link_url: banner.link_url || '',
-                                  order: banner.order || 0
+                                  order: banner.order || 0,
+                                  original_price: banner.original_price || '',
+                                  final_price: banner.final_price || ''
                                 });
                                 setShowBannerForm(true);
                                 setBannerFormPosition({ x: 30, y: 120 });
@@ -1767,6 +1989,13 @@ const AdminPanel3 = ({ onNavigate }) => {
                             
                             <div className="event-actions">
                               <button 
+                                onClick={() => openPreview('event', event)}
+                                className="btn-preview-modern"
+                                title="Visualizar"
+                              >
+                                👁️
+                              </button>
+                              <button 
                                 onClick={() => {
                                   setEditingEvent(event.id);
                                   setEventForm({
@@ -1999,6 +2228,169 @@ const AdminPanel3 = ({ onNavigate }) => {
           )}
         </main>
       </div>
+
+      {/* Modal de Preview */}
+      {showPreview && previewData && (
+        <div className="preview-modal-overlay" onClick={closePreview}>
+          <div className="preview-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="preview-modal-header">
+              <h3>
+                {previewType === 'product' && '📦 Preview do Produto'}
+                {previewType === 'banner' && '🎨 Preview do Banner'}
+                {previewType === 'event' && '🏆 Preview do Evento'}
+              </h3>
+              <button onClick={closePreview} className="btn-close-preview">✕</button>
+            </div>
+            
+            <div className="preview-modal-body">
+              {/* Preview de Produto */}
+              {previewType === 'product' && (
+                <div className="product-preview-container">
+                  <div className="product-card-site-preview">
+                    <div className="product-image-wrapper-preview">
+                      <img 
+                        src={previewData.image_url} 
+                        alt={previewData.name}
+                        className="product-image-preview default"
+                      />
+                      {previewData.hover_image_url && (
+                        <img 
+                          src={previewData.hover_image_url} 
+                          alt={`${previewData.name} - Hover`}
+                          className="product-image-preview hover"
+                        />
+                      )}
+                    </div>
+                    <div className="product-info-preview">
+                      <span className="product-category-preview">
+                        {previewData.category ? previewData.category.toUpperCase() : 'GEEK'}
+                      </span>
+                      <h3 className="product-name-preview">{previewData.name}</h3>
+                      <p className="product-price-site-preview">
+                        R$ {parseFloat(previewData.price).toFixed(2)}
+                      </p>
+                      <button className="product-btn-preview">
+                        Adicionar ao Carrinho
+                      </button>
+                    </div>
+                  </div>
+                  <p className="preview-note">💡 Esta é uma prévia de como o produto aparecerá na loja</p>
+                </div>
+              )}
+
+              {/* Preview de Banner */}
+              {previewType === 'banner' && (
+                <div className="banner-preview-container">
+                  <div className="offer-slide-preview">
+                    <div className="offer-discount-badge-preview">
+                      {previewData.discount || '20% OFF'}
+                    </div>
+                    <div className="offer-split-preview">
+                      <div className="offer-image-side-preview">
+                        <div className="offer-glow-preview"></div>
+                        <img 
+                          src={previewData.image_url} 
+                          alt={previewData.title}
+                          className="offer-image-preview"
+                        />
+                      </div>
+                      <div className="offer-content-side-preview">
+                        <h3 className="offer-title-preview">{previewData.title}</h3>
+                        
+                        {(previewData.original_price || previewData.final_price) && (
+                          <div className="offer-prices-preview">
+                            {previewData.original_price && (
+                              <div className="price-block-preview">
+                                <span className="price-label-preview">De:</span>
+                                <span className="price-original-preview">{previewData.original_price}</span>
+                              </div>
+                            )}
+                            {previewData.final_price && (
+                              <div className="price-block-preview">
+                                <span className="price-label-final-preview">Por apenas:</span>
+                                <span className="price-final-preview">{previewData.final_price}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {previewData.description && (
+                          <p className="offer-description-preview">{previewData.description}</p>
+                        )}
+                        <button className="offer-btn-preview">
+                          Ver Ofertas
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="preview-note">💡 Esta é uma prévia de como o banner aparecerá no carrossel da página inicial</p>
+                </div>
+              )}
+
+              {/* Preview de Evento */}
+              {previewType === 'event' && (
+                <div className="event-preview-container">
+                  <div className="event-carousel-preview">
+                    <div className="event-carousel-shine"></div>
+                    
+                    <img 
+                      src={previewData.image_url} 
+                      alt={previewData.title}
+                      className="event-carousel-image"
+                    />
+                    
+                    <div className="event-carousel-overlay"></div>
+                    
+                    <div className="event-carousel-content">
+                      <div className="event-tag-preview">// Próximo Evento</div>
+                      
+                      <h2 className="event-title-carousel">{previewData.title}</h2>
+                      
+                      <div className="event-details-carousel">
+                        <div className="event-detail-item">
+                          <span className="detail-icon">📅</span>
+                          <span className="detail-text">
+                            {new Date(previewData.date).toLocaleDateString('pt-BR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                        
+                        {previewData.prize && (
+                          <div className="event-detail-item">
+                            <span className="detail-icon">🏆</span>
+                            <span className="detail-text">{previewData.prize}</span>
+                          </div>
+                        )}
+                        
+                        {previewData.max_participants && (
+                          <div className="event-detail-item">
+                            <span className="detail-icon">👥</span>
+                            <span className="detail-text">Máx: {previewData.max_participants} participantes</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {previewData.description && (
+                        <p className="event-description-carousel">
+                          {previewData.description}
+                        </p>
+                      )}
+                      
+                      <button className="event-register-carousel-btn">
+                        Inscrever-se Agora
+                      </button>
+                    </div>
+                  </div>
+                  <p className="preview-note">💡 Esta é uma prévia de como o evento aparecerá no carrossel da página Gamer World</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
