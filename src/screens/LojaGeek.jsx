@@ -908,9 +908,49 @@ export default function LojaGeek({ onBack }){
                 className="product-image-wrapper" 
                 onClick={() => navigate(`/produto/${product.id}`)}
                 style={{ cursor: 'pointer' }}
+                onMouseEnter={(e) => {
+                  const modelViewer = e.currentTarget.querySelector('model-viewer');
+                  if (modelViewer) {
+                    modelViewer.setAttribute('camera-controls', '');
+                    modelViewer.autoRotate = true;
+                    modelViewer.autoRotateDelay = 0;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const modelViewer = e.currentTarget.querySelector('model-viewer');
+                  if (modelViewer) {
+                    modelViewer.removeAttribute('camera-controls');
+                    modelViewer.autoRotate = false;
+                  }
+                }}
               >
-                <img src={product.image} alt={product.name} className="product-image default" />
-                <img src={product.hoverImage} alt={product.name} className="product-image hover" />
+                {/* Verifica se a imagem é um modelo 3D (.glb) */}
+                {product.image && product.image.endsWith('.glb') ? (
+                  <model-viewer
+                    src={product.image}
+                    alt={product.name}
+                    ar
+                    shadow-intensity="1"
+                    interaction-prompt="none"
+                    disable-tap
+                    rotation-per-second="120deg"
+                    className="product-model-3d"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      borderRadius: '12px 12px 0 0',
+                      pointerEvents: 'auto'
+                    }}
+                  ></model-viewer>
+                ) : (
+                  <>
+                    <img src={product.image} alt={product.name} className="product-image default" />
+                    {/* Hover image - apenas para imagens normais */}
+                    {product.hoverImage && (
+                      <img src={product.hoverImage} alt={product.name} className="product-image hover" />
+                    )}
+                  </>
+                )}
               </div>
               <div className="product-info">
                 <span className="product-category" style={{

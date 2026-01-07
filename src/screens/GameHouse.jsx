@@ -3197,29 +3197,67 @@ export default function GamerWorld() {
                 
                 {/* Imagem do produto */}
                 {product.image && (
-                  <div style={{
-                    width: '100%',
-                    height: isMobile ? '180px' : '220px',
-                    marginBottom: '20px',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    />
+                  <div 
+                    className={product.image.endsWith('.glb') ? 'product-3d-container' : ''}
+                    style={{
+                      width: '100%',
+                      height: isMobile ? '180px' : '220px',
+                      marginBottom: '20px',
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onMouseEnter={(e) => {
+                      const modelViewer = e.currentTarget.querySelector('model-viewer');
+                      if (modelViewer) {
+                        modelViewer.setAttribute('camera-controls', '');
+                        modelViewer.autoRotate = true;
+                        modelViewer.autoRotateDelay = 0;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      const modelViewer = e.currentTarget.querySelector('model-viewer');
+                      if (modelViewer) {
+                        modelViewer.removeAttribute('camera-controls');
+                        modelViewer.autoRotate = false;
+                      }
+                    }}
+                  >
+                    {/* Verifica se é modelo 3D (.glb) */}
+                    {product.image.endsWith('.glb') ? (
+                      <model-viewer
+                        src={product.image}
+                        alt={product.name}
+                        ar
+                        shadow-intensity="1"
+                        interaction-prompt="none"
+                        disable-tap
+                        rotation-per-second="120deg"
+                        className="product-model-3d-gamehouse"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '12px',
+                          pointerEvents: 'auto'
+                        }}
+                      ></model-viewer>
+                    ) : (
+                      <img 
+                        src={product.image} 
+                        alt={product.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.3s ease',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      />
+                    )}
                   </div>
                 )}
                 

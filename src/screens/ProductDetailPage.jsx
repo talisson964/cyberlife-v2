@@ -316,7 +316,25 @@ export default function ProductDetailPage() {
     )
   }
 
-  const productImages = [product.image, product.hoverImage].filter(Boolean)
+  // Montar array de imagens para galeria
+  // Prioridade: usar array 'images' se existir, caso contrário usar image_url e hover_image_url
+  let productImages = [];
+  
+  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+    // Se tem imagens no array, usar elas (já estão ordenadas)
+    productImages = product.images.map(img => img.url).filter(Boolean);
+  } else {
+    // Fallback para o formato antigo
+    if (product.image) productImages.push(product.image);
+    if (product.hoverImage && product.hoverImage !== product.image) {
+      productImages.push(product.hoverImage);
+    }
+  }
+  
+  // Garantir que há pelo menos uma imagem
+  if (productImages.length === 0) {
+    productImages = [product.image || '/images/default-product.png'];
+  }
 
   return (
     <div className="product-detail-page">
@@ -339,8 +357,32 @@ export default function ProductDetailPage() {
 
       <div className="product-detail-container">
         <div className="product-gallery">
+          {product.model_3d && (
+            <div className="model-3d-viewer">
+              <model-viewer
+                src={product.model_3d}
+                alt={`Modelo 3D de ${product.name}`}
+                auto-rotate
+                camera-controls
+                shadow-intensity="1"
+                style={{
+                  width: '100%',
+                  height: '400px',
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  borderRadius: '12px',
+                  marginBottom: '20px'
+                }}
+              />
+              <div className="model-3d-badge">🎮 Visualização 3D Interativa</div>
+            </div>
+          )}
           <div className="main-image">
-            <img src={productImages[selectedImage]} alt={product.name} />
+            <img src={productImages[selectedImage] || product.image} alt={product.name} />
+            {productImages.length > 1 && (
+              <div className="image-counter">
+                {selectedImage + 1} / {productImages.length}
+              </div>
+            )}
           </div>
           {productImages.length > 1 && (
             <div className="image-thumbnails">
@@ -349,6 +391,7 @@ export default function ProductDetailPage() {
                   key={index}
                   className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
                   onClick={() => setSelectedImage(index)}
+                  title={`Imagem ${index + 1}`}
                 >
                   <img src={img} alt={`${product.name} ${index + 1}`} />
                 </div>

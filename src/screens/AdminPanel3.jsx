@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import AccessLogsView from '../components/AccessLogsView';
+import ProductImageUploader from '../components/ProductImageUploader';
+import Model3DUploader from '../components/Model3DUploader';
 import { stopAudio } from '../utils/audioPlayer';
 import { allProducts } from '../data/lojaData';
 import './AdminPanel3.css';
@@ -42,8 +44,13 @@ const AdminPanel3 = ({ onNavigate }) => {
     weight: '',
     brand: '',
     warranty: '',
-    material: ''
+    material: '',
+    images: [], // Array de imagens adicionais
+    model_3d: '' // URL do modelo 3D .glb
   });
+  const [productImages, setProductImages] = useState([]); // Estado separado para gerenciar upload
+  const [product3DModel, setProduct3DModel] = useState(null); // Estado para modelo 3D
+  const [useModelAsCover, setUseModelAsCover] = useState(true); // Usar modelo 3D como capa
   
   // Banners
   const [banners, setBanners] = useState([]);
@@ -297,39 +304,226 @@ const AdminPanel3 = ({ onNavigate }) => {
     }
   };
 
+  // Função auxiliar para fazer upload de imagens para o Supabase Storage
+  const uploadImagesToStorage = async (images, productId) => {
+    const uploadedUrls = [];
+    
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      if (!image.file) continue; // Pular se já foi feito upload
+      
+      const fileExt = image.file.name.split('.').pop();
+      const fileName = `products/${productId}/image_${i + 1}_${Date.now()}.${fileExt}`;
+      
+      try {
+        const { data, error } = await supabase.storage
+          .from('product-images')
+          .upload(fileName, image.file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (error) throw error;
+        
+        // Obter URL pública
+        const { data: { publicUrl } } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+        
+        uploadedUrls.push({
+          url: publicUrl,
+          order: i + 1
+        });
+      } catch (error) {
+        console.error(`Erro ao fazer upload da imagem ${i + 1}:`, error);
+      }
+    }
+    
+    return uploadedUrls;
+  };
+
+  // Função para fazer upload de modelo 3D para o Supabase Storage
+  const upload3DModelToStorage = async (modelFile, productId) => {
+    if (!modelFile) return null;
+    
+    const fileName = `products/${productId}/model_${Date.now()}.glb`;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('product-3d-models')
+        .upload(fileName, modelFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'model/gltf-binary'
+        });
+      
+      if (error) throw error;
+      
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-3d-models')
+        .getPublicUrl(fileName);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload do modelo 3D:', error);
+      return null;
+    }
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
+      // Fazer upload das imagens primeiro se houver
+      let uploadedUrls = [];
+      let finalImageUrl = productForm.image_url;
+      let finalHoverImageUrl = productForm.hover_image_url;
+      let model3DUrl = null;
+      
+      // Inserir produto temporariamente para obter ID
       const { data, error } = await supabase
         .from('products')
         .insert([{
           ...productForm,
           price: parsePriceToNumber(productForm.price),
-          stock: parseInt(productForm.stock) || 0
+          stock: parseInt(productForm.stock) || 0,
+          images: [] // Inicialmente vazio
         }])
         .select();
 
       if (error) throw error;
       
+      const newProductId = data[0].id;
+      
+      // Fazer upload do modelo 3D se houver
+      if (product3DModel) {
+        model3DUrl = await upload3DModelToStorage(product3DModel, newProductId);
+      }
+      
+      // Fazer upload das imagens se houver
+      if (productImages.length > 0) {
+        uploadedUrls = await uploadImagesToStorage(productImages, newProductId);
+      }
+      
+      // LÓGICA DE PRIORIDADE PARA IMAGEM DE CAPA:
+      // 1ª Prioridade: Modelo 3D (se marcado para usar como capa)
+      // 2ª Prioridade: Links manuais (image_url e hover_image_url)
+      // 3ª Prioridade: Primeira e segunda imagens do array
+      
+      if (model3DUrl && useModelAsCover) {
+        // Usar modelo 3D como capa
+        finalImageUrl = model3DUrl;
+        // Hover usa segunda imagem ou link manual
+        if (!finalHoverImageUrl && uploadedUrls.length > 0) {
+          finalHoverImageUrl = uploadedUrls[0].url;
+        }
+      } else {
+        // Fallback para links manuais ou imagens do array
+        if (!finalImageUrl && uploadedUrls.length > 0) {
+          finalImageUrl = uploadedUrls[0].url;
+        }
+        if (!finalHoverImageUrl && uploadedUrls.length > 1) {
+          finalHoverImageUrl = uploadedUrls[1].url;
+        }
+      }
+      
+      // Atualizar produto com todas as informações
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ 
+          images: uploadedUrls,
+          image_url: finalImageUrl,
+          hover_image_url: finalHoverImageUrl,
+          model_3d: model3DUrl
+        })
+        .eq('id', newProductId);
+      
+      if (updateError) {
+        console.error('Erro ao salvar informações do produto:', updateError);
+      }
+      
       await loadProducts(); // Recarregar lista do banco
       setShowProductForm(false); // Fechar formulário
       resetProductForm();
+      setProductImages([]);
+      setProduct3DModel(null);
+      setUseModelAsCover(true);
       alert('Produto adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar produto:', error);
       alert('Erro ao adicionar produto: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUpdateProduct = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
+      // Obter todas as imagens na ordem atual (existentes + novas)
+      let updatedImages = [];
+      
+      // Processar todas as imagens na ordem atual do estado productImages
+      for (let i = 0; i < productImages.length; i++) {
+        const img = productImages[i];
+        if (img.uploaded) {
+          // Imagem já existe, manter URL
+          updatedImages.push({ url: img.url, order: i + 1 });
+        } else if (img.file) {
+          // Nova imagem, fazer upload
+          const uploaded = await uploadImagesToStorage([img], editingProduct);
+          if (uploaded.length > 0) {
+            updatedImages.push({ url: uploaded[0].url, order: i + 1 });
+          }
+        }
+      }
+      
+      // Fazer upload do modelo 3D se houver um novo
+      let model3DUrl = productForm.model_3d; // Manter URL existente
+      if (product3DModel) {
+        const newModel3DUrl = await upload3DModelToStorage(product3DModel, editingProduct);
+        if (newModel3DUrl) {
+          model3DUrl = newModel3DUrl;
+        }
+      }
+      
+      // LÓGICA DE PRIORIDADE PARA IMAGEM DE CAPA:
+      // 1ª Prioridade: Modelo 3D (se marcado para usar como capa)
+      // 2ª Prioridade: Links manuais (image_url e hover_image_url)
+      // 3ª Prioridade: Primeira e segunda imagens do array
+      
+      let finalImageUrl = productForm.image_url;
+      let finalHoverImageUrl = productForm.hover_image_url;
+      
+      if (model3DUrl && useModelAsCover) {
+        // Usar modelo 3D como capa
+        finalImageUrl = model3DUrl;
+        // Hover usa segunda imagem ou link manual ou primeira imagem
+        if (!finalHoverImageUrl && updatedImages.length > 0) {
+          finalHoverImageUrl = updatedImages[0].url;
+        }
+      } else {
+        // Fallback para links manuais ou imagens do array
+        if (!finalImageUrl && updatedImages.length > 0) {
+          finalImageUrl = updatedImages[0].url;
+        }
+        if (!finalHoverImageUrl && updatedImages.length > 1) {
+          finalHoverImageUrl = updatedImages[1].url;
+        }
+      }
+      
       const { error } = await supabase
         .from('products')
         .update({
           ...productForm,
           price: parsePriceToNumber(productForm.price),
-          stock: parseInt(productForm.stock) || 0
+          stock: parseInt(productForm.stock) || 0,
+          images: updatedImages,
+          image_url: finalImageUrl,
+          hover_image_url: finalHoverImageUrl,
+          model_3d: model3DUrl
         })
         .eq('id', editingProduct);
 
@@ -339,10 +533,15 @@ const AdminPanel3 = ({ onNavigate }) => {
       setEditingProduct(null);
       setShowProductForm(false); // Fechar formulário
       resetProductForm();
+      setProductImages([]);
+      setProduct3DModel(null);
+      setUseModelAsCover(true);
       alert('Produto atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar produto:', error);
       alert('Erro ao atualizar produto: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -381,8 +580,13 @@ const AdminPanel3 = ({ onNavigate }) => {
       weight: '',
       brand: '',
       warranty: '',
-      material: ''
+      material: '',
+      images: [],
+      model_3d: ''
     });
+    setProductImages([]);
+    setProduct3DModel(null);
+    setUseModelAsCover(true);
   };
 
   // FORMATAÇÃO AUTOMÁTICA
@@ -1132,13 +1336,16 @@ const AdminPanel3 = ({ onNavigate }) => {
                     </div>
                     
                     <div className="form-group">
-                      <label>URL da Imagem</label>
+                      <label>🖼️ URL da Imagem de Capa (Opcional)</label>
                       <input
                         type="url"
                         placeholder="https://exemplo.com/imagem.jpg"
                         value={productForm.image_url}
                         onChange={(e) => setProductForm({...productForm, image_url: e.target.value})}
                       />
+                      <small style={{color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block'}}>
+                        💡 Se não preencher, a 1ª imagem do upload será usada como capa
+                      </small>
                       {productForm.image_url && (
                         <div className="image-preview">
                           <img 
@@ -1163,14 +1370,79 @@ const AdminPanel3 = ({ onNavigate }) => {
                     </div>
                     
                     <div className="form-group">
-                      <label>URL da Imagem Hover (Opcional)</label>
+                      <label>✨ URL da Imagem Hover (Opcional)</label>
                       <input
                         type="url"
                         placeholder="https://exemplo.com/imagem-hover.jpg"
                         value={productForm.hover_image_url}
                         onChange={(e) => setProductForm({...productForm, hover_image_url: e.target.value})}
                       />
+                      <small style={{color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block'}}>
+                        💡 Se não preencher, a 2ª imagem do upload será usada no hover
+                      </small>
                     </div>
+                    
+                    {/* Componente de Upload de Múltiplas Imagens */}
+                    <div style={{background: 'rgba(0, 255, 157, 0.05)', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid rgba(0, 255, 157, 0.2)'}}>
+                      <p style={{margin: '0 0 10px 0', color: '#00ff9d', fontWeight: '600', fontSize: '0.9rem'}}>
+                        📌 IMPORTANTE - Ordem das Imagens:
+                      </p>
+                      <ul style={{margin: 0, paddingLeft: '20px', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem'}}>
+                        <li>Arraste as imagens para reordená-las</li>
+                        <li><strong>1ª imagem</strong> = Imagem de Capa (se URL não preenchida)</li>
+                        <li><strong>2ª imagem</strong> = Imagem de Hover (se URL não preenchida)</li>
+                        <li><strong>Demais imagens</strong> = Galeria na página de detalhes</li>
+                      </ul>
+                    </div>
+                    <ProductImageUploader
+                      images={productImages}
+                      onChange={setProductImages}
+                      maxImages={9}
+                    />
+                    
+                    <Model3DUploader
+                      onModelChange={setProduct3DModel}
+                      currentModel={productForm.model_3d ? { url: productForm.model_3d } : null}
+                      maxSizeMB={20}
+                    />
+                    
+                    {(product3DModel || productForm.model_3d) && (
+                      <div className="form-group" style={{
+                        background: 'rgba(0, 217, 255, 0.1)',
+                        border: '2px solid rgba(0, 217, 255, 0.3)',
+                        borderRadius: '10px',
+                        padding: '15px',
+                        marginTop: '15px'
+                      }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={useModelAsCover}
+                            onChange={(e) => setUseModelAsCover(e.target.checked)}
+                            style={{ 
+                              width: '20px', 
+                              height: '20px', 
+                              cursor: 'pointer',
+                              accentColor: '#00d9ff'
+                            }}
+                          />
+                          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#00d9ff' }}>
+                            🎯 Usar Modelo 3D como Imagem de Capa
+                          </span>
+                        </label>
+                        <p style={{ 
+                          margin: '10px 0 0 30px', 
+                          fontSize: '0.9rem', 
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          lineHeight: '1.5'
+                        }}>
+                          <strong>Prioridade de Capa:</strong><br/>
+                          1️⃣ Modelo 3D (se marcado)<br/>
+                          2️⃣ Links manuais de imagem<br/>
+                          3️⃣ Primeira imagem do array
+                        </p>
+                      </div>
+                    )}
                     
                     <div className="form-group">
                       <label>Descrição Curta</label>
@@ -1423,9 +1695,31 @@ const AdminPanel3 = ({ onNavigate }) => {
                                 // Formatar price para exibição
                                 const formattedProduct = {
                                   ...product,
-                                  price: product.price ? formatPrice((product.price * 100).toString()) : ''
+                                  price: product.price ? formatPrice((product.price * 100).toString()) : '',
+                                  images: product.images || [],
+                                  model_3d: product.model_3d || ''
                                 };
                                 setProductForm(formattedProduct);
+                                
+                                // Carregar imagens existentes para o uploader
+                                if (product.images && Array.isArray(product.images)) {
+                                  const existingImages = product.images.map((img, index) => ({
+                                    url: img.url,
+                                    order: img.order || index + 1,
+                                    uploaded: true
+                                  }));
+                                  setProductImages(existingImages);
+                                } else {
+                                  setProductImages([]);
+                                }
+                                
+                                // Resetar modelo 3D (usuário pode fazer novo upload se quiser)
+                                setProduct3DModel(null);
+                                
+                                // Verificar se modelo 3D está sendo usado como capa
+                                const isUsingModelAsCover = product.model_3d && product.image_url === product.model_3d;
+                                setUseModelAsCover(isUsingModelAsCover);
+                                
                                 setShowProductForm(true);
                                 setProductFormPosition({ x: 30, y: 120 });
                               }}
