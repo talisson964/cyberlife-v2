@@ -98,15 +98,14 @@ export default function LojaGeek({ onBack }){
         return;
       }
 
-      // Mapear campos do banco para o formato esperado pelo frontend
-      const formattedProducts = products.map(p => ({
-        ...p,
-        image: p.image_url,
-        hoverImage: p.hover_image_url,
-        price: p.price ? `R$ ${p.price.toFixed(2).replace('.', ',')}` : 'R$ 0,00'
-      }));
-
-      setProducts(formattedProducts || []);
+      setProducts(products || []);
+      
+      // Debug: verificar se há produtos com model_3d
+      if (products) {
+        const productsWithModel3D = products.filter(p => p.model_3d);
+        console.log('Produtos com model_3d:', productsWithModel3D.length);
+        console.log('Produtos com model_3d:', productsWithModel3D.map(p => ({ name: p.name, model_3d: p.model_3d })));
+      }
     } catch (error) {
       console.error('Erro ao conectar com banco:', error);
       // Fallback para localStorage
@@ -141,9 +140,7 @@ export default function LojaGeek({ onBack }){
         description: banner.description,
         discount: banner.discount,
         image: banner.image_url,
-        link: banner.link_url,
-        originalPrice: banner.original_price,
-        finalPrice: banner.final_price
+        link: banner.link_url
       }));
 
       setOffers(offersFromBanners.length > 0 ? offersFromBanners : defaultOffers);
@@ -466,7 +463,7 @@ export default function LojaGeek({ onBack }){
           </button>
           <button 
             className="nav-button cart-button" 
-            onClick={() => navigate('/carrinho')}
+            onClick={() => window.location.href = '/carrinho'}
             style={{
               background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
               border: '2px solid rgba(255, 0, 234, 0.4)',
@@ -709,72 +706,56 @@ export default function LojaGeek({ onBack }){
                     textShadow: '0 2px 10px rgba(0, 217, 255, 0.5)',
                   }}>{offer.title}</h3>
                   
-                  {offer.description && (
-                    <p style={{
-                      fontSize: '1.1rem',
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      marginBottom: '30px',
-                      lineHeight: '1.6',
-                      fontFamily: 'Rajdhani, sans-serif',
-                    }}>{offer.description}</p>
-                  )}
-                  
-                  {(offer.originalPrice || offer.finalPrice) && (
-                    <div className="offer-prices" style={{
-                      display: 'flex',
-                      gap: '30px',
-                      marginBottom: '40px',
-                      flexWrap: 'wrap',
+                  <div className="offer-prices" style={{
+                    display: 'flex',
+                    gap: '30px',
+                    marginBottom: '40px',
+                    flexWrap: 'wrap',
+                  }}>
+                    <div className="price-block" style={{
+                      flex: 1,
+                      minWidth: '150px',
                     }}>
-                      {offer.originalPrice && (
-                        <div className="price-block" style={{
-                          flex: 1,
-                          minWidth: '150px',
-                        }}>
-                          <span className="price-label" style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            marginBottom: '8px',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            letterSpacing: '1px',
-                          }}>De:</span>
-                          <span className="price-original" style={{
-                            display: 'block',
-                            fontSize: '1.5rem',
-                            color: 'rgba(255, 255, 255, 0.4)',
-                            textDecoration: 'line-through',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontWeight: 600,
-                          }}>{offer.originalPrice}</span>
-                        </div>
-                      )}
-                      {offer.finalPrice && (
-                        <div className="price-block" style={{
-                          flex: 1,
-                          minWidth: '150px',
-                        }}>
-                          <span className="price-label" style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            color: '#00ff88',
-                            marginBottom: '8px',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            letterSpacing: '1px',
-                            fontWeight: 700,
-                          }}>Por apenas:</span>
-                          <span className="price-final" style={{
-                            display: 'block',
-                            fontSize: '2.5rem',
-                            color: '#00ff88',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontWeight: 900,
-                            textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
-                          }}>{offer.finalPrice}</span>
-                        </div>
-                      )}
+                      <span className="price-label" style={{
+                        display: 'block',
+                        fontSize: '0.9rem',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        marginBottom: '8px',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        letterSpacing: '1px',
+                      }}>De:</span>
+                      <span className="price-original" style={{
+                        display: 'block',
+                        fontSize: '1.5rem',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        textDecoration: 'line-through',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 600,
+                      }}>{offer.originalPrice}</span>
                     </div>
-                  )}
+                    <div className="price-block" style={{
+                      flex: 1,
+                      minWidth: '150px',
+                    }}>
+                      <span className="price-label" style={{
+                        display: 'block',
+                        fontSize: '0.9rem',
+                        color: '#00ff88',
+                        marginBottom: '8px',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        letterSpacing: '1px',
+                        fontWeight: 700,
+                      }}>Por apenas:</span>
+                      <span className="price-final" style={{
+                        display: 'block',
+                        fontSize: '2.5rem',
+                        color: '#00ff88',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 900,
+                        textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
+                      }}>{offer.finalPrice}</span>
+                    </div>
+                  </div>
                   
                   <button className="offer-button" style={{
                     width: '100%',
@@ -908,47 +889,43 @@ export default function LojaGeek({ onBack }){
                 className="product-image-wrapper" 
                 onClick={() => navigate(`/produto/${product.id}`)}
                 style={{ cursor: 'pointer' }}
-                onMouseEnter={(e) => {
-                  const modelViewer = e.currentTarget.querySelector('model-viewer');
-                  if (modelViewer) {
-                    modelViewer.setAttribute('camera-controls', '');
-                    modelViewer.autoRotate = true;
-                    modelViewer.autoRotateDelay = 0;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  const modelViewer = e.currentTarget.querySelector('model-viewer');
-                  if (modelViewer) {
-                    modelViewer.removeAttribute('camera-controls');
-                    modelViewer.autoRotate = false;
-                  }
-                }}
               >
-                {/* Verifica se a imagem é um modelo 3D (.glb) */}
-                {product.image && product.image.endsWith('.glb') ? (
-                  <model-viewer
-                    src={product.image}
-                    alt={product.name}
-                    ar
-                    shadow-intensity="1"
-                    interaction-prompt="none"
-                    disable-tap
-                    rotation-per-second="120deg"
-                    className="product-model-3d"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '12px 12px 0 0',
-                      pointerEvents: 'auto'
-                    }}
-                  ></model-viewer>
+                {product.model_3d ? (
+                  <div className="product-3d-container">
+                    <model-viewer
+                      src={product.model_3d}
+                      alt={`Modelo 3D de ${product.name}`}
+                      shadow-intensity="1"
+                      disable-pan
+                      disable-zoom
+                      camera-orbit="90deg 75deg 2.5m"
+                      field-of-view="30deg"
+                      style={{
+                        width: '100%',
+                        height: '250px',
+                        background: 'rgba(0, 0, 0, 0.1)',
+                        borderRadius: '8px',
+                      }}
+                      onLoad={(e) => {
+                        e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.setAttribute('auto-rotate', '');
+                        e.target.setAttribute('rotation-per-second', '60deg');
+                        e.target.setAttribute('camera-controls', '');
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.removeAttribute('auto-rotate');
+                        e.target.removeAttribute('camera-controls');
+                        e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                      }}
+                    />
+                    <div className="model-3d-badge-catalog">🎮 3D</div>
+                  </div>
                 ) : (
                   <>
                     <img src={product.image} alt={product.name} className="product-image default" />
-                    {/* Hover image - apenas para imagens normais */}
-                    {product.hoverImage && (
-                      <img src={product.hoverImage} alt={product.name} className="product-image hover" />
-                    )}
+                    <img src={product.hoverImage} alt={product.name} className="product-image hover" />
                   </>
                 )}
               </div>
@@ -1241,7 +1218,7 @@ export default function LojaGeek({ onBack }){
                   WhatsApp
                   <ArrowRight size={16} style={{ marginLeft: 'auto', opacity: 0, transition: 'all 0.3s' }} className="arrow-icon" />
                 </a>
-                <a href="https://www.instagram.com/cyberlife_technology/" target="_blank" rel="noopener noreferrer" style={{
+                <a href="https://instagram.com/cyberlife" target="_blank" rel="noopener noreferrer" style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',

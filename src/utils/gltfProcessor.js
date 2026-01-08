@@ -3,6 +3,11 @@
  * Suporta descompactação Draco e validação de modelos
  */
 
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+
 /**
  * Valida se um arquivo GLB é válido
  * @param {ArrayBuffer} arrayBuffer - Buffer do arquivo
@@ -52,11 +57,6 @@ export function getGLBInfo(arrayBuffer) {
 export async function loadGLBWithDraco(file, onProgress = null) {
   return new Promise(async (resolve, reject) => {
     try {
-      // Importar dinamicamente os loaders do Three.js
-      const THREE = await import('three');
-      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
-      const { DRACOLoader } = await import('three/examples/jsm/loaders/DRACOLoader.js');
-
       // Criar loaders
       const dracoLoader = new DRACOLoader();
       
@@ -301,8 +301,6 @@ function calculateOptimizationScore(info, sizeMB) {
  */
 export async function exportToGLB(gltfData) {
   try {
-    const { GLTFExporter } = await import('three/examples/jsm/exporters/GLTFExporter.js');
-    
     return new Promise((resolve, reject) => {
       const exporter = new GLTFExporter();
       

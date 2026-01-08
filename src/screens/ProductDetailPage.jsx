@@ -14,6 +14,19 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [cartItemsCount, setCartItemsCount] = useState(0)
+  const [productImages, setProductImages] = useState([])
+  const [showImageInstead3D, setShowImageInstead3D] = useState(false)
+
+  const updateCartCount = () => {
+    const storedCart = localStorage.getItem('cyberlife_cart')
+    if (storedCart) {
+      const cart = JSON.parse(storedCart)
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
+      setCartItemsCount(totalItems)
+    } else {
+      setCartItemsCount(0)
+    }
+  }
 
   // Parar a música ao entrar nesta tela
   useEffect(() => {
@@ -52,15 +65,146 @@ export default function ProductDetailPage() {
     updateCartCount();
   }, [id]);
 
-  const updateCartCount = () => {
-    const storedCart = localStorage.getItem('cyberlife_cart')
-    if (storedCart) {
-      const cart = JSON.parse(storedCart)
-      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0)
-      setCartItemsCount(totalItems)
-    } else {
-      setCartItemsCount(0)
+  // Processar imagens quando o produto mudar
+  useEffect(() => {
+    if (!product) {
+      setProductImages([]);
+      return;
     }
+
+    let images = [];
+    
+    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+      // Se tem imagens no array, usar elas (já estão ordenadas)
+      images = product.images.map(img => img.url).filter(Boolean);
+    } else {
+      // Fallback para o formato antigo
+      if (product.image) images.push(product.image);
+      if (product.hoverImage && product.hoverImage !== product.image) {
+        images.push(product.hoverImage);
+      }
+    }
+    
+    // Garantir que há pelo menos uma imagem
+    if (images.length === 0) {
+      images = [product.image || '/images/default-product.png'];
+    }
+
+    setProductImages(images);
+  }, [product]);
+
+  // Garantir que selectedImage não excede o número de imagens disponíveis
+  useEffect(() => {
+    if (selectedImage >= productImages.length && productImages.length > 0) {
+      setSelectedImage(0);
+    }
+  }, [productImages.length, selectedImage]);
+
+  // Função auxiliar para calcular frete estimado baseado em região
+  const calculateEstimatedShipping = (cepData, productPrice, cepOrigem, cepDestino) => {
+    const uf = cepData.uf
+    const cidade = cepData.localidade
+    
+    // Guaíra-SP é a origem (14790-156)
+    // Calcular multiplicadores baseados em distância estimada
+    
+    // Mesma cidade = frete local
+    if (cidade.toLowerCase() === 'guaíra' || cidade.toLowerCase() === 'guaira') {
+      return [
+        { method: 'PAC', days: '2-3 dias úteis', price: 'R$ 8,50' },
+        { method: 'SEDEX', days: '1-2 dias úteis', price: 'R$ 12,00' },
+        { method: 'Expresso', days: '1 dia útil', price: 'R$ 18,00' }
+      ]
+    }
+    
+    // Região Sudeste - proximidade média
+    const regioesProximas = ['SP', 'MG', 'RJ', 'ES']
+    // Sul e Centro-Oeste - distância média
+    const regioesMedias = ['PR', 'SC', 'RS', 'GO', 'DF', 'MS', 'MT']
+    // Norte e Nordeste - distância grande
+    const regioesDistantes = ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA', 'PA', 'AP', 'AM', 'RR', 'RO', 'AC', 'TO']
+
+    // Valores base dos Correios (2024/2025) - realistas
+    let basePAC = 18.50
+    let baseSEDEX = 28.50
+    let baseExpresso = 45.00
+    let diasPAC = '8-12'
+    let diasSEDEX = '4-6'
+    let diasExpresso = '2-3'
+
+    // SP interior - região próxima
+    if (uf === 'SP') {
+      // Cidades mais próximas de Guaíra
+      const cidadesProximas = ['ribeirão preto', 'barretos', 'franca', 'araraquara', 'são josé do rio preto']
+      const isProxima = cidadesProximas.some(c => cidade.toLowerCase().includes(c))
+      
+      if (isProxima) {
+        basePAC = 12.00
+        baseSEDEX = 19.00
+        baseExpresso = 32.00
+        diasPAC = '4-6'
+        diasSEDEX = '2-3'
+        diasExpresso = '1-2'
+      } else {
+        basePAC = 15.00
+        baseSEDEX = 24.00
+        baseExpresso = 38.00
+        diasPAC = '6-9'
+        diasSEDEX = '3-5'
+        diasExpresso = '2-3'
+      }
+    }
+    // Outros estados do Sudeste
+    else if (regioesProximas.includes(uf)) {
+      basePAC *= 1.15
+      baseSEDEX *= 1.15
+      baseExpresso *= 1.15
+      diasPAC = '10-15'
+      diasSEDEX = '6-9'
+      diasExpresso = '4-5'
+    }
+    // Sul e Centro-Oeste
+    else if (regioesMedias.includes(uf)) {
+      basePAC *= 1.45
+      baseSEDEX *= 1.45
+      baseExpresso *= 1.45
+      diasPAC = '12-18'
+      diasSEDEX = '6-9'
+      diasExpresso = '4-5'
+    }
+    // Norte e Nordeste
+    else if (regioesDistantes.includes(uf)) {
+      basePAC *= 1.95
+      baseSEDEX *= 1.95
+      baseExpresso *= 1.95
+      diasPAC = '15-22'
+      diasSEDEX = '9-14'
+      diasExpresso = '5-8'
+    }
+
+    // Adicionar percentual do valor do produto (seguro obrigatório Correios)
+    const adicionalSeguro = productPrice * 0.015 // 1.5% do valor
+    basePAC += adicionalSeguro
+    baseSEDEX += adicionalSeguro
+    baseExpresso += adicionalSeguro
+
+    return [
+      { 
+        method: 'PAC', 
+        days: `${diasPAC} dias úteis`, 
+        price: `R$ ${basePAC.toFixed(2).replace('.', ',')}` 
+      },
+      { 
+        method: 'SEDEX', 
+        days: `${diasSEDEX} dias úteis`, 
+        price: `R$ ${baseSEDEX.toFixed(2).replace('.', ',')}` 
+      },
+      { 
+        method: 'Expresso', 
+        days: `${diasExpresso} dias úteis`, 
+        price: `R$ ${baseExpresso.toFixed(2).replace('.', ',')}` 
+      }
+    ]
   }
 
   const handleAddToCart = () => {
@@ -91,6 +235,21 @@ export default function ProductDetailPage() {
     const button = document.querySelector('.add-to-cart-btn')
     button.classList.add('added')
     setTimeout(() => button.classList.remove('added'), 1000)
+  }
+
+  const handleThumbnailClick = (index) => {
+    setSelectedImage(index)
+    // Se há model 3D e não está sendo exibida imagem no lugar dele, troca
+    if (product.model_3d && !showImageInstead3D) {
+      setShowImageInstead3D(true)
+    }
+  }
+
+  const handleModelViewerClick = () => {
+    // Volta a exibir o model 3D quando clica nele
+    if (product.model_3d && showImageInstead3D) {
+      setShowImageInstead3D(false)
+    }
   }
 
   const handleBuyNow = () => {
@@ -192,113 +351,6 @@ export default function ProductDetailPage() {
     }
   }
 
-  // Função auxiliar para calcular frete estimado baseado em região
-  const calculateEstimatedShipping = (cepData, productPrice, cepOrigem, cepDestino) => {
-    const uf = cepData.uf
-    const cidade = cepData.localidade
-    
-    // Guaíra-SP é a origem (14790-156)
-    // Calcular multiplicadores baseados em distância estimada
-    
-    // Mesma cidade = frete local
-    if (cidade.toLowerCase() === 'guaíra' || cidade.toLowerCase() === 'guaira') {
-      return [
-        { method: 'PAC', days: '2-3 dias úteis', price: 'R$ 8,50' },
-        { method: 'SEDEX', days: '1-2 dias úteis', price: 'R$ 12,00' },
-        { method: 'Expresso', days: '1 dia útil', price: 'R$ 18,00' }
-      ]
-    }
-    
-    // Região Sudeste - proximidade média
-    const regioesProximas = ['SP', 'MG', 'RJ', 'ES']
-    // Sul e Centro-Oeste - distância média
-    const regioesMedias = ['PR', 'SC', 'RS', 'GO', 'DF', 'MS', 'MT']
-    // Norte e Nordeste - distância grande
-    const regioesDistantes = ['BA', 'SE', 'AL', 'PE', 'PB', 'RN', 'CE', 'PI', 'MA', 'PA', 'AP', 'AM', 'RR', 'RO', 'AC', 'TO']
-
-    // Valores base dos Correios (2024/2025) - realistas
-    let basePAC = 18.50
-    let baseSEDEX = 28.50
-    let baseExpresso = 45.00
-    let diasPAC = '8-12'
-    let diasSEDEX = '4-6'
-    let diasExpresso = '2-3'
-
-    // SP interior - região próxima
-    if (uf === 'SP') {
-      // Cidades mais próximas de Guaíra
-      const cidadesProximas = ['ribeirão preto', 'barretos', 'franca', 'araraquara', 'são josé do rio preto']
-      const isProxima = cidadesProximas.some(c => cidade.toLowerCase().includes(c))
-      
-      if (isProxima) {
-        basePAC = 12.00
-        baseSEDEX = 19.00
-        baseExpresso = 32.00
-        diasPAC = '4-6'
-        diasSEDEX = '2-3'
-        diasExpresso = '1-2'
-      } else {
-        basePAC = 15.00
-        baseSEDEX = 24.00
-        baseExpresso = 38.00
-        diasPAC = '6-9'
-        diasSEDEX = '3-5'
-        diasExpresso = '2-3'
-      }
-    }
-    // Outros estados do Sudeste
-    else if (regioesProximas.includes(uf)) {
-      basePAC *= 1.15
-      baseSEDEX *= 1.15
-      baseExpresso *= 1.15
-      diasPAC = '9-13'
-      diasSEDEX = '5-7'
-      diasExpresso = '3-4'
-    }
-    // Sul e Centro-Oeste
-    else if (regioesMedias.includes(uf)) {
-      basePAC *= 1.45
-      baseSEDEX *= 1.45
-      baseExpresso *= 1.45
-      diasPAC = '12-16'
-      diasSEDEX = '6-9'
-      diasExpresso = '4-5'
-    }
-    // Norte e Nordeste
-    else if (regioesDistantes.includes(uf)) {
-      basePAC *= 1.95
-      baseSEDEX *= 1.95
-      baseExpresso *= 1.95
-      diasPAC = '15-22'
-      diasSEDEX = '9-14'
-      diasExpresso = '5-8'
-    }
-
-    // Adicionar percentual do valor do produto (seguro obrigatório Correios)
-    const adicionalSeguro = productPrice * 0.015 // 1.5% do valor
-    basePAC += adicionalSeguro
-    baseSEDEX += adicionalSeguro
-    baseExpresso += adicionalSeguro
-
-    return [
-      { 
-        method: 'PAC', 
-        days: `${diasPAC} dias úteis`, 
-        price: `R$ ${basePAC.toFixed(2).replace('.', ',')}` 
-      },
-      { 
-        method: 'SEDEX', 
-        days: `${diasSEDEX} dias úteis`, 
-        price: `R$ ${baseSEDEX.toFixed(2).replace('.', ',')}` 
-      },
-      { 
-        method: 'Expresso', 
-        days: `${diasExpresso} dias úteis`, 
-        price: `R$ ${baseExpresso.toFixed(2).replace('.', ',')}` 
-      }
-    ]
-  }
-
   const handleWhatsApp = () => {
     const message = product 
       ? `Olá! Gostaria de mais informações sobre: ${product.name}`
@@ -309,31 +361,13 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="product-detail-loading">
-        <div className="loading-spinner"></div>
-        <p>Carregando produto...</p>
+      <div className="product-detail-page">
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Carregando produto...</p>
+        </div>
       </div>
     )
-  }
-
-  // Montar array de imagens para galeria
-  // Prioridade: usar array 'images' se existir, caso contrário usar image_url e hover_image_url
-  let productImages = [];
-  
-  if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-    // Se tem imagens no array, usar elas (já estão ordenadas)
-    productImages = product.images.map(img => img.url).filter(Boolean);
-  } else {
-    // Fallback para o formato antigo
-    if (product.image) productImages.push(product.image);
-    if (product.hoverImage && product.hoverImage !== product.image) {
-      productImages.push(product.hoverImage);
-    }
-  }
-  
-  // Garantir que há pelo menos uma imagem
-  if (productImages.length === 0) {
-    productImages = [product.image || '/images/default-product.png'];
   }
 
   return (
@@ -357,8 +391,8 @@ export default function ProductDetailPage() {
 
       <div className="product-detail-container">
         <div className="product-gallery">
-          {product.model_3d && (
-            <div className="model-3d-viewer">
+          {product.model_3d && !showImageInstead3D ? (
+            <div className="model-3d-viewer" onClick={handleModelViewerClick}>
               <model-viewer
                 src={product.model_3d}
                 alt={`Modelo 3D de ${product.name}`}
@@ -370,27 +404,28 @@ export default function ProductDetailPage() {
                   height: '400px',
                   background: 'rgba(0, 0, 0, 0.3)',
                   borderRadius: '12px',
-                  marginBottom: '20px'
+                  cursor: showImageInstead3D ? 'pointer' : 'default'
                 }}
               />
               <div className="model-3d-badge">🎮 Visualização 3D Interativa</div>
             </div>
+          ) : (
+            <div className="main-image" onClick={handleModelViewerClick} style={{
+              cursor: product.model_3d ? 'pointer' : 'default'
+            }}>
+              <img src={productImages[selectedImage] || product.image} alt={product.name} />
+              {product.model_3d && (
+                <div className="view-3d-hint">🔄 Clique para ver em 3D</div>
+              )}
+            </div>
           )}
-          <div className="main-image">
-            <img src={productImages[selectedImage] || product.image} alt={product.name} />
-            {productImages.length > 1 && (
-              <div className="image-counter">
-                {selectedImage + 1} / {productImages.length}
-              </div>
-            )}
-          </div>
           {productImages.length > 1 && (
             <div className="image-thumbnails">
               {productImages.map((img, index) => (
                 <div 
                   key={index}
                   className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
-                  onClick={() => setSelectedImage(index)}
+                  onClick={() => handleThumbnailClick(index)}
                   title={`Imagem ${index + 1}`}
                 >
                   <img src={img} alt={`${product.name} ${index + 1}`} />

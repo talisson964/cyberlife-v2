@@ -207,15 +207,7 @@ export default function GamerWorld() {
           return;
         }
 
-        // Mapear campos do banco para o formato esperado pelo frontend
-        const formattedProducts = products.map(p => ({
-          ...p,
-          image: p.image_url,
-          hoverImage: p.hover_image_url,
-          price: p.price ? `R$ ${p.price.toFixed(2).replace('.', ',')}` : 'R$ 0,00'
-        }));
-
-        setStoreProducts(formattedProducts || []);
+        setStoreProducts(products || []);
       } catch (error) {
         console.error('Erro ao conectar com banco:', error);
         // Fallback para localStorage
@@ -2958,10 +2950,10 @@ export default function GamerWorld() {
 
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
-        padding: '120px 48px 80px',
+        padding: '10px 48px',
         background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
         borderTop: '1px solid rgba(0, 217, 255, 0.2)',
-        marginTop: '0',
+        marginTop: '-5%',
       }}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
           <h2 style={{
@@ -2974,7 +2966,7 @@ export default function GamerWorld() {
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
             wordWrap: 'break-word',
-          }}>Loja Gamer</h2>
+          }}>Loja Única</h2>
           <p style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: isMobile ? '0.95rem' : '1.1rem',
@@ -3197,67 +3189,29 @@ export default function GamerWorld() {
                 
                 {/* Imagem do produto */}
                 {product.image && (
-                  <div 
-                    className={product.image.endsWith('.glb') ? 'product-3d-container' : ''}
-                    style={{
-                      width: '100%',
-                      height: isMobile ? '180px' : '220px',
-                      marginBottom: '20px',
-                      borderRadius: '12px',
-                      overflow: 'hidden',
-                      background: 'rgba(0, 0, 0, 0.3)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    onMouseEnter={(e) => {
-                      const modelViewer = e.currentTarget.querySelector('model-viewer');
-                      if (modelViewer) {
-                        modelViewer.setAttribute('camera-controls', '');
-                        modelViewer.autoRotate = true;
-                        modelViewer.autoRotateDelay = 0;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      const modelViewer = e.currentTarget.querySelector('model-viewer');
-                      if (modelViewer) {
-                        modelViewer.removeAttribute('camera-controls');
-                        modelViewer.autoRotate = false;
-                      }
-                    }}
-                  >
-                    {/* Verifica se é modelo 3D (.glb) */}
-                    {product.image.endsWith('.glb') ? (
-                      <model-viewer
-                        src={product.image}
-                        alt={product.name}
-                        ar
-                        shadow-intensity="1"
-                        interaction-prompt="none"
-                        disable-tap
-                        rotation-per-second="120deg"
-                        className="product-model-3d-gamehouse"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          borderRadius: '12px',
-                          pointerEvents: 'auto'
-                        }}
-                      ></model-viewer>
-                    ) : (
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          transition: 'transform 0.3s ease',
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      />
-                    )}
+                  <div style={{
+                    width: '100%',
+                    height: isMobile ? '180px' : '220px',
+                    marginBottom: '20px',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'transform 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    />
                   </div>
                 )}
                 
