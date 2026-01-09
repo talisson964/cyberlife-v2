@@ -257,18 +257,27 @@ export const defaultOffers = [
     title: "Mouse Gamer RGB",
     discount: "50% OFF",
     image: "/images/mouse.png",
+    originalPrice: 199.90,
+    finalPrice: 99.90,
+    tag: "OFERTA ESPECIAL"
   },
   {
     id: 2,
     title: "Headset Pro X",
     discount: "40% OFF",
     image: "/images/headset.png",
+    originalPrice: 399.90,
+    finalPrice: 239.90,
+    tag: "SUPER OFERTA"
   },
   {
     id: 3,
     title: "Teclado Mecânico",
     discount: "35% OFF",
     image: "/images/keyboard.png",
+    originalPrice: 599.90,
+    finalPrice: 389.90,
+    tag: "IMPERDÍVEL"
   }
 ]
 

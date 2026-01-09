@@ -6,6 +6,92 @@ import { defaultOffers } from '../data/lojaData'
 import { supabase } from '../supabaseClient'
 import { stopAudio } from '../utils/audioPlayer'
 
+// Função para formatar preços para reais brasileiros
+const formatPrice = (price) => {
+  // Se já é uma string formatada, retorna como está
+  if (typeof price === 'string' && price.includes('R$')) {
+    return price
+  }
+  
+  // Se é um número, formata para reais
+  if (typeof price === 'number') {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price)
+  }
+  
+  // Se é uma string com apenas números, converte e formata
+  if (typeof price === 'string') {
+    const numericPrice = parseFloat(price.replace(/[^\d,.-]/g, '').replace(',', '.'))
+    if (!isNaN(numericPrice)) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(numericPrice)
+    }
+  }
+  
+  return price // Retorna como está se não conseguir processar
+}
+
+// Função para determinar a imagem principal do produto
+const getProductMainImage = (product) => {
+  console.log('Determinando imagem principal para produto:', product.name, {
+    images: product.images,
+    image_url: product.image_url,
+    image: product.image
+  });
+  
+  let selectedImage = null;
+  
+  // Prioridade 1: primeira imagem do array de imagens
+  if (product.images && Array.isArray(product.images) && product.images.length > 0 && product.images[0].url) {
+    selectedImage = product.images[0].url;
+    console.log('✅ Usando primeira imagem do array:', selectedImage);
+  }
+  // Prioridade 2: campo image_url do banco
+  else if (product.image_url) {
+    selectedImage = product.image_url;
+    console.log('✅ Usando image_url:', selectedImage);
+  }
+  // Prioridade 3: campo image tradicional  
+  else if (product.image) {
+    selectedImage = product.image;
+    console.log('✅ Usando image tradicional:', selectedImage);
+  }
+  // Fallback
+  else {
+    selectedImage = '/cyberlife-icone2.png';
+    console.log('⚠️ Usando fallback logo');
+  }
+  
+  return selectedImage;
+}
+
+// Função para determinar a imagem de hover do produto
+const getProductHoverImage = (product) => {
+  console.log('Determinando imagem hover para produto:', product.name);
+  
+  // Prioridade 1: segunda imagem do array de imagens
+  if (product.images && Array.isArray(product.images) && product.images.length > 1) {
+    return product.images[1].url;
+  }
+  
+  // Prioridade 2: campo hover_image_url do banco
+  if (product.hover_image_url) {
+    return product.hover_image_url;
+  }
+  
+  // Prioridade 3: campo hoverImage tradicional
+  if (product.hoverImage) {
+    return product.hoverImage;
+  }
+  
+  // Fallback para imagem principal
+  return getProductMainImage(product);
+}
+
 export default function LojaGeek({ onBack }){
   const navigate = useNavigate()
   const [currentOffer, setCurrentOffer] = useState(0)
@@ -93,18 +179,33 @@ export default function LojaGeek({ onBack }){
         const storedProducts = localStorage.getItem('cyberlife_products');
         if (storedProducts) {
           const allProducts = JSON.parse(storedProducts);
-          setProducts(allProducts.filter(p => p.category === 'geek'));
+          const geekProducts = allProducts.filter(p => p.category === 'geek');
+          console.log('Produtos carregados do localStorage:', geekProducts);
+          setProducts(geekProducts);
         }
         return;
       }
 
+      console.log('Produtos carregados do banco:', products);
       setProducts(products || []);
       
-      // Debug: verificar se há produtos com model_3d
-      if (products) {
-        const productsWithModel3D = products.filter(p => p.model_3d);
-        console.log('Produtos com model_3d:', productsWithModel3D.length);
-        console.log('Produtos com model_3d:', productsWithModel3D.map(p => ({ name: p.name, model_3d: p.model_3d })));
+      // Debug: verificar estrutura das imagens  
+      if (products && products.length > 0) {
+        console.log('=== ANÁLISE DE PRODUTOS DO BANCO ===');
+        console.log('Total de produtos:', products.length);
+        console.log('Estrutura do primeiro produto:', products[0]);
+        
+        products.slice(0, 3).forEach((p, index) => {
+          console.log(`--- Produto ${index + 1}: ${p.name} ---`);
+          console.log('ID:', p.id);
+          console.log('image:', p.image);
+          console.log('image_url:', p.image_url);
+          console.log('images (array):', p.images);
+          console.log('hover_image_url:', p.hover_image_url);
+          console.log('Estrutura completa:', JSON.stringify(p, null, 2));
+        });
+        
+        console.log('=== FIM ANÁLISE ===');
       }
     } catch (error) {
       console.error('Erro ao conectar com banco:', error);
@@ -140,7 +241,10 @@ export default function LojaGeek({ onBack }){
         description: banner.description,
         discount: banner.discount,
         image: banner.image_url,
-        link: banner.link_url
+        link: banner.link_url,
+        originalPrice: banner.original_price,
+        finalPrice: banner.final_price,
+        tag: banner.tag || 'OFERTA'
       }));
 
       setOffers(offersFromBanners.length > 0 ? offersFromBanners : defaultOffers);
@@ -185,6 +289,9 @@ export default function LojaGeek({ onBack }){
   }
 
   const handleAddToCart = (product) => {
+    console.log('=== INÍCIO AddToCart ===');
+    console.log('Produto sendo adicionado ao carrinho:', product);
+    
     const storedCart = localStorage.getItem('cyberlife_cart')
     let cart = storedCart ? JSON.parse(storedCart) : []
     
@@ -192,18 +299,34 @@ export default function LojaGeek({ onBack }){
     
     if (existingItemIndex !== -1) {
       cart[existingItemIndex].quantity += 1
+      console.log('Quantidade atualizada para produto existente');
     } else {
-      cart.push({
+      // Usar as funções helper para garantir a imagem correta
+      const mainImage = getProductMainImage(product);
+      console.log('Imagem principal determinada:', mainImage);
+      
+      // Mapear campos do banco de dados para estrutura do carrinho
+      const cartItem = {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
         category: product.category,
-        quantity: 1
-      })
+        quantity: 1,
+        image: mainImage || '/cyberlife-icone2.png', // Garantir que sempre tenha uma imagem
+        images: product.images || [],
+        // Campos de debug
+        debug_original_image: product.image,
+        debug_original_image_url: product.image_url,
+        debug_original_images: product.images
+      }
+      
+      console.log('Item sendo salvo no carrinho:', cartItem);
+      cart.push(cartItem);
     }
     
     localStorage.setItem('cyberlife_cart', JSON.stringify(cart))
+    console.log('Carrinho completo atualizado:', cart);
+    console.log('=== FIM AddToCart ===');
     updateCartCount()
   }
   
@@ -706,56 +829,58 @@ export default function LojaGeek({ onBack }){
                     textShadow: '0 2px 10px rgba(0, 217, 255, 0.5)',
                   }}>{offer.title}</h3>
                   
-                  <div className="offer-prices" style={{
-                    display: 'flex',
-                    gap: '30px',
-                    marginBottom: '40px',
-                    flexWrap: 'wrap',
-                  }}>
-                    <div className="price-block" style={{
-                      flex: 1,
-                      minWidth: '150px',
+                  {(offer.originalPrice && offer.finalPrice) && (
+                    <div className="offer-prices" style={{
+                      display: 'flex',
+                      gap: '30px',
+                      marginBottom: '40px',
+                      flexWrap: 'wrap',
                     }}>
-                      <span className="price-label" style={{
-                        display: 'block',
-                        fontSize: '0.9rem',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        marginBottom: '8px',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '1px',
-                      }}>De:</span>
-                      <span className="price-original" style={{
-                        display: 'block',
-                        fontSize: '1.5rem',
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        textDecoration: 'line-through',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontWeight: 600,
-                      }}>{offer.originalPrice}</span>
+                      <div className="price-block" style={{
+                        flex: 1,
+                        minWidth: '150px',
+                      }}>
+                        <span className="price-label" style={{
+                          display: 'block',
+                          fontSize: '0.9rem',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          marginBottom: '8px',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          letterSpacing: '1px',
+                        }}>De:</span>
+                        <span className="price-original" style={{
+                          display: 'block',
+                          fontSize: '1.5rem',
+                          color: 'rgba(255, 255, 255, 0.4)',
+                          textDecoration: 'line-through',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontWeight: 600,
+                        }}>{formatPrice(offer.originalPrice)}</span>
+                      </div>
+                      <div className="price-block" style={{
+                        flex: 1,
+                        minWidth: '150px',
+                      }}>
+                        <span className="price-label" style={{
+                          display: 'block',
+                          fontSize: '0.9rem',
+                          color: '#00ff88',
+                          marginBottom: '8px',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          letterSpacing: '1px',
+                          fontWeight: 700,
+                        }}>Por apenas:</span>
+                        <span className="price-final" style={{
+                          display: 'block',
+                          fontSize: '2.5rem',
+                          color: '#00ff88',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontWeight: 900,
+                          textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
+                        }}>{formatPrice(offer.finalPrice)}</span>
+                      </div>
                     </div>
-                    <div className="price-block" style={{
-                      flex: 1,
-                      minWidth: '150px',
-                    }}>
-                      <span className="price-label" style={{
-                        display: 'block',
-                        fontSize: '0.9rem',
-                        color: '#00ff88',
-                        marginBottom: '8px',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '1px',
-                        fontWeight: 700,
-                      }}>Por apenas:</span>
-                      <span className="price-final" style={{
-                        display: 'block',
-                        fontSize: '2.5rem',
-                        color: '#00ff88',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontWeight: 900,
-                        textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
-                      }}>{offer.finalPrice}</span>
-                    </div>
-                  </div>
+                  )}
                   
                   <button className="offer-button" style={{
                     width: '100%',
@@ -924,8 +1049,16 @@ export default function LojaGeek({ onBack }){
                   </div>
                 ) : (
                   <>
-                    <img src={product.image} alt={product.name} className="product-image default" />
-                    <img src={product.hoverImage} alt={product.name} className="product-image hover" />
+                    <img 
+                      src={getProductMainImage(product)} 
+                      alt={product.name} 
+                      className="product-image default" 
+                    />
+                    <img 
+                      src={getProductHoverImage(product)} 
+                      alt={product.name} 
+                      className="product-image hover" 
+                    />
                   </>
                 )}
               </div>
@@ -940,7 +1073,7 @@ export default function LojaGeek({ onBack }){
                 >
                   {product.name}
                 </h3>
-                <p className="product-price">{product.price}</p>
+                <p className="product-price">{formatPrice(product.price)}</p>
                 <button className="product-btn" onClick={() => handleAddToCart(product)}>Adicionar ao Carrinho</button>
               </div>
             </div>
@@ -1927,8 +2060,6 @@ export default function LojaGeek({ onBack }){
               zIndex: 2,
             }}>
               <button
-                onMouseEnter={() => setCatMood('sad')}
-                onMouseLeave={() => setCatMood('neutral')}
                 onClick={handleConfirmYes}
                 style={{
                   flex: 1,
@@ -1964,8 +2095,6 @@ export default function LojaGeek({ onBack }){
               </button>
               
               <button
-                onMouseEnter={() => setCatMood('happy')}
-                onMouseLeave={() => setCatMood('neutral')}
                 onClick={handleConfirmNo}
                 style={{
                   flex: 1,

@@ -210,6 +210,8 @@ export default function ProductDetailPage() {
   const handleAddToCart = () => {
     if (!product) return
     
+    console.log('Produto sendo adicionado ao carrinho (ProductDetail):', product);
+    
     const storedCart = localStorage.getItem('cyberlife_cart')
     let cart = storedCart ? JSON.parse(storedCart) : []
     
@@ -218,14 +220,20 @@ export default function ProductDetailPage() {
     if (existingItemIndex !== -1) {
       cart[existingItemIndex].quantity += quantity
     } else {
-      cart.push({
+      // Mapear campos do banco de dados para estrutura do carrinho
+      const cartItem = {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
         category: product.category,
-        quantity: quantity
-      })
+        quantity: quantity,
+        // Mapear imagens corretamente
+        image: product.image_url || product.image,
+        images: product.images,
+      }
+      
+      console.log('Item sendo salvo no carrinho (ProductDetail):', cartItem);
+      cart.push(cartItem);
     }
     
     localStorage.setItem('cyberlife_cart', JSON.stringify(cart))
