@@ -168,25 +168,13 @@ export default function GamerWorld() {
   // Função para adicionar ao carrinho
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
-    console.log('Produto sendo adicionado ao carrinho (GameHouse):', product);
-    
     const cart = JSON.parse(localStorage.getItem('cyberlife_cart') || '[]');
     const existingProduct = cart.find(item => item.id === product.id);
     
     if (existingProduct) {
       existingProduct.quantity += 1;
     } else {
-      // Mapear campos do banco de dados para estrutura do carrinho
-      const cartItem = {
-        ...product,
-        quantity: 1,
-        // Garantir que os campos de imagem estejam corretos
-        image: product.image_url || product.image,
-        images: product.images,
-      };
-      
-      console.log('Item sendo salvo no carrinho (GameHouse):', cartItem);
-      cart.push(cartItem);
+      cart.push({ ...product, quantity: 1 });
     }
     
     localStorage.setItem('cyberlife_cart', JSON.stringify(cart));
@@ -2962,10 +2950,10 @@ export default function GamerWorld() {
 
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
-        padding: '40px 48px 40px',
+        padding: '10px 48px',
         background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
         borderTop: '1px solid rgba(0, 217, 255, 0.2)',
-        marginTop: '0',
+        marginTop: '-5%',
       }}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
           <h2 style={{

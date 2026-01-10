@@ -8,7 +8,6 @@ import NextScreen from './screens/NextScreen'
 import LojaGeek from './screens/LojaGeek'
 import AdminPanel3 from './screens/AdminPanel3';
 import CarrinhoPage from './screens/CarrinhoPage'
-import PagamentoPIX from './screens/PagamentoPIX'
 import GameHouse from './screens/GamerWorld'
 import PerfilPage from './screens/PerfilPage'
 import EventoPage from './screens/EventoPage'
@@ -134,7 +133,6 @@ export default function App() {
           <Route path="/loja-geek" element={<LojaWrapper />} />
           <Route path="/produto/:id" element={<ProductDetailPage />} />
           <Route path="/carrinho" element={<CarrinhoWrapper />} />
-          <Route path="/pagamento-pix/:orderId" element={<PagamentoPIX />} />
           <Route path="/admin" element={<AdminWrapper />} />
           <Route path="/loja-geek/admin" element={<AdminWrapper />} />
           <Route path="/gamer-world" element={<GameHouseWrapper />} />
