@@ -224,6 +224,8 @@ export default function ProductDetailPage() {
         price: product.price,
         image: product.image,
         category: product.category,
+        model_3d: product.model_3d,
+        reward_points: product.reward_points,
         quantity: quantity
       })
     }
@@ -442,6 +444,24 @@ export default function ProductDetailPage() {
             <div className="product-price-section">
               <span className="product-price">{product.price}</span>
               <span className="price-installment">ou 3x de {(parseFloat(product.price.replace('R$ ', '').replace(',', '.')) / 3).toFixed(2).replace('.', ',')} sem juros</span>
+            </div>
+            
+            {/* CyberPoints Badge */}
+            <div className="cyber-points-badge">
+              <div className="cyber-points-icon">🎮</div>
+              <div className="cyber-points-info">
+                <span className="cyber-points-label">Ganhe CyberPoints</span>
+                <span className="cyber-points-value">
+                  {product.reward_points !== null && product.reward_points !== undefined 
+                    ? `${product.reward_points} pontos` 
+                    : `${Math.floor(parseFloat(product.price.replace('R$ ', '').replace(',', '.')) / 50) * 30} pontos`}
+                </span>
+                <span className="cyber-points-hint">
+                  {product.reward_points !== null && product.reward_points !== undefined
+                    ? 'Pontos especiais deste produto!'
+                    : 'A cada R$ 50 gastos = 30 pontos'}
+                </span>
+              </div>
             </div>
           </div>
 

@@ -46,7 +46,8 @@ const AdminPanel3 = ({ onNavigate }) => {
     warranty: '',
     material: '',
     images: [], // Array de imagens adicionais
-    model_3d: '' // URL do modelo 3D .glb
+    model_3d: '', // URL do modelo 3D .glb
+    reward_points: '' // CyberPoints customizados
   });
   const [productImages, setProductImages] = useState([]); // Estado separado para gerenciar upload
   const [product3DModel, setProduct3DModel] = useState(null); // Estado para modelo 3D
@@ -66,7 +67,8 @@ const AdminPanel3 = ({ onNavigate }) => {
     link_url: '',
     order: 0,
     original_price: '',
-    final_price: ''
+    final_price: '',
+    reward_points: '' // CyberPoints do banner
   });
 
   // Eventos
@@ -83,7 +85,8 @@ const AdminPanel3 = ({ onNavigate }) => {
     prize: '',
     max_participants: '',
     type: 'Torneio',
-    image_url: ''
+    image_url: '',
+    reward_points: '' // CyberPoints do evento
   });
 
   // Pedidos
@@ -388,6 +391,7 @@ const AdminPanel3 = ({ onNavigate }) => {
           ...productForm,
           price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0,
+          reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null,
           images: [] // Inicialmente vazio
         }])
         .select();
@@ -727,6 +731,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         "order": parseInt(bannerForm.order || 0),
         original_price: bannerForm.original_price,
         final_price: bannerForm.final_price,
+        reward_points: bannerForm.reward_points ? parseInt(bannerForm.reward_points) : null,
         active: true
       };
 
@@ -760,6 +765,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         "order": parseInt(bannerForm.order || 0),
         original_price: bannerForm.original_price,
         final_price: bannerForm.final_price,
+        reward_points: bannerForm.reward_points ? parseInt(bannerForm.reward_points) : null,
         active: true,
         updated_at: new Date().toISOString()
       };
@@ -850,6 +856,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
         max_participants: parseInt(eventForm.max_participants) || null,
         image_url: eventForm.image_url || '/images/default-event.png',
+        reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
         active: true // Nome correto da coluna: active
       };
 
@@ -883,6 +890,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
         max_participants: parseInt(eventForm.max_participants) || null,
         image_url: eventForm.image_url || '/images/default-event.png',
+        reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
         active: true // Nome correto da coluna: active
       };
 
@@ -1532,6 +1540,47 @@ const AdminPanel3 = ({ onNavigate }) => {
                         onChange={(e) => setProductForm({...productForm, warranty: e.target.value})}
                       />
                     </div>
+
+                    {/* CyberPoints Field */}
+                    <div className="form-group" style={{
+                      background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
+                      border: '2px solid rgba(102, 126, 234, 0.4)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      marginTop: '20px'
+                    }}>
+                      <label style={{
+                        color: '#667eea',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        🎮 CyberPoints (Opcional)
+                      </label>
+                      <small style={{
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '0.85rem',
+                        display: 'block',
+                        marginTop: '5px',
+                        marginBottom: '10px'
+                      }}>
+                        Deixe vazio para usar regra padrão (R$ 50 = 30 pontos)
+                      </small>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Ex: 100 pontos"
+                        value={productForm.reward_points}
+                        onChange={(e) => setProductForm({...productForm, reward_points: e.target.value})}
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          border: '2px solid rgba(102, 126, 234, 0.5)',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </div>
                     
                     <div className="form-actions">
                       <button type="submit" className="btn-primary">
@@ -1912,6 +1961,47 @@ const AdminPanel3 = ({ onNavigate }) => {
                         onChange={(e) => setBannerForm({...bannerForm, link_url: e.target.value})}
                       />
                     </div>
+
+                    {/* CyberPoints Field */}
+                    <div className="form-group" style={{
+                      background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
+                      border: '2px solid rgba(102, 126, 234, 0.4)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      marginTop: '20px'
+                    }}>
+                      <label style={{
+                        color: '#667eea',
+                        fontWeight: 'bold',
+                        fontSize: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        🎮 CyberPoints (Opcional)
+                      </label>
+                      <small style={{
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '0.85rem',
+                        display: 'block',
+                        marginTop: '5px',
+                        marginBottom: '10px'
+                      }}>
+                        Pontos promocionais especiais deste banner
+                      </small>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Ex: 500 pontos de bônus"
+                        value={bannerForm.reward_points}
+                        onChange={(e) => setBannerForm({...bannerForm, reward_points: e.target.value})}
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          border: '2px solid rgba(102, 126, 234, 0.5)',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </div>
                     
                     <div className="form-actions">
                       <button type="submit" className="btn-save-modern">
@@ -2174,6 +2264,50 @@ const AdminPanel3 = ({ onNavigate }) => {
                         rows={4}
                         required
                       />
+                    </div>
+
+                    {/* Campo CyberPoints */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <label style={{ 
+                        color: '#fff', 
+                        fontWeight: 'bold', 
+                        display: 'block', 
+                        marginBottom: '8px',
+                        fontSize: '14px',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}>
+                        🎁 CyberPoints (Pontos de Recompensa)
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Ex: 100 pontos (opcional)"
+                        value={eventForm.reward_points}
+                        onChange={(e) => setEventForm({...eventForm, reward_points: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: '2px solid rgba(255, 255, 255, 0.3)',
+                          fontSize: '14px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                          color: '#333'
+                        }}
+                      />
+                      <small style={{ 
+                        color: '#fff', 
+                        display: 'block', 
+                        marginTop: '6px', 
+                        fontSize: '12px',
+                        opacity: '0.9'
+                      }}>
+                        Deixe em branco para usar o padrão (R$ 50 = 30 pontos)
+                      </small>
                     </div>
                     
                     <div className="form-actions">

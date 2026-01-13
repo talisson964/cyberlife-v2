@@ -58,6 +58,28 @@ export default function CarrinhoPage({ onBack }) {
   const shipping = subtotal > 0 ? 15.00 : 0;
   const total = subtotal + shipping;
 
+  // Calcular CyberPoints que serão ganhos com a compra (sem frete)
+  const calculateCyberPoints = () => {
+    let totalPoints = 0;
+
+    cartItems.forEach(item => {
+      const itemTotal = item.price * item.quantity;
+      
+      // Se o produto tem reward_points customizado, usar ele
+      if (item.reward_points && item.reward_points > 0) {
+        totalPoints += item.reward_points * item.quantity;
+      } else {
+        // Caso contrário, usar a regra padrão: R$50 = 30 pontos
+        const pointsForThisItem = Math.floor((itemTotal / 50) * 30);
+        totalPoints += pointsForThisItem;
+      }
+    });
+
+    return totalPoints;
+  };
+
+  const cyberPointsToEarn = calculateCyberPoints();
+
   return (
     <div className="carrinho-page">
       <header className="header">
@@ -113,7 +135,39 @@ export default function CarrinhoPage({ onBack }) {
               {cartItems.map((item) => (
                 <div key={item.id} className="cart-item">
                   <div className="item-image">
-                    <img src={item.image} alt={item.name} />
+                    {item.model_3d ? (
+                      <model-viewer
+                        src={item.model_3d}
+                        alt={`Modelo 3D de ${item.name}`}
+                        shadow-intensity="1"
+                        disable-pan
+                        disable-zoom
+                        camera-orbit="90deg 75deg 2.5m"
+                        field-of-view="30deg"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          background: 'rgba(0, 0, 0, 0.1)',
+                          borderRadius: '8px',
+                        }}
+                      />
+                    ) : item.images && item.images.length > 0 ? (
+                      <img src={item.images[0]} alt={item.name} />
+                    ) : item.image ? (
+                      <img src={item.image} alt={item.name} />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '3rem',
+                        color: '#666'
+                      }}>
+                        📦
+                      </div>
+                    )}
                   </div>
                   <div className="item-details">
                     <h3 className="item-name">{item.name}</h3>
@@ -171,6 +225,47 @@ export default function CarrinhoPage({ onBack }) {
                 <span>Total</span>
                 <span>R$ {total.toFixed(2).replace('.', ',')}</span>
               </div>
+
+              {/* CyberPoints que serão ganhos */}
+              {cyberPointsToEarn > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
+                  border: '2px solid rgba(102, 126, 234, 0.4)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginTop: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.2)'
+                }}>
+                  <div style={{
+                    fontSize: '32px',
+                    animation: 'float 3s ease-in-out infinite'
+                  }}>
+                    🎮
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontSize: '0.85rem',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      marginBottom: '4px',
+                      fontFamily: 'Rajdhani, sans-serif'
+                    }}>
+                      Você vai ganhar:
+                    </div>
+                    <div style={{
+                      fontSize: '1.4rem',
+                      fontWeight: 'bold',
+                      color: '#667eea',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      textShadow: '0 2px 10px rgba(102, 126, 234, 0.5)'
+                    }}>
+                      +{cyberPointsToEarn} CyberPoints
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <button className="btn-checkout">
                 Finalizar Compra

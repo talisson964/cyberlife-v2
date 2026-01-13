@@ -140,7 +140,13 @@ export default function LojaGeek({ onBack }){
         description: banner.description,
         discount: banner.discount,
         image: banner.image_url,
-        link: banner.link_url
+        link: banner.link_url,
+        originalPrice: banner.original_price 
+          ? `R$ ${parseFloat(banner.original_price).toFixed(2).replace('.', ',')}`
+          : null,
+        finalPrice: banner.final_price 
+          ? `R$ ${parseFloat(banner.final_price).toFixed(2).replace('.', ',')}`
+          : null
       }));
 
       setOffers(offersFromBanners.length > 0 ? offersFromBanners : defaultOffers);
@@ -199,6 +205,8 @@ export default function LojaGeek({ onBack }){
         price: product.price,
         image: product.image,
         category: product.category,
+        model_3d: product.model_3d,
+        reward_points: product.reward_points,
         quantity: 1
       })
     }
@@ -706,58 +714,78 @@ export default function LojaGeek({ onBack }){
                     textShadow: '0 2px 10px rgba(0, 217, 255, 0.5)',
                   }}>{offer.title}</h3>
                   
-                  <div className="offer-prices" style={{
-                    display: 'flex',
-                    gap: '30px',
-                    marginBottom: '40px',
-                    flexWrap: 'wrap',
-                  }}>
-                    <div className="price-block" style={{
-                      flex: 1,
-                      minWidth: '150px',
+                  {(offer.originalPrice || offer.finalPrice) && (
+                    <div className="offer-prices" style={{
+                      display: 'flex',
+                      gap: '30px',
+                      marginBottom: '40px',
+                      flexWrap: 'wrap',
                     }}>
-                      <span className="price-label" style={{
-                        display: 'block',
-                        fontSize: '0.9rem',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        marginBottom: '8px',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '1px',
-                      }}>De:</span>
-                      <span className="price-original" style={{
-                        display: 'block',
-                        fontSize: '1.5rem',
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        textDecoration: 'line-through',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontWeight: 600,
-                      }}>{offer.originalPrice}</span>
+                      {offer.originalPrice && (
+                        <div className="price-block" style={{
+                          flex: 1,
+                          minWidth: '150px',
+                        }}>
+                          <span className="price-label" style={{
+                            display: 'block',
+                            fontSize: '0.9rem',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            marginBottom: '8px',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            letterSpacing: '1px',
+                          }}>De:</span>
+                          <span className="price-original" style={{
+                            display: 'block',
+                            fontSize: '1.5rem',
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            textDecoration: 'line-through',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 600,
+                          }}>{offer.originalPrice}</span>
+                        </div>
+                      )}
+                      {offer.finalPrice && (
+                        <div className="price-block" style={{
+                          flex: 1,
+                          minWidth: '150px',
+                        }}>
+                          <span className="price-label" style={{
+                            display: 'block',
+                            fontSize: '0.9rem',
+                            color: '#00ff88',
+                            marginBottom: '8px',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            letterSpacing: '1px',
+                            fontWeight: 700,
+                          }}>Por apenas:</span>
+                          <span className="price-final" style={{
+                            display: 'block',
+                            fontSize: '2.5rem',
+                            color: '#00ff88',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 900,
+                            textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
+                          }}>{offer.finalPrice}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="price-block" style={{
-                      flex: 1,
-                      minWidth: '150px',
-                    }}>
-                      <span className="price-label" style={{
-                        display: 'block',
-                        fontSize: '0.9rem',
-                        color: '#00ff88',
-                        marginBottom: '8px',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        letterSpacing: '1px',
-                        fontWeight: 700,
-                      }}>Por apenas:</span>
-                      <span className="price-final" style={{
-                        display: 'block',
-                        fontSize: '2.5rem',
-                        color: '#00ff88',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontWeight: 900,
-                        textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
-                      }}>{offer.finalPrice}</span>
-                    </div>
-                  </div>
+                  )}
                   
-                  <button className="offer-button" style={{
+                  <button 
+                    className="offer-button" 
+                    onClick={() => {
+                      if (offer.product_id) {
+                        // Se o banner tem produto associado, navegar para página do produto
+                        navigate(`/produto/${offer.product_id}`);
+                      } else if (offer.link) {
+                        // Se tem link customizado, abrir
+                        window.open(offer.link, '_blank');
+                      } else {
+                        // Fallback: rolar para catálogo
+                        scrollToCatalog();
+                      }
+                    }}
+                    style={{
                     width: '100%',
                     padding: '18px 40px',
                     background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
@@ -940,7 +968,12 @@ export default function LojaGeek({ onBack }){
                 >
                   {product.name}
                 </h3>
-                <p className="product-price">{product.price}</p>
+                <p className="product-price">
+                  {new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                  }).format(product.price)}
+                </p>
                 <button className="product-btn" onClick={() => handleAddToCart(product)}>Adicionar ao Carrinho</button>
               </div>
             </div>

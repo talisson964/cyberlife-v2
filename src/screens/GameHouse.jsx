@@ -2963,6 +2963,7 @@ export default function GamerWorld() {
             color: '#00d9ff',
             textAlign: 'center',
             marginBottom: isMobile ? '15px' : '20px',
+            marginTop: isMobile ? '40px' : '60px',
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
             wordWrap: 'break-word',
@@ -2973,6 +2974,7 @@ export default function GamerWorld() {
             color: '#00d9ff',
             textAlign: 'center',
             marginBottom: isMobile ? '20px' : '30px',
+            marginTop: isMobile ? '20px' : '30px',
             opacity: 0.8,
           }}>
             Destaque em <span style={{color: '#00d9ff', fontWeight: 700}}>Gamer</span>
@@ -3187,9 +3189,9 @@ export default function GamerWorld() {
                   </div>
                 )}
                 
-                {/* Imagem do produto */}
-                {product.image && (
-                  <div style={{
+                {/* Imagem ou Modelo 3D do produto */}
+                <div 
+                  style={{
                     width: '100%',
                     height: isMobile ? '180px' : '220px',
                     marginBottom: '20px',
@@ -3199,9 +3201,59 @@ export default function GamerWorld() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                  }}>
+                    position: 'relative',
+                  }}
+                >
+                  {product.model_3d ? (
+                    <>
+                      <model-viewer
+                        src={product.model_3d}
+                        alt={`Modelo 3D de ${product.name}`}
+                        shadow-intensity="1"
+                        disable-pan
+                        disable-zoom
+                        camera-orbit="90deg 75deg 2.5m"
+                        field-of-view="30deg"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          background: 'rgba(0, 0, 0, 0.1)',
+                          borderRadius: '12px',
+                        }}
+                        onLoad={(e) => {
+                          e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.setAttribute('auto-rotate', '');
+                          e.target.setAttribute('rotation-per-second', '60deg');
+                          e.target.setAttribute('camera-controls', '');
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.removeAttribute('auto-rotate');
+                          e.target.removeAttribute('camera-controls');
+                          e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                        }}
+                      />
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        right: '10px',
+                        background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
+                        color: '#fff',
+                        padding: '6px 12px',
+                        borderRadius: '20px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        fontFamily: 'Rajdhani, sans-serif',
+                        boxShadow: '0 4px 15px rgba(0, 217, 255, 0.5)',
+                        zIndex: 2,
+                      }}>
+                        🎮 3D
+                      </div>
+                    </>
+                  ) : product.images && product.images.length > 0 ? (
                     <img 
-                      src={product.image} 
+                      src={product.images[0]} 
                       alt={product.name}
                       style={{
                         width: '100%',
@@ -3212,8 +3264,20 @@ export default function GamerWorld() {
                       onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#666',
+                      fontSize: '3rem',
+                    }}>
+                      📦
+                    </div>
+                  )}
+                </div>
                 
                 <h3 style={{
                   fontFamily: 'Rajdhani, sans-serif',
@@ -3250,7 +3314,12 @@ export default function GamerWorld() {
                   fontWeight: 'bold',
                   marginBottom: '18px',
                   textShadow: '0 0 20px rgba(255, 0, 234, 0.5)',
-                }}>{product.price}</p>
+                }}>
+                  {new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                  }).format(product.price)}
+                </p>
                 
                 {/* Botões de ação */}
                 <div style={{

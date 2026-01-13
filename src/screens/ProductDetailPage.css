@@ -123,6 +123,71 @@
   border: 2px solid #0a0a0a;
 }
 
+/* CyberPoints Badge */
+.cyber-points-badge {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(138, 43, 226, 0.1));
+  border: 2px solid #00d9ff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  margin-top: 20px;
+  animation: cyber-glow 2s infinite alternate;
+}
+
+@keyframes cyber-glow {
+  0% {
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.6), 0 0 30px rgba(138, 43, 226, 0.3);
+  }
+}
+
+.cyber-points-icon {
+  font-size: 2.5rem;
+  animation: float-icon 3s ease-in-out infinite;
+}
+
+@keyframes float-icon {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.cyber-points-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cyber-points-label {
+  font-size: 0.85rem;
+  color: #00d9ff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cyber-points-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00d9ff, #8a2be2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cyber-points-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
 .product-detail-container {
   max-width: 1400px;
   margin: 60px auto;

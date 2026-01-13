@@ -31,7 +31,8 @@ const AdminPanel2 = ({ onNavigate }) => {
     image_url: '',
     hover_image_url: '',
     description: '',
-    stock: 0
+    stock: 0,
+    reward_points: ''
   });
   
   // Banners
@@ -44,7 +45,10 @@ const AdminPanel2 = ({ onNavigate }) => {
     description: '',
     image_url: '',
     link_url: '',
-    order: 0
+    order: 0,
+    reward_points: '',
+    original_price: '',
+    final_price: ''
   });
 
   // Eventos
@@ -62,7 +66,8 @@ const AdminPanel2 = ({ onNavigate }) => {
     max_participants: null,
     image_url: '',
     rules: [],
-    schedule: []
+    schedule: [],
+    reward_points: ''
   });
 
   // Pedidos
@@ -219,7 +224,8 @@ const AdminPanel2 = ({ onNavigate }) => {
         .insert([{
           ...productForm,
           price: parseFloat(productForm.price),
-          stock: parseInt(productForm.stock) || 0
+          stock: parseInt(productForm.stock) || 0,
+          reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null
         }])
         .select();
 
@@ -242,7 +248,8 @@ const AdminPanel2 = ({ onNavigate }) => {
         .update({
           ...productForm,
           price: parseFloat(productForm.price),
-          stock: parseInt(productForm.stock) || 0
+          stock: parseInt(productForm.stock) || 0,
+          reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null
         })
         .eq('id', editingProduct);
 
@@ -286,7 +293,8 @@ const AdminPanel2 = ({ onNavigate }) => {
       image_url: '',
       hover_image_url: '',
       description: '',
-      stock: 0
+      stock: 0,
+      reward_points: ''
     });
   };
 
@@ -315,7 +323,10 @@ const AdminPanel2 = ({ onNavigate }) => {
         .from('banners')
         .insert([{
           ...bannerForm,
-          order: parseInt(bannerForm.order) || 0
+          order: parseInt(bannerForm.order) || 0,
+          reward_points: bannerForm.reward_points ? parseInt(bannerForm.reward_points) : null,
+          original_price: bannerForm.original_price ? parseFloat(bannerForm.original_price) : null,
+          final_price: bannerForm.final_price ? parseFloat(bannerForm.final_price) : null
         }])
         .select();
 
@@ -337,7 +348,10 @@ const AdminPanel2 = ({ onNavigate }) => {
         .from('banners')
         .update({
           ...bannerForm,
-          order: parseInt(bannerForm.order) || 0
+          order: parseInt(bannerForm.order) || 0,
+          reward_points: bannerForm.reward_points ? parseInt(bannerForm.reward_points) : null,
+          original_price: bannerForm.original_price ? parseFloat(bannerForm.original_price) : null,
+          final_price: bannerForm.final_price ? parseFloat(bannerForm.final_price) : null
         })
         .eq('id', editingBanner);
 
@@ -379,7 +393,10 @@ const AdminPanel2 = ({ onNavigate }) => {
       description: '',
       image_url: '',
       link_url: '',
-      order: 0
+      order: 0,
+      reward_points: '',
+      original_price: '',
+      final_price: ''
     });
   };
 
@@ -410,7 +427,8 @@ const AdminPanel2 = ({ onNavigate }) => {
           ...eventForm,
           max_participants: eventForm.max_participants ? parseInt(eventForm.max_participants) : null,
           rules: Array.isArray(eventForm.rules) ? eventForm.rules : [],
-          schedule: Array.isArray(eventForm.schedule) ? eventForm.schedule : []
+          schedule: Array.isArray(eventForm.schedule) ? eventForm.schedule : [],
+          reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null
         }])
         .select();
 
@@ -434,7 +452,8 @@ const AdminPanel2 = ({ onNavigate }) => {
           ...eventForm,
           max_participants: eventForm.max_participants ? parseInt(eventForm.max_participants) : null,
           rules: Array.isArray(eventForm.rules) ? eventForm.rules : [],
-          schedule: Array.isArray(eventForm.schedule) ? eventForm.schedule : []
+          schedule: Array.isArray(eventForm.schedule) ? eventForm.schedule : [],
+          reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null
         })
         .eq('id', editingEvent);
 
@@ -481,7 +500,8 @@ const AdminPanel2 = ({ onNavigate }) => {
       max_participants: null,
       image_url: '',
       rules: [],
-      schedule: []
+      schedule: [],
+      reward_points: ''
     });
   };
 
@@ -877,6 +897,48 @@ const AdminPanel2 = ({ onNavigate }) => {
                     required
                   />
                   
+                  <div style={{
+                    marginTop: '15px',
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                    border: '2px solid rgba(102, 126, 234, 0.3)',
+                    borderRadius: '12px'
+                  }}>
+                    <label htmlFor="product-reward-points" style={{
+                      display: 'block',
+                      marginBottom: '10px',
+                      color: '#667eea',
+                      fontWeight: 'bold',
+                      fontSize: '16px'
+                    }}>
+                      🎮 CyberPoints (Opcional)
+                      <span style={{
+                        display: 'block',
+                        fontSize: '12px',
+                        color: '#999',
+                        fontWeight: 'normal',
+                        marginTop: '5px'
+                      }}>Deixe vazio para usar regra padrão (R$ 50 = 30 pontos)</span>
+                    </label>
+                    <input
+                      id="product-reward-points"
+                      type="number"
+                      min="0"
+                      placeholder="Ex: 100 pontos"
+                      value={productForm.reward_points}
+                      onChange={(e) => setProductForm({...productForm, reward_points: e.target.value})}
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        fontSize: '14px',
+                        border: '2px solid rgba(102, 126, 234, 0.4)',
+                        borderRadius: '8px',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        color: '#fff'
+                      }}
+                    />
+                  </div>
+                  
                   <div className="form-buttons">
                     <button type="submit" className="btn-primary">
                       {editingProduct ? '✅ ATUALIZAR' : '➕ ADICIONAR'}
@@ -959,7 +1021,10 @@ const AdminPanel2 = ({ onNavigate }) => {
                           <button 
                             onClick={() => {
                               setEditingProduct(product.id);
-                              setProductForm(product);
+                              setProductForm({
+                                ...product,
+                                reward_points: product.reward_points ?? ''
+                              });
                             }}
                             className="btn-edit"
                           >
@@ -1070,6 +1135,90 @@ const AdminPanel2 = ({ onNavigate }) => {
                   onChange={(e) => setBannerForm({...bannerForm, order: e.target.value})}
                 />
                 
+                <div className="price-fields" style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '15px',
+                  marginTop: '10px'
+                }}>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      color: '#00d9ff',
+                      fontSize: '0.9rem',
+                      marginBottom: '5px',
+                      fontWeight: 600
+                    }}>💰 De: (Preço Original)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Ex: 599.90"
+                      value={bannerForm.original_price}
+                      onChange={(e) => setBannerForm({...bannerForm, original_price: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display: 'block',
+                      color: '#00ff88',
+                      fontSize: '0.9rem',
+                      marginBottom: '5px',
+                      fontWeight: 600
+                    }}>✨ Por apenas: (Preço Final)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="Ex: 399.90"
+                      value={bannerForm.final_price}
+                      onChange={(e) => setBannerForm({...bannerForm, final_price: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div style={{
+                  marginTop: '15px',
+                  padding: '20px',
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                  border: '2px solid rgba(102, 126, 234, 0.3)',
+                  borderRadius: '12px'
+                }}>
+                  <label htmlFor="banner-reward-points" style={{
+                    display: 'block',
+                    marginBottom: '10px',
+                    color: '#667eea',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                  }}>
+                    🎮 CyberPoints (Opcional)
+                    <span style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      color: '#999',
+                      fontWeight: 'normal',
+                      marginTop: '5px'
+                    }}>Pontos promocionais especiais deste banner</span>
+                  </label>
+                  <input
+                    id="banner-reward-points"
+                    type="number"
+                    min="0"
+                    placeholder="Ex: 500 pontos de bônus"
+                    value={bannerForm.reward_points}
+                    onChange={(e) => setBannerForm({...bannerForm, reward_points: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '14px',
+                      border: '2px solid rgba(102, 126, 234, 0.4)',
+                      borderRadius: '8px',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+                
                 <div className="form-buttons">
                   <button type="submit" className="btn-primary">
                     {editingBanner ? '✅ ATUALIZAR' : '➕ ADICIONAR'}
@@ -1120,7 +1269,12 @@ const AdminPanel2 = ({ onNavigate }) => {
                         <button 
                           onClick={() => {
                             setEditingBanner(banner.id);
-                            setBannerForm(banner);
+                            setBannerForm({
+                              ...banner,
+                              reward_points: banner.reward_points ?? '',
+                              original_price: banner.original_price ?? '',
+                              final_price: banner.final_price ?? ''
+                            });
                           }}
                           className="btn-edit"
                         >
@@ -1218,6 +1372,48 @@ const AdminPanel2 = ({ onNavigate }) => {
                   required
                 />
                 
+                <div style={{
+                  marginTop: '15px',
+                  padding: '20px',
+                  background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                  border: '2px solid rgba(102, 126, 234, 0.3)',
+                  borderRadius: '12px'
+                }}>
+                  <label htmlFor="event-reward-points" style={{
+                    display: 'block',
+                    marginBottom: '10px',
+                    color: '#667eea',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                  }}>
+                    🎮 CyberPoints (Opcional)
+                    <span style={{
+                      display: 'block',
+                      fontSize: '12px',
+                      color: '#999',
+                      fontWeight: 'normal',
+                      marginTop: '5px'
+                    }}>Pontos que participantes ganham ao se inscrever</span>
+                  </label>
+                  <input
+                    id="event-reward-points"
+                    type="number"
+                    min="0"
+                    placeholder="Ex: 200 pontos por participação"
+                    value={eventForm.reward_points}
+                    onChange={(e) => setEventForm({...eventForm, reward_points: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      fontSize: '14px',
+                      border: '2px solid rgba(102, 126, 234, 0.4)',
+                      borderRadius: '8px',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      color: '#fff'
+                    }}
+                  />
+                </div>
+                
                 <div className="form-buttons">
                   <button type="submit" className="btn-primary">
                     {editingEvent ? '✅ ATUALIZAR' : '➕ ADICIONAR'}
@@ -1279,7 +1475,10 @@ const AdminPanel2 = ({ onNavigate }) => {
                         <button 
                           onClick={() => {
                             setEditingEvent(event.id);
-                            setEventForm(event);
+                            setEventForm({
+                              ...event,
+                              reward_points: event.reward_points ?? ''
+                            });
                           }}
                           className="btn-edit"
                         >
