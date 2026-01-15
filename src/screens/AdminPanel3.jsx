@@ -83,10 +83,22 @@ const AdminPanel3 = ({ onNavigate }) => {
     date: '',
     time: '',
     prize: '',
+    inscription_info: '',
+    inscription_price: '',
     max_participants: '',
     type: 'Torneio',
     image_url: '',
-    reward_points: '' // CyberPoints do evento
+    rules: '',
+    schedule: '',
+    reward_points: '', // CyberPoints do evento
+    // Campos para torneio ao vivo
+    is_live: false,
+    game_name: '',
+    stream_link: '',
+    current_scores: '',
+    ranking: '',
+    participants: '',
+    live_comments: ''
   });
 
   // Pedidos
@@ -845,6 +857,15 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleAddEvent = async (e) => {
     e.preventDefault();
     try {
+      // Converter regras e cronograma de texto para array
+      const rulesArray = eventForm.rules ? eventForm.rules.split('\n').filter(r => r.trim()) : [];
+      const scheduleArray = eventForm.schedule ? eventForm.schedule.split('\n').filter(s => s.trim()) : [];
+      
+      // Converter placar, ranking e participantes de texto para array
+      const scoresArray = eventForm.current_scores ? eventForm.current_scores.split('\n').filter(s => s.trim()) : [];
+      const rankingArray = eventForm.ranking ? eventForm.ranking.split('\n').filter(r => r.trim()) : [];
+      const participantsArray = eventForm.participants ? eventForm.participants.split('\n').filter(p => p.trim()) : [];
+      
       // Mapear os dados do formulário para a estrutura do banco
       const eventData = {
         title: eventForm.title,
@@ -854,9 +875,19 @@ const AdminPanel3 = ({ onNavigate }) => {
         date: eventForm.date, // Nome correto da coluna: date
         prize: eventForm.prize || null,
         inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
+        inscription_price: eventForm.inscription_price || null,
         max_participants: parseInt(eventForm.max_participants) || null,
         image_url: eventForm.image_url || '/images/default-event.png',
+        rules: rulesArray,
+        schedule: scheduleArray,
         reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
+        is_live: eventForm.is_live || false,
+        game_name: eventForm.game_name || null,
+        stream_link: eventForm.stream_link || null,
+        current_scores: scoresArray,
+        ranking: rankingArray,
+        participants: participantsArray,
+        live_comments: eventForm.live_comments || null,
         active: true // Nome correto da coluna: active
       };
 
@@ -880,6 +911,15 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
     try {
+      // Converter regras e cronograma de texto para array
+      const rulesArray = eventForm.rules ? eventForm.rules.split('\n').filter(r => r.trim()) : [];
+      const scheduleArray = eventForm.schedule ? eventForm.schedule.split('\n').filter(s => s.trim()) : [];
+      
+      // Converter placar, ranking e participantes de texto para array
+      const scoresArray = eventForm.current_scores ? eventForm.current_scores.split('\n').filter(s => s.trim()) : [];
+      const rankingArray = eventForm.ranking ? eventForm.ranking.split('\n').filter(r => r.trim()) : [];
+      const participantsArray = eventForm.participants ? eventForm.participants.split('\n').filter(p => p.trim()) : [];
+      
       // Mapear os dados do formulário para a estrutura do banco
       const eventData = {
         title: eventForm.title,
@@ -888,9 +928,19 @@ const AdminPanel3 = ({ onNavigate }) => {
         date: eventForm.date, // Nome correto da coluna: date
         prize: eventForm.prize || null,
         inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
+        inscription_price: eventForm.inscription_price || null,
         max_participants: parseInt(eventForm.max_participants) || null,
         image_url: eventForm.image_url || '/images/default-event.png',
+        rules: rulesArray,
+        schedule: scheduleArray,
         reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
+        is_live: eventForm.is_live || false,
+        game_name: eventForm.game_name || null,
+        stream_link: eventForm.stream_link || null,
+        current_scores: scoresArray,
+        ranking: rankingArray,
+        participants: participantsArray,
+        live_comments: eventForm.live_comments || null,
         active: true // Nome correto da coluna: active
       };
 
@@ -938,9 +988,21 @@ const AdminPanel3 = ({ onNavigate }) => {
       date: '',
       time: '',
       prize: '',
+      inscription_info: '',
+      inscription_price: '',
       max_participants: '',
       type: 'Torneio',
-      image_url: ''
+      image_url: '',
+      rules: '',
+      schedule: '',
+      reward_points: '',
+      is_live: false,
+      game_name: '',
+      stream_link: '',
+      current_scores: '',
+      ranking: '',
+      participants: '',
+      live_comments: ''
     });
   };
 
@@ -2240,6 +2302,48 @@ const AdminPanel3 = ({ onNavigate }) => {
                       />
                     </div>
                     
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Informações de Inscrição</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Inscrições abertas até 15/01"
+                          value={eventForm.inscription_info}
+                          onChange={(e) => setEventForm({...eventForm, inscription_info: e.target.value})}
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Valor da Inscrição</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: R$ 50,00 ou Gratuito"
+                          value={eventForm.inscription_price}
+                          onChange={(e) => setEventForm({...eventForm, inscription_price: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Regras (uma por linha)</label>
+                      <textarea
+                        placeholder="Equipes de 5 jogadores&#10;Formato de eliminatórias duplas&#10;Idade mínima: 16 anos"
+                        value={eventForm.rules}
+                        onChange={(e) => setEventForm({...eventForm, rules: e.target.value})}
+                        rows={5}
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Cronograma (um item por linha)</label>
+                      <textarea
+                        placeholder="Fase de Grupos: 20/01 - 10:00&#10;Quartas de Final: 20/01 - 14:00&#10;Semifinais: 20/01 - 17:00"
+                        value={eventForm.schedule}
+                        onChange={(e) => setEventForm({...eventForm, schedule: e.target.value})}
+                        rows={5}
+                      />
+                    </div>
+                    
                     <div className="form-group">
                       <label>URL da Imagem</label>
                       <input
@@ -2308,6 +2412,164 @@ const AdminPanel3 = ({ onNavigate }) => {
                       }}>
                         Deixe em branco para usar o padrão (R$ 50 = 30 pontos)
                       </small>
+                    </div>
+
+                    {/* Seção Torneio Ao Vivo */}
+                    <div style={{
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
+                      border: '2px solid rgba(255, 255, 255, 0.1)',
+                      marginTop: '20px'
+                    }}>
+                      <div style={{ marginBottom: '15px' }}>
+                        <label style={{ 
+                          color: '#fff', 
+                          fontWeight: 'bold', 
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '16px',
+                          textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}>
+                          <input
+                            type="checkbox"
+                            checked={eventForm.is_live}
+                            onChange={(e) => setEventForm({...eventForm, is_live: e.target.checked})}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                          />
+                          🔴 Torneio Acontecendo Agora (Ao Vivo)
+                        </label>
+                        <small style={{ 
+                          color: '#fff', 
+                          display: 'block', 
+                          marginTop: '6px', 
+                          fontSize: '12px',
+                          opacity: '0.9',
+                          marginLeft: '26px'
+                        }}>
+                          Marque para exibir este torneio na seção "Torneio Atual"
+                        </small>
+                      </div>
+
+                      {eventForm.is_live && (
+                        <>
+                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🎮 Nome do Jogo</label>
+                            <input
+                              type="text"
+                              placeholder="Ex: League of Legends, CS:GO, FIFA 25"
+                              value={eventForm.game_name}
+                              onChange={(e) => setEventForm({...eventForm, game_name: e.target.value})}
+                              style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                fontSize: '14px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: '#333'
+                              }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📺 Link de Transmissão</label>
+                            <input
+                              type="url"
+                              placeholder="https://youtube.com/... ou https://twitch.tv/..."
+                              value={eventForm.stream_link}
+                              onChange={(e) => setEventForm({...eventForm, stream_link: e.target.value})}
+                              style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                fontSize: '14px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: '#333'
+                              }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📊 Placar Atual (um por linha)</label>
+                            <textarea
+                              placeholder="Time A 2 x 1 Time B&#10;Time C 3 x 0 Time D"
+                              value={eventForm.current_scores}
+                              onChange={(e) => setEventForm({...eventForm, current_scores: e.target.value})}
+                              rows={3}
+                              style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                fontSize: '14px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: '#333'
+                              }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🏆 Ranking (um por linha)</label>
+                            <textarea
+                              placeholder="1º - Time A (15 pontos)&#10;2º - Time B (12 pontos)&#10;3º - Time C (10 pontos)"
+                              value={eventForm.ranking}
+                              onChange={(e) => setEventForm({...eventForm, ranking: e.target.value})}
+                              rows={4}
+                              style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                fontSize: '14px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: '#333'
+                              }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>👥 Participantes (um por linha)</label>
+                            <textarea
+                              placeholder="Time A&#10;Time B&#10;Time C&#10;Jogador Solo 1"
+                              value={eventForm.participants}
+                              onChange={(e) => setEventForm({...eventForm, participants: e.target.value})}
+                              rows={4}
+                              style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                fontSize: '14px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: '#333'
+                              }}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>💬 Comentários</label>
+                            <textarea
+                              placeholder="Atualizações sobre o andamento do torneio..."
+                              value={eventForm.live_comments}
+                              onChange={(e) => setEventForm({...eventForm, live_comments: e.target.value})}
+                              rows={3}
+                              style={{
+                                width: '100%',
+                                padding: '10px',
+                                borderRadius: '8px',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                fontSize: '14px',
+                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                color: '#333'
+                              }}
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                     
                     <div className="form-actions">
@@ -2432,9 +2694,21 @@ const AdminPanel3 = ({ onNavigate }) => {
                                     date: event.date || '',
                                     time: '', // Campo não existe no banco
                                     prize: event.prize || '',
+                                    inscription_info: event.inscription_info || '',
+                                    inscription_price: event.inscription_price || '',
                                     max_participants: event.max_participants || '',
                                     type: event.type || 'Torneio',
-                                    image_url: event.image_url || ''
+                                    image_url: event.image_url || '',
+                                    rules: Array.isArray(event.rules) ? event.rules.join('\n') : '',
+                                    schedule: Array.isArray(event.schedule) ? event.schedule.join('\n') : '',
+                                    reward_points: event.reward_points || '',
+                                    is_live: event.is_live || false,
+                                    game_name: event.game_name || '',
+                                    stream_link: event.stream_link || '',
+                                    current_scores: Array.isArray(event.current_scores) ? event.current_scores.join('\n') : '',
+                                    ranking: Array.isArray(event.ranking) ? event.ranking.join('\n') : '',
+                                    participants: Array.isArray(event.participants) ? event.participants.join('\n') : '',
+                                    live_comments: event.live_comments || ''
                                   });
                                   setShowEventForm(true);
                                   setEventFormPosition({ x: 30, y: 120 });

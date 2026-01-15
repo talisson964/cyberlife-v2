@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import CommunityFab from '../components/CommunityFab';
+import { supabase } from '../supabaseClient';
 
 const eventosData = {
   'league-of-legends': {
@@ -127,9 +128,54 @@ const eventosData = {
 
 export default function EventoPage() {
   const { eventoId } = useParams();
-  const evento = eventosData[eventoId];
+  const [evento, setEvento] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Carregar evento do banco de dados
+  useEffect(() => {
+    const loadEvento = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('slug', eventoId)
+          .single();
+
+        if (error) {
+          console.error('Erro ao carregar evento:', error);
+          setEvento(null);
+          return;
+        }
+
+        // Formatar a data se necessário
+        let formattedDate = data.date;
+        if (data.date) {
+          const dateObj = new Date(data.date);
+          formattedDate = dateObj.toLocaleDateString('pt-BR', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+          });
+        }
+
+        setEvento({
+          ...data,
+          date: formattedDate,
+          inscription: data.inscription_info || 'Informações em breve'
+        });
+      } catch (error) {
+        console.error('Erro ao conectar com banco:', error);
+        setEvento(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEvento();
+  }, [eventoId]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -140,10 +186,51 @@ export default function EventoPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  if (loading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        background: '#000', 
+        color: '#fff', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        fontFamily: 'Rajdhani, sans-serif'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          animation: 'pulse 2s ease-in-out infinite'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⚡</div>
+          <h2 style={{ color: '#00d9ff', fontSize: '1.5rem' }}>Carregando evento...</h2>
+        </div>
+      </div>
+    );
+  }
+
   if (!evento) {
     return (
       <div style={{ minHeight: '100vh', background: '#000', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <h2 style={{ fontFamily: 'Rajdhani, sans-serif', color: '#00d9ff' }}>Evento não encontrado</h2>
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontFamily: 'Rajdhani, sans-serif', color: '#00d9ff', fontSize: '2rem', marginBottom: '20px' }}>Evento não encontrado</h2>
+          <Link to="/gamer-world" style={{
+            fontFamily: 'Rajdhani, sans-serif',
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            color: '#000',
+            background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+            border: '2px solid #00d9ff',
+            padding: '12px 30px',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            display: 'inline-block',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            boxShadow: '0 5px 20px rgba(0, 217, 255, 0.4)',
+          }}>
+            ← Voltar para Eventos
+          </Link>
+        </div>
       </div>
     );
   }
@@ -372,6 +459,249 @@ export default function EventoPage() {
             boxShadow: '0 0 15px #ff00ea',
           }} />
 
+          {/* Seção Evento Ao Vivo */}
+          {evento.is_live && (
+            <>
+              <style>{`
+                @keyframes pulse-live {
+                  0%, 100% { transform: scale(1); }
+                  50% { transform: scale(1.05); }
+                }
+                @keyframes blink-dot {
+                  0%, 100% { opacity: 1; }
+                  50% { opacity: 0.3; }
+                }
+              `}</style>
+              <div style={{
+                background: 'linear-gradient(135deg, #ff6b6b15 0%, #ee5a6f15 100%)',
+                border: '3px solid #ff6b6b',
+                borderRadius: '20px',
+                padding: isMobile ? '25px' : '40px',
+                marginBottom: '40px',
+                boxShadow: '0 0 30px rgba(255, 107, 107, 0.4)',
+              }}>
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    background: '#ff6b6b',
+                    padding: '10px 25px',
+                    borderRadius: '30px',
+                    marginBottom: '15px',
+                    animation: 'pulse-live 2s ease-in-out infinite',
+                  }}>
+                    <div style={{
+                      width: '12px',
+                      height: '12px',
+                      background: '#fff',
+                      borderRadius: '50%',
+                      animation: 'blink-dot 1s ease-in-out infinite',
+                    }}></div>
+                    <span style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      color: '#fff',
+                      letterSpacing: '2px',
+                    }}>EVENTO AO VIVO</span>
+                  </div>
+                  {evento.game_name && (
+                    <h3 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: isMobile ? '1.3rem' : '1.8rem',
+                      color: '#00d9ff',
+                      fontWeight: 600,
+                      marginBottom: '10px',
+                    }}>🎮 {evento.game_name}</h3>
+                  )}
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                  gap: '20px',
+                  marginBottom: '25px',
+                }}>
+                  {/* Placar */}
+                  {evento.current_scores && evento.current_scores.length > 0 && (
+                    <div style={{
+                      background: 'rgba(255, 107, 107, 0.1)',
+                      border: '2px solid rgba(255, 107, 107, 0.3)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                    }}>
+                      <h4 style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1.3rem',
+                        fontWeight: 700,
+                        color: '#ff6b6b',
+                        marginBottom: '15px',
+                      }}>📊 Placar Atual</h4>
+                      <ul style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                      }}>
+                        {evento.current_scores.map((score, idx) => (
+                          <li key={idx} style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '1rem',
+                            color: '#fff',
+                            padding: '8px 12px',
+                            background: 'rgba(255, 107, 107, 0.15)',
+                            borderRadius: '6px',
+                          }}>{score}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Ranking */}
+                  {evento.ranking && evento.ranking.length > 0 && (
+                    <div style={{
+                      background: 'rgba(255, 215, 0, 0.1)',
+                      border: '2px solid rgba(255, 215, 0, 0.3)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                    }}>
+                      <h4 style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1.3rem',
+                        fontWeight: 700,
+                        color: '#ffd700',
+                        marginBottom: '15px',
+                      }}>🏆 Ranking</h4>
+                      <ul style={{
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                      }}>
+                        {evento.ranking.map((rank, idx) => (
+                          <li key={idx} style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '1rem',
+                            color: '#fff',
+                            padding: '8px 12px',
+                            background: 'rgba(255, 215, 0, 0.15)',
+                            borderRadius: '6px',
+                            fontWeight: idx === 0 ? 700 : 400,
+                          }}>{rank}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Participantes */}
+                {evento.participants && evento.participants.length > 0 && (
+                  <div style={{
+                    background: 'rgba(138, 43, 226, 0.1)',
+                    border: '2px solid rgba(138, 43, 226, 0.3)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginBottom: '20px',
+                  }}>
+                    <h4 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      color: '#ba55d3',
+                      marginBottom: '15px',
+                    }}>👥 Participantes</h4>
+                    <ul style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                      gap: '10px',
+                    }}>
+                      {evento.participants.map((participant, idx) => (
+                        <li key={idx} style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: '1rem',
+                          color: '#fff',
+                          padding: '10px 15px',
+                          background: 'rgba(138, 43, 226, 0.15)',
+                          borderRadius: '6px',
+                        }}>{participant}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Comentários */}
+                {evento.live_comments && (
+                  <div style={{
+                    background: 'rgba(0, 217, 255, 0.1)',
+                    border: '2px solid rgba(0, 217, 255, 0.3)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginBottom: '20px',
+                  }}>
+                    <h4 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      color: '#00d9ff',
+                      marginBottom: '15px',
+                    }}>💬 Comentários</h4>
+                    <p style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1rem',
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      lineHeight: '1.6',
+                      whiteSpace: 'pre-wrap',
+                    }}>{evento.live_comments}</p>
+                  </div>
+                )}
+
+                {/* Link de Transmissão */}
+                {evento.stream_link && (
+                  <div style={{ textAlign: 'center' }}>
+                    <a 
+                      href={evento.stream_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1.2rem',
+                        fontWeight: 700,
+                        color: '#000',
+                        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                        padding: '15px 40px',
+                        borderRadius: '10px',
+                        textDecoration: 'none',
+                        letterSpacing: '2px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 5px 20px rgba(255, 107, 107, 0.4)',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-3px)';
+                        e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 107, 107, 0.6)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 107, 107, 0.4)';
+                      }}
+                    >
+                      📺 Assistir Ao Vivo
+                    </a>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
           {/* Grid de Informações */}
           <div style={{
             display: 'grid',
@@ -395,6 +725,24 @@ export default function EventoPage() {
               }}>Detalhes do Evento</h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {/* Tipo de Evento */}
+                {evento.type && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>🎮 Tipo</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      color: '#00d9ff',
+                      fontWeight: 600,
+                    }}>{evento.type}</div>
+                  </div>
+                )}
+
                 <div>
                   <div style={{
                     fontFamily: 'Rajdhani, sans-serif',
@@ -410,36 +758,93 @@ export default function EventoPage() {
                   }}>{evento.date}</div>
                 </div>
 
-                <div>
-                  <div style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '0.9rem',
-                    color: '#aaa',
-                    marginBottom: '5px',
-                  }}>🏆 Prêmio</div>
-                  <div style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1.5rem',
-                    color: '#ffea00',
-                    fontWeight: 700,
-                    textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
-                  }}>{evento.prize}</div>
-                </div>
+                {evento.prize && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>🏆 Prêmio</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.5rem',
+                      color: '#ffea00',
+                      fontWeight: 700,
+                      textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
+                    }}>{evento.prize}</div>
+                  </div>
+                )}
 
-                <div>
-                  <div style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '0.9rem',
-                    color: '#aaa',
-                    marginBottom: '5px',
-                  }}>✍️ Inscrição</div>
-                  <div style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1.1rem',
-                    color: '#fff',
-                    fontWeight: 600,
-                  }}>{evento.inscription}</div>
-                </div>
+                {evento.inscription && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>✍️ Inscrição</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.1rem',
+                      color: '#fff',
+                      fontWeight: 600,
+                    }}>{evento.inscription}</div>
+                  </div>
+                )}
+
+                {evento.inscription_price && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>💰 Valor da Inscrição</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      color: '#00ff88',
+                      fontWeight: 700,
+                      textShadow: '0 0 10px rgba(0, 255, 136, 0.6)',
+                    }}>{evento.inscription_price}</div>
+                  </div>
+                )}
+
+                {evento.max_participants && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>👥 Participantes</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.1rem',
+                      color: '#fff',
+                      fontWeight: 600,
+                    }}>Máximo de {evento.max_participants} participantes</div>
+                  </div>
+                )}
+
+                {evento.reward_points && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>🎁 Recompensa</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      color: '#a855f7',
+                      fontWeight: 700,
+                      textShadow: '0 0 10px rgba(168, 85, 247, 0.6)',
+                    }}>+{evento.reward_points} CyberPoints</div>
+                  </div>
+                )}
               </div>
 
               {/* Botão de Inscrição */}
@@ -491,94 +896,124 @@ export default function EventoPage() {
                 fontSize: '1.1rem',
                 color: 'rgba(255, 255, 255, 0.9)',
                 lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
               }}>{evento.description}</p>
+
+              {/* Imagem do Evento */}
+              {evento.image_url && (
+                <div style={{
+                  marginTop: '25px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)',
+                }}>
+                  <img 
+                    src={evento.image_url} 
+                    alt={evento.title}
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      display: 'block',
+                    }}
+                    onError={(e) => e.target.style.display = 'none'}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           {/* Grid de Regras e Cronograma */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: '30px',
-          }}>
-            {/* Regras */}
+          {((evento.rules && evento.rules.length > 0) || (evento.schedule && evento.schedule.length > 0)) && (
             <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-              border: '2px solid rgba(0, 217, 255, 0.4)',
-              borderRadius: '16px',
-              padding: isMobile ? '25px' : '35px',
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gap: '30px',
+              marginTop: '30px',
             }}>
-              <h3 style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: '#00d9ff',
-                marginBottom: '20px',
-              }}>📋 Regras</h3>
-
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}>
-                {evento.rules.map((rule, idx) => (
-                  <li key={idx} style={{
+              {/* Regras */}
+              {evento.rules && evento.rules.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.4)',
+                  borderRadius: '16px',
+                  padding: isMobile ? '25px' : '35px',
+                }}>
+                  <h3 style={{
                     fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    padding: '10px 15px',
-                    background: 'rgba(0, 217, 255, 0.05)',
-                    border: '1px solid rgba(0, 217, 255, 0.2)',
-                    borderRadius: '8px',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: '#00d9ff',
+                    marginBottom: '20px',
+                  }}>📋 Regras</h3>
+
+                  <ul style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
                   }}>
-                    • {rule}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                    {evento.rules.map((rule, idx) => (
+                      <li key={idx} style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        padding: '10px 15px',
+                        background: 'rgba(0, 217, 255, 0.05)',
+                        border: '1px solid rgba(0, 217, 255, 0.2)',
+                        borderRadius: '8px',
+                      }}>
+                        • {rule}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-            {/* Cronograma */}
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-              border: '2px solid rgba(0, 217, 255, 0.4)',
-              borderRadius: '16px',
-              padding: isMobile ? '25px' : '35px',
-            }}>
-              <h3 style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: '#00d9ff',
-                marginBottom: '20px',
-              }}>⏰ Cronograma</h3>
-
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}>
-                {evento.schedule.map((item, idx) => (
-                  <li key={idx} style={{
+              {/* Cronograma */}
+              {evento.schedule && evento.schedule.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.4)',
+                  borderRadius: '16px',
+                  padding: isMobile ? '25px' : '35px',
+                }}>
+                  <h3 style={{
                     fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    padding: '10px 15px',
-                    background: 'rgba(0, 217, 255, 0.05)',
-                    border: '1px solid rgba(0, 217, 255, 0.2)',
-                    borderRadius: '8px',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: '#00d9ff',
+                    marginBottom: '20px',
+                  }}>⏰ Cronograma</h3>
+
+                  <ul style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
                   }}>
-                    • {item}
-                  </li>
-                ))}
-              </ul>
+                    {evento.schedule.map((item, idx) => (
+                      <li key={idx} style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        padding: '10px 15px',
+                        background: 'rgba(0, 217, 255, 0.05)',
+                        border: '1px solid rgba(0, 217, 255, 0.2)',
+                        borderRadius: '8px',
+                      }}>
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </section>
 

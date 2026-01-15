@@ -317,7 +317,7 @@ export default function GamerWorld() {
           }),
           prize: event.prize || '',
           inscription: `Inscrições abertas`,
-          slug: event.title.toLowerCase().replace(/\s+/g, '-'),
+          slug: event.slug, // Usar o slug do banco de dados
           type: event.type || 'Torneio',
         }));
         

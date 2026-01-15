@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import CommunityFab from '../components/CommunityFab';
+import { supabase } from '../supabaseClient';
 
 const atividadesData = {
   'corujoes': {
@@ -8,8 +9,7 @@ const atividadesData = {
     title: 'Corujões',
     description: 'Faça reuniões com amigos e jogue a noite toda!',
     color: '#ff00ea',
-    schedule: 'Sextas e Sábados • 22h às 6h',
-    fullDescription: 'Nossos eventos Corujões são perfeitos para quem ama jogar durante a madrugada! Reúna seus amigos e aproveite uma noite completa de jogos, competição e diversão. O ambiente fica aberto das 22h até as 6h da manhã.',
+    fullDescription: 'Nossos eventos Corujões são perfeitos para quem ama jogar durante a madrugada! Reúna seus amigos e aproveite uma noite completa de jogos, competição e diversão.',
     benefits: [
       'Ambiente exclusivo para grupos',
       'Acesso ilimitado a todos os jogos',
@@ -25,7 +25,6 @@ const atividadesData = {
     rules: [
       'Idade mínima: 16 anos (menores acompanhados)',
       'Reserva antecipada recomendada',
-      'Respeite o horário de silêncio para outras áreas',
       'Consumo de alimentos e bebidas permitido',
     ]
   },
@@ -34,11 +33,10 @@ const atividadesData = {
     title: 'Torneios',
     description: 'Jogue, compita e ganhe prêmios incríveis!',
     color: '#00d9ff',
-    schedule: 'Quinzenalmente • Premiação de até R$ 5.000',
-    fullDescription: 'Participe dos nossos torneios quinzenais e mostre suas habilidades! Competições em diversos jogos com premiações que podem chegar a R$ 5.000. Os melhores jogadores ganham reconhecimento, prêmios e bragging rights!',
+    schedule: 'Quinzenalmente • Premiação garantida',
+    fullDescription: 'Participe dos nossos torneios quinzenais e mostre suas habilidades! Competições em diversos jogos com premiações garantidas. Os melhores jogadores ganham reconhecimento, prêmios e bragging rights!',
     benefits: [
       'Premiações em dinheiro',
-      'Troféus e medalhas',
       'Transmissão ao vivo dos jogos',
       'Ranking de jogadores',
       'Networking com outros gamers',
@@ -61,8 +59,7 @@ const atividadesData = {
     title: 'Rush Play',
     description: 'A jogatina só acaba quando o jogo terminar!',
     color: '#ffea00',
-    schedule: 'Domingos • 14h - Game até zerar',
-    fullDescription: 'Rush Play é o desafio definitivo para gamers hardcore! Todo domingo, escolhemos um jogo e a missão é clara: jogar até zerar. Não importa quanto tempo leve, vamos continuar até completar 100% do jogo!',
+    fullDescription: 'Rush Play é o desafio definitivo para gamers hardcore! Escolhemos um jogo e a missão é clara: jogar até zerar. Não importa quanto tempo leve, vamos continuar até completar 100% do jogo!',
     benefits: [
       'Maratona de gameplay completa',
       'Pizza e bebidas incluídas',
@@ -76,9 +73,7 @@ const atividadesData = {
       { type: 'Espectador', price: 'Gratuito', duration: 'Entrada livre para assistir' },
     ],
     rules: [
-      'Início pontual às 14h',
       'Não há limite de tempo - pode durar até 12h+',
-      'Pausas programadas a cada 3 horas',
       'Jogos escolhidos por votação prévia',
       'Participação limitada - inscreva-se cedo!',
     ]
@@ -90,6 +85,37 @@ export default function AtividadePage() {
   const atividade = atividadesData[atividadeId];
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [liveTournament, setLiveTournament] = useState(null);
+
+  // Carregar torneio ao vivo
+  useEffect(() => {
+    const loadLiveTournament = async () => {
+      if (atividadeId !== 'torneios') return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('is_live', true)
+          .eq('type', 'Torneio')
+          .limit(1)
+          .single();
+
+        if (error) {
+          console.log('Nenhum torneio ao vivo encontrado');
+          setLiveTournament(null);
+          return;
+        }
+
+        setLiveTournament(data);
+      } catch (error) {
+        console.error('Erro ao carregar torneio ao vivo:', error);
+        setLiveTournament(null);
+      }
+    };
+
+    loadLiveTournament();
+  }, [atividadeId]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -109,7 +135,18 @@ export default function AtividadePage() {
   }
 
   return (
-    <div className="atividade-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
+    <>
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
+      <div className="atividade-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
       {/* Header igual ao da Gamer World */}
       <header className="header" style={{ 
         display: 'flex', 
@@ -370,11 +407,252 @@ export default function AtividadePage() {
             }}>{atividade.fullDescription}</p>
           </div>
 
+          {/* Seção Torneio Atual - Apenas para torneios */}
+          {atividadeId === 'torneios' && liveTournament && (
+            <div style={{
+              background: 'linear-gradient(135deg, #ff6b6b15 0%, #ee5a6f15 100%)',
+              border: '3px solid #ff6b6b',
+              borderRadius: '20px',
+              padding: isMobile ? '25px' : '40px',
+              marginBottom: '40px',
+              boxShadow: '0 0 30px rgba(255, 107, 107, 0.4)',
+            }}>
+              <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: '#ff6b6b',
+                  padding: '10px 25px',
+                  borderRadius: '30px',
+                  marginBottom: '15px',
+                  animation: 'pulse 2s ease-in-out infinite',
+                }}>
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    background: '#fff',
+                    borderRadius: '50%',
+                    animation: 'blink 1s ease-in-out infinite',
+                  }}></div>
+                  <span style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    color: '#fff',
+                    letterSpacing: '2px',
+                  }}>AO VIVO</span>
+                </div>
+                <h2 style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: isMobile ? '2rem' : '3rem',
+                  fontWeight: 700,
+                  color: '#ff6b6b',
+                  marginBottom: '10px',
+                  textShadow: '0 0 20px rgba(255, 107, 107, 0.6)',
+                }}>🏆 Torneio Atual</h2>
+                <h3 style={{
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: isMobile ? '1.3rem' : '1.8rem',
+                  color: '#fff',
+                  marginBottom: '10px',
+                }}>{liveTournament.title}</h3>
+                {liveTournament.game_name && (
+                  <p style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.2rem',
+                    color: '#00d9ff',
+                    fontWeight: 600,
+                  }}>🎮 {liveTournament.game_name}</p>
+                )}
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: '20px',
+                marginBottom: '25px',
+              }}>
+                {/* Placar */}
+                {liveTournament.current_scores && liveTournament.current_scores.length > 0 && (
+                  <div style={{
+                    background: 'rgba(255, 107, 107, 0.1)',
+                    border: '2px solid rgba(255, 107, 107, 0.3)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                  }}>
+                    <h4 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      color: '#ff6b6b',
+                      marginBottom: '15px',
+                    }}>📊 Placar Atual</h4>
+                    <ul style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}>
+                      {liveTournament.current_scores.map((score, idx) => (
+                        <li key={idx} style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: '1rem',
+                          color: '#fff',
+                          padding: '8px 12px',
+                          background: 'rgba(255, 107, 107, 0.15)',
+                          borderRadius: '6px',
+                        }}>{score}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Ranking */}
+                {liveTournament.ranking && liveTournament.ranking.length > 0 && (
+                  <div style={{
+                    background: 'rgba(255, 215, 0, 0.1)',
+                    border: '2px solid rgba(255, 215, 0, 0.3)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                  }}>
+                    <h4 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      color: '#ffd700',
+                      marginBottom: '15px',
+                    }}>🏆 Ranking</h4>
+                    <ul style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}>
+                      {liveTournament.ranking.map((rank, idx) => (
+                        <li key={idx} style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: '1rem',
+                          color: '#fff',
+                          padding: '8px 12px',
+                          background: 'rgba(255, 215, 0, 0.15)',
+                          borderRadius: '6px',
+                          fontWeight: idx === 0 ? 700 : 400,
+                        }}>{rank}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Participantes */}
+              {liveTournament.participants && liveTournament.participants.length > 0 && (
+                <div style={{
+                  background: 'rgba(138, 43, 226, 0.1)',
+                  border: '2px solid rgba(138, 43, 226, 0.3)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                }}>
+                  <h4 style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.3rem',
+                    fontWeight: 700,
+                    color: '#ba55d3',
+                    marginBottom: '15px',
+                  }}>👥 Participantes</h4>
+                  <ul style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                    gap: '10px',
+                  }}>
+                    {liveTournament.participants.map((participant, idx) => (
+                      <li key={idx} style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',
+                        color: '#fff',
+                        padding: '10px 15px',
+                        background: 'rgba(138, 43, 226, 0.15)',
+                        borderRadius: '6px',
+                      }}>{participant}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Comentários */}
+              {liveTournament.live_comments && (
+                <div style={{
+                  background: 'rgba(0, 217, 255, 0.1)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                }}>
+                  <h4 style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.3rem',
+                    fontWeight: 700,
+                    color: '#00d9ff',
+                    marginBottom: '15px',
+                  }}>💬 Comentários</h4>
+                  <p style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap',
+                  }}>{liveTournament.live_comments}</p>
+                </div>
+              )}
+
+              {/* Link de Transmissão */}
+              {liveTournament.stream_link && (
+                <div style={{ textAlign: 'center' }}>
+                  <a 
+                    href={liveTournament.stream_link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-block',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      color: '#000',
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                      padding: '15px 40px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase',
+                      boxShadow: '0 5px 20px rgba(255, 107, 107, 0.4)',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 107, 107, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 107, 107, 0.4)';
+                    }}
+                  >
+                    📺 Assistir Transmissão
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Grid de Informações */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: '30px',
             marginBottom: '40px',
           }}>
             {/* Benefícios */}
@@ -414,57 +692,6 @@ export default function AtividadePage() {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            {/* Preços */}
-            <div style={{
-              background: `linear-gradient(135deg, ${atividade.color}15 0%, ${atividade.color}05 100%)`,
-              border: `2px solid ${atividade.color}`,
-              borderRadius: '16px',
-              padding: isMobile ? '25px' : '35px',
-            }}>
-              <h3 style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '1.8rem',
-                fontWeight: 700,
-                color: atividade.color,
-                marginBottom: '20px',
-              }}>💰 Valores</h3>
-
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '15px',
-              }}>
-                {atividade.pricing.map((item, idx) => (
-                  <div key={idx} style={{
-                    padding: '15px',
-                    background: `${atividade.color}10`,
-                    border: `1px solid ${atividade.color}40`,
-                    borderRadius: '8px',
-                  }}>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1.1rem',
-                      color: '#fff',
-                      fontWeight: 700,
-                      marginBottom: '5px',
-                    }}>{item.type}</div>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1.5rem',
-                      color: atividade.color,
-                      fontWeight: 700,
-                      marginBottom: '5px',
-                    }}>{item.price}</div>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '0.9rem',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                    }}>{item.duration}</div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -541,5 +768,6 @@ export default function AtividadePage() {
 
       <CommunityFab />
     </div>
+    </>
   );
 }
