@@ -417,7 +417,7 @@ export default function StartScreen({ onStart }){
 
   return (
     <div className="start-screen">
-      <div 
+      <div
         className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
         style={{backgroundImage:`url(${images[index]})`}}
       />
