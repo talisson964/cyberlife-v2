@@ -409,20 +409,14 @@ export default function GamerWorld() {
   const tutorialSteps = [
     {
       title: "Bem-vindo à CyberLife!",
-      description: "Este é o Gamer World, seu espaço dedicado aos jogos e competições.",
+      description: "Este é o Gamer World na CyberLife, um espaço dedicado aos verdadeiros Gamers e Competidores!",
       elementId: null,
       position: "center"
     },
     {
       title: "Menu de Navegação",
-      description: "Este é o menu principal. Clique no ícone de hambúrguer para abrir a barra lateral.",
+      description: "Este é o menu principal. Clique no ícone de \"traços\" para abrir a barra lateral.",
       elementId: "menu-toggle", // Using a ref or element ID
-      position: "bottom-right"
-    },
-    {
-      title: "Abrindo a Sidebar",
-      description: "Clique no ícone de hambúrguer para abrir a barra de navegação lateral.",
-      elementId: "menu-toggle",
       position: "bottom-right"
     },
     {
