@@ -159,6 +159,10 @@ export default function GamerWorld() {
   const [currentGame, setCurrentGame] = useState(0);
   const [searchGame, setSearchGame] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
   
   // Estado para produtos da loja centralizada
   const [storeProducts, setStoreProducts] = useState([]);
@@ -394,23 +398,159 @@ export default function GamerWorld() {
     };
   }, [menuOpen]);
 
+  // Show tutorial on every visit
+  useEffect(() => {
+    setTimeout(() => {
+      setShowTutorial(true);
+    }, 1000); // Show tutorial after 1 second to allow page to load
+  }, []);
+
+  // Tutorial data
+  const tutorialSteps = [
+    {
+      title: "Bem-vindo à CyberLife!",
+      description: "Este é o Gamer World, seu espaço dedicado aos jogos e competições.",
+      elementId: null,
+      position: "center"
+    },
+    {
+      title: "Menu de Navegação",
+      description: "Este é o menu principal. Clique no ícone de hambúrguer para abrir a barra lateral.",
+      elementId: "menu-toggle", // Using a ref or element ID
+      position: "bottom-right"
+    },
+    {
+      title: "Abrindo a Sidebar",
+      description: "Clique no ícone de hambúrguer para abrir a barra de navegação lateral.",
+      elementId: "menu-toggle",
+      position: "bottom-right"
+    },
+    {
+      title: "Seção Início",
+      description: "Agora que o menu está aberto, este é o botão para voltar à página inicial.",
+      elementId: "inicio-link",
+      position: "bottom-left"
+    },
+    {
+      title: "CyberHouse",
+      description: "Conheça nossa casa de games, com os melhores equipamentos e experiências.",
+      elementId: "cyberhouse-link",
+      position: "bottom-left"
+    },
+    {
+      title: "Eventos",
+      description: "Confira nossos eventos, torneios, corujões e rush plays.",
+      elementId: "eventos-link",
+      position: "bottom-left"
+    },
+    {
+      title: "Explore Jogos",
+      description: "Descubra nossa galeria de jogos disponíveis para experimentar.",
+      elementId: "galeria-link",
+      position: "bottom-left"
+    },
+    {
+      title: "Loja Gamer",
+      description: "Acesse nossa loja especializada em produtos para gamers.",
+      elementId: "loja-link",
+      position: "bottom-left"
+    },
+    {
+      title: "Perfil",
+      description: "Acesse suas informações pessoais e histórico de atividades.",
+      elementId: "perfil-link",
+      position: "bottom-left"
+    }
+  ];
+
+  const currentTutorialStep = tutorialSteps[tutorialStep];
+
+  // Effect to handle menu opening during tutorial
+  useEffect(() => {
+    // Open menu when we reach the menu items steps (after step 2)
+    if (showTutorial && tutorialStep > 2 && !menuOpen) {
+      setMenuOpen(true);
+    }
+
+    // Close menu when leaving the menu items steps
+    if (showTutorial && tutorialStep <= 2 && menuOpen) {
+      setMenuOpen(false);
+    }
+
+    // Update menu dropdown styling when tutorial is active
+    if (showTutorial && menuOpen) {
+      const menuDropdown = document.querySelector('[style*="backdropFilter"]');
+      if (menuDropdown) {
+        menuDropdown.style.setProperty('--tutorial-active', 'true');
+      }
+    }
+  }, [tutorialStep, showTutorial, menuOpen]);
+
+  const nextTutorialStep = () => {
+    // Special handling for step 2 (click menu to open sidebar)
+    if (tutorialStep === 2) {
+      // Toggle menu open if it's closed
+      if (!menuOpen) {
+        setMenuOpen(true);
+      }
+      // Move to next step after a delay to allow menu to open
+      setTimeout(() => {
+        setTutorialStep(prev => prev + 1);
+      }, 500);
+      return;
+    }
+
+    if (tutorialStep < tutorialSteps.length - 1) {
+      setTutorialStep(prev => prev + 1);
+    } else {
+      setShowTutorial(false);
+      setTutorialStep(0);
+      // Close menu when tutorial ends
+      if (menuOpen) {
+        setMenuOpen(false);
+      }
+    }
+  };
+
+  const prevTutorialStep = () => {
+    // Special handling when going back from step 3 to step 2
+    if (tutorialStep === 3) {
+      // Move to previous step first
+      setTutorialStep(prev => prev - 1);
+      // Then close menu if it's open
+      if (menuOpen) {
+        setMenuOpen(false);
+      }
+      return;
+    }
+
+    if (tutorialStep > 0) {
+      setTutorialStep(prev => prev - 1);
+    }
+  };
+
+  const skipTutorial = () => {
+    setShowTutorial(false);
+    setTutorialStep(0);
+  };
+
   // Detectar mudanças no tamanho da tela
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
     <div className="gamer-world-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
-      <header className="header" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        padding: isMobile ? '10px 16px' : '12px 36px', 
+      <header className="header" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: isMobile ? '10px 16px' : '12px 36px',
         margin: 0,
         background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
         borderBottom: '2px solid #00d9ff',
@@ -422,8 +562,8 @@ export default function GamerWorld() {
         boxSizing: 'border-box',
       }}>
         <div className="logo" style={{
-          display: 'flex', 
-          alignItems: 'center', 
+          display: 'flex',
+          alignItems: 'center',
           gap: '10px',
           transition: 'transform 0.3s ease',
           cursor: 'pointer',
@@ -431,20 +571,20 @@ export default function GamerWorld() {
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <img 
-            src="/cyberlife-icone2.png" 
-            alt="CyberLife Logo" 
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife Logo"
             style={{
-              height: isMobile ? '32px' : '40px', 
+              height: isMobile ? '32px' : '40px',
               verticalAlign: 'middle',
               filter: 'drop-shadow(0 0 8px rgba(0, 217, 255, 0.6))',
-            }} 
+            }}
           />
           <span style={{
-            fontFamily: 'Rajdhani, sans-serif', 
-            fontWeight: 700, 
-            fontSize: isMobile ? '1.1rem' : '1.4rem', 
-            color: '#00d9ff', 
+            fontFamily: 'Rajdhani, sans-serif',
+            fontWeight: 700,
+            fontSize: isMobile ? '1.1rem' : '1.4rem',
+            color: '#00d9ff',
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
           }}>CyberLife</span>
@@ -452,6 +592,7 @@ export default function GamerWorld() {
         <nav className="nav" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           {/* Botão Menu Hambúrguer */}
           <button
+            id="menu-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
               background: 'transparent',
@@ -498,9 +639,9 @@ export default function GamerWorld() {
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
           </button>
-          
+
           <Link to="/menu">
-            <button style={{
+            <button id="inicio-btn" style={{
               background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
               border: '2px solid #00d9ff',
               color: '#00d9ff',
@@ -557,16 +698,17 @@ export default function GamerWorld() {
           gap: '6px',
         }}>
           {[
-            { name: 'Início', id: 'hero', isScroll: true },
-            { name: 'CyberHouse', id: 'cyberhouse', isScroll: true },
-            { name: 'Eventos', id: 'eventos', isScroll: true },
-            { name: 'Explore Jogos', id: 'galeria', isScroll: true },
-            { name: 'Loja Gamer', id: 'loja', isScroll: true },
-            { name: 'Perfil', id: 'perfil', isScroll: false },
+            { name: 'Início', id: 'hero', isScroll: true, tutorialId: 'inicio-link' },
+            { name: 'CyberHouse', id: 'cyberhouse', isScroll: true, tutorialId: 'cyberhouse-link' },
+            { name: 'Eventos', id: 'eventos', isScroll: true, tutorialId: 'eventos-link' },
+            { name: 'Explore Jogos', id: 'galeria', isScroll: true, tutorialId: 'galeria-link' },
+            { name: 'Loja Gamer', id: 'loja', isScroll: true, tutorialId: 'loja-link' },
+            { name: 'Perfil', id: 'perfil', isScroll: false, tutorialId: 'perfil-link' },
           ].map((item, idx) => (
             item.isScroll ? (
               <a
                 key={idx}
+                id={item.tutorialId}
                 href={`#${item.id}`}
                 onClick={(e) => {
                   e.preventDefault();
@@ -620,6 +762,7 @@ export default function GamerWorld() {
             ) : (
               <Link
                 key={idx}
+                id={item.tutorialId}
                 to={`/${item.id}`}
                 style={{
                   fontFamily: 'Rajdhani, sans-serif',
@@ -2354,6 +2497,15 @@ export default function GamerWorld() {
               left: 100%;
             }
           }
+
+          @keyframes pulse-glow {
+            0%, 100% {
+              box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.7), 0 0 20px #00d9ff;
+            }
+            50% {
+              box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.7), 0 0 30px #00d9ff, 0 0 40px #00d9ff;
+            }
+          }
         `}</style>
       </section>
 
@@ -3402,6 +3554,203 @@ export default function GamerWorld() {
         </div>
       </section>
       
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: isMobile ? 'flex-end' : 'center',
+          justifyContent: 'center',
+          paddingBottom: isMobile ? '20px' : '0',
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #0a0a2a 100%)',
+            border: '2px solid #00d9ff',
+            borderRadius: '15px',
+            padding: isMobile ? '20px' : '30px',
+            maxWidth: '500px',
+            width: isMobile ? '95%' : '90%',
+            position: 'relative',
+            boxShadow: '0 0 40px rgba(0, 217, 255, 0.8), 0 0 60px rgba(0, 217, 255, 0.5)',
+            backdropFilter: 'blur(10px)',
+            zIndex: 10001,
+            maxHeight: isMobile ? '80vh' : 'none',
+            overflowY: isMobile ? 'auto' : 'visible',
+            // Position the tutorial modal near the element being highlighted
+            ...(currentTutorialStep.elementId && (() => {
+              const element = document.getElementById(currentTutorialStep.elementId);
+              if (element) {
+                const rect = element.getBoundingClientRect();
+                // Calculate position to ensure it fits on screen
+                const modalWidth = isMobile ? window.innerWidth * 0.9 : 500; // Adjust for mobile
+                const adjustedLeft = Math.max(
+                  10, // Minimum left margin
+                  Math.min(
+                    rect.left + rect.width / 2 - (modalWidth / 2), // Centered position
+                    window.innerWidth - modalWidth - 10 // Maximum right margin
+                  )
+                );
+
+                // Calculate top position to ensure it's visible on screen
+                const topPosition = Math.min(
+                  rect.bottom + 20 + window.scrollY, // Default position below element
+                  window.innerHeight - 200 + window.scrollY // Ensure it doesn't go off screen
+                );
+
+                return {
+                  position: 'fixed',
+                  top: topPosition + 'px',
+                  left: adjustedLeft + 'px',
+                  transform: isMobile ? 'none' : 'translateX(-50%)',
+                };
+              }
+              return {};
+            })())
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: isMobile ? '10px' : '15px',
+              right: isMobile ? '10px' : '15px',
+              fontSize: isMobile ? '1.2rem' : '1.5rem',
+              cursor: 'pointer',
+              color: '#ff00ea',
+              textShadow: '0 0 10px rgba(255, 0, 234, 0.7)',
+            }} onClick={skipTutorial}>✕</div>
+
+            <h3 style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: isMobile ? '1.3rem' : '1.5rem',
+              color: '#00d9ff',
+              marginBottom: '15px',
+              textAlign: 'center',
+              textShadow: '0 0 10px rgba(0, 217, 255, 0.7)',
+            }}>{currentTutorialStep.title}</h3>
+
+            <p style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: isMobile ? '0.9rem' : '1rem',
+              color: '#fff',
+              marginBottom: '25px',
+              textAlign: 'center',
+              lineHeight: '1.5',
+              textShadow: '0 0 5px rgba(255, 255, 255, 0.5)',
+            }}>{currentTutorialStep.description}</p>
+
+            <div style={{
+              display: isMobile ? 'flex' : 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: isMobile ? 'center' : 'space-between',
+              alignItems: isMobile ? 'center' : 'center',
+              gap: isMobile ? '10px' : '0',
+            }}>
+              <div style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: isMobile ? '0.8rem' : '0.9rem',
+                color: '#00d9ff',
+                textShadow: '0 0 5px rgba(0, 217, 255, 0.5)',
+                marginBottom: isMobile ? '10px' : '0',
+              }}>
+                Passo {tutorialStep + 1} de {tutorialSteps.length}
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: isMobile ? '5px' : '10px',
+                flexWrap: 'wrap',
+                justifyContent: 'center',
+              }}>
+                {tutorialStep > 0 && (
+                  <button
+                    onClick={prevTutorialStep}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.3), rgba(0, 150, 200, 0.3))',
+                      border: '1px solid #00d9ff',
+                      color: '#00d9ff',
+                      padding: isMobile ? '6px 10px' : '8px 15px',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 'bold',
+                      textShadow: '0 0 5px rgba(0, 217, 255, 0.5)',
+                      fontSize: isMobile ? '0.8rem' : '1rem',
+                    }}
+                  >
+                    {isMobile ? 'Ant.' : 'Anterior'}
+                  </button>
+                )}
+
+                <button
+                  onClick={nextTutorialStep}
+                  style={{
+                    background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
+                    border: 'none',
+                    color: '#000',
+                    padding: isMobile ? '6px 10px' : '8px 15px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 10px rgba(0, 217, 255, 0.5)',
+                    fontSize: isMobile ? '0.8rem' : '1rem',
+                  }}
+                >
+                  {tutorialStep === tutorialSteps.length - 1 ? (isMobile ? 'Fim' : 'Concluir') : (isMobile ? 'Próx.' : 'Próximo')}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Highlight overlay for the current element */}
+          {currentTutorialStep.elementId && (() => {
+            const element = document.getElementById(currentTutorialStep.elementId);
+            if (element) {
+              const rect = element.getBoundingClientRect();
+              return (
+                <div style={{
+                  position: 'fixed',
+                  top: rect.top + window.scrollY + 'px',
+                  left: rect.left + window.scrollX + 'px',
+                  width: rect.width + 'px',
+                  height: rect.height + 'px',
+                  border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
+                  borderRadius: '8px',
+                  boxShadow: '0 0 15px #00d9ff, 0 0 25px rgba(0, 217, 255, 0.8)',
+                  zIndex: 9999,
+                  pointerEvents: 'none',
+                  animation: 'pulse-glow 1.5s infinite',
+                }}></div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Special highlight for menu dropdown when it should be open */}
+          {tutorialStep >= 3 && tutorialStep <= 8 && showTutorial && (
+            <div style={{
+              position: isMobile ? 'fixed' : 'fixed',
+              top: isMobile ? '52px' : '68px',
+              right: isMobile ? '5px' : '120px',
+              background: 'transparent',
+              border: '2px solid #00d9ff',
+              borderRadius: '0 0 12px 12px',
+              borderTop: 'none',
+              zIndex: 9998,
+              boxShadow: '0 8px 30px rgba(0, 217, 255, 0.8), 0 0 40px rgba(0, 217, 255, 0.6)',
+              animation: 'pulse-glow 1.5s infinite',
+              pointerEvents: 'none',
+              width: isMobile ? '200px' : '220px',
+              maxHeight: '400px',
+            }}></div>
+          )}
+        </div>
+      )}
+
       <CommunityFab />
     </div>
   );

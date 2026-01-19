@@ -736,6 +736,7 @@ export default function AtividadePage() {
           </div>
 
           {/* Botão de Reserva */}
+          {!['corujoes', 'torneios', 'rush-play'].includes(atividadeId) && (
           <div style={{ textAlign: 'center' }}>
             <button style={{
               padding: isMobile ? '15px 40px' : '20px 60px',
@@ -763,6 +764,7 @@ export default function AtividadePage() {
               Fazer Reserva
             </button>
           </div>
+          )}
         </div>
       </section>
 
