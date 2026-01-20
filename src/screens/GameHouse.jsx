@@ -461,13 +461,13 @@ export default function GamerWorld() {
 
   // Effect to handle menu opening during tutorial
   useEffect(() => {
-    // Open menu when we reach the menu items steps (after step 2)
-    if (showTutorial && tutorialStep > 2 && !menuOpen) {
+    // Open menu when we reach the menu items steps (step 2 and onwards)
+    if (showTutorial && tutorialStep >= 2 && !menuOpen) {
       setMenuOpen(true);
     }
 
-    // Close menu when leaving the menu items steps
-    if (showTutorial && tutorialStep <= 2 && menuOpen) {
+    // Close menu when leaving the menu items steps (before step 2)
+    if (showTutorial && tutorialStep < 2 && menuOpen) {
       setMenuOpen(false);
     }
 
@@ -481,8 +481,8 @@ export default function GamerWorld() {
   }, [tutorialStep, showTutorial, menuOpen]);
 
   const nextTutorialStep = () => {
-    // Special handling for step 2 (click menu to open sidebar)
-    if (tutorialStep === 2) {
+    // Special handling for step 1 (click menu to open sidebar)
+    if (tutorialStep === 1) {
       // Toggle menu open if it's closed
       if (!menuOpen) {
         setMenuOpen(true);
@@ -495,7 +495,37 @@ export default function GamerWorld() {
     }
 
     if (tutorialStep < tutorialSteps.length - 1) {
-      setTutorialStep(prev => prev + 1);
+      const nextStep = tutorialStep + 1;
+      setTutorialStep(nextStep);
+
+      // Scroll to the section for the new step if it has an elementId
+      setTimeout(() => {
+        const nextStepData = tutorialSteps[nextStep];
+        if (nextStepData && nextStepData.elementId) {
+          // Map tutorial element IDs to section IDs
+          const sectionMap = {
+            'inicio-link': 'hero',
+            'cyberhouse-link': 'cyberhouse',
+            'eventos-link': 'eventos',
+            'galeria-link': 'galeria',
+            'loja-link': 'loja'
+          };
+
+          if (sectionMap[nextStepData.elementId]) {
+            // Scroll to the corresponding section
+            const sectionElement = document.getElementById(sectionMap[nextStepData.elementId]);
+            if (sectionElement) {
+              sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          } else {
+            // For other elements, scroll to the element directly
+            const element = document.getElementById(nextStepData.elementId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        }
+      }, 100);
     } else {
       setShowTutorial(false);
       setTutorialStep(0);
@@ -503,12 +533,22 @@ export default function GamerWorld() {
       if (menuOpen) {
         setMenuOpen(false);
       }
+      // Scroll to top of hero section when tutorial ends
+      setTimeout(() => {
+        const heroSection = document.getElementById('hero');
+        if (heroSection) {
+          heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          // Fallback to top of page if hero section is not found
+          window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+        }
+      }, 10);
     }
   };
 
   const prevTutorialStep = () => {
-    // Special handling when going back from step 3 to step 2
-    if (tutorialStep === 3) {
+    // Special handling when going back from step 2 to step 1
+    if (tutorialStep === 2) {
       // Move to previous step first
       setTutorialStep(prev => prev - 1);
       // Then close menu if it's open
@@ -519,13 +559,57 @@ export default function GamerWorld() {
     }
 
     if (tutorialStep > 0) {
-      setTutorialStep(prev => prev - 1);
+      const prevStep = tutorialStep - 1;
+      setTutorialStep(prevStep);
+
+      // Scroll to the section for the previous step if it has an elementId
+      setTimeout(() => {
+        const prevStepData = tutorialSteps[prevStep];
+        if (prevStepData && prevStepData.elementId) {
+          // Map tutorial element IDs to section IDs
+          const sectionMap = {
+            'inicio-link': 'hero',
+            'cyberhouse-link': 'cyberhouse',
+            'eventos-link': 'eventos',
+            'galeria-link': 'galeria',
+            'loja-link': 'loja'
+          };
+
+          if (sectionMap[prevStepData.elementId]) {
+            // Scroll to the corresponding section
+            const sectionElement = document.getElementById(sectionMap[prevStepData.elementId]);
+            if (sectionElement) {
+              sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          } else {
+            // For other elements, scroll to the element directly
+            const element = document.getElementById(prevStepData.elementId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        }
+      }, 100);
     }
   };
 
   const skipTutorial = () => {
     setShowTutorial(false);
     setTutorialStep(0);
+    // Close menu when tutorial is skipped
+    if (menuOpen) {
+      setMenuOpen(false);
+    }
+    // Scroll to top of hero section when tutorial is skipped
+    setTimeout(() => {
+      const heroSection = document.getElementById('hero');
+      if (heroSection) {
+        heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // Fallback to top of page if hero section is not found
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }
+    }, 10);
   };
 
   // Detectar mudanças no tamanho da tela

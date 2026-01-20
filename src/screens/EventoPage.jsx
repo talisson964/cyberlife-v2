@@ -133,6 +133,13 @@ export default function EventoPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // Estados para a funcionalidade de apostas
+  const [selectedBet, setSelectedBet] = useState(null);
+  const [betAmount] = useState(10); // Aposta fixa de 10 CyberPoints
+  const [userPoints, setUserPoints] = useState(100); // Isso viria do perfil do usuário
+  const [bets, setBets] = useState([]); // Armazena as apostas do usuário
+
+  // Carregar evento do banco de dados
   // Carregar evento do banco de dados
   useEffect(() => {
     const loadEvento = async () => {
@@ -177,14 +184,154 @@ export default function EventoPage() {
     loadEvento();
   }, [eventoId]);
 
+  // Carregar pontos do usuário
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('cyber_points')
+            .eq('id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Erro ao carregar perfil:', error);
+            setUserPoints(100); // Valor padrão
+          } else {
+            setUserPoints(profile.cyber_points || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao obter usuário:', error);
+        setUserPoints(100); // Valor padrão
+      }
+    };
+
+    loadUserProfile();
+  }, []);
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Estado para armazenar os participantes do evento
+  const [eventParticipants, setEventParticipants] = useState([]);
+
+  // Carregar participantes do evento
+  useEffect(() => {
+    const loadEventParticipants = async () => {
+      if (evento && evento.id) {
+        try {
+          // Buscar inscrições confirmadas para este evento
+          const { data: registrations, error } = await supabase
+            .from('event_registrations')
+            .select('user_id, user_nickname')
+            .eq('event_id', evento.id)
+            .eq('status', 'confirmed');
+
+          if (error) {
+            console.error('Erro ao carregar participantes:', error);
+            // Se não houver registros no banco, usar dados do evento como fallback
+            if (evento.participants) {
+              setEventParticipants(evento.participants.map((p, idx) => ({ id: idx + 1, name: p, odds: (Math.random() * 3 + 1.5).toFixed(2) })));
+            } else {
+              setEventParticipants([]);
+            }
+            return;
+          }
+
+          // Transformar os dados para o formato esperado
+          const participants = registrations.map((reg, idx) => ({
+            id: reg.user_id,
+            name: reg.user_nickname,
+            odds: (Math.random() * 3 + 1.5).toFixed(2) // Odds aleatórias como exemplo
+          }));
+
+          setEventParticipants(participants);
+        } catch (error) {
+          console.error('Erro ao conectar com banco para participantes:', error);
+          setEventParticipants([]);
+        }
+      }
+    };
+
+    loadEventParticipants();
+  }, [evento]);
+
+  // Calcular potencial ganho baseado na regra: 75% do total apostado dividido pelos acertadores
+  const potentialWin = 0; // O valor real será calculado após o evento terminar
+
+  // Função para fazer a aposta
+  const placeBet = async () => {
+    if (!selectedBet || userPoints < 10) {
+      alert('Por favor, selecione um jogador e tenha pelo menos 10 CyberPoints para apostar.');
+      return;
+    }
+
+    try {
+      // Verificar se o usuário tem pontos suficientes
+      if (userPoints < 10) {
+        alert('Você não tem CyberPoints suficientes para esta aposta (mínimo 10).');
+        return;
+      }
+
+      // Obter usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Você precisa estar logado para fazer uma aposta.');
+        return;
+      }
+
+      // Criar a aposta no banco de dados
+      const betData = {
+        user_id: user.id,
+        event_id: evento.id,
+        selected_option: selectedBet,
+        amount: 10, // Aposta fixa de 10 CyberPoints
+        created_at: new Date().toISOString()
+      };
+
+      const { error: betError } = await supabase
+        .from('event_bets')
+        .insert([betData]);
+
+      if (betError) {
+        console.error('Erro ao salvar aposta:', betError);
+        alert('Erro ao registrar sua aposta. Tente novamente.');
+        return;
+      }
+
+      // Atualizar pontos do usuário (subtrair valor da aposta)
+      const newPoints = userPoints - 10;
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ cyber_points: newPoints })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Erro ao atualizar pontos:', updateError);
+        alert('Erro ao atualizar seus pontos. Tente novamente.');
+        return;
+      }
+
+      // Atualizar estado local
+      setUserPoints(newPoints);
+      setBets([...bets, betData]);
+      setSelectedBet(null);
+
+      alert('Aposta registrada com sucesso! Boa sorte!');
+    } catch (error) {
+      console.error('Erro ao fazer aposta:', error);
+      alert('Erro ao fazer sua aposta. Tente novamente.');
+    }
+  };
 
   if (loading) {
     return (
@@ -758,6 +905,23 @@ export default function EventoPage() {
                   }}>{evento.date}</div>
                 </div>
 
+                {evento.time && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>🕐 Horário</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      color: '#00d9ff',
+                      fontWeight: 600,
+                    }}>{evento.time}</div>
+                  </div>
+                )}
+
                 {evento.prize && (
                   <div>
                     <div style={{
@@ -808,6 +972,42 @@ export default function EventoPage() {
                       fontWeight: 700,
                       textShadow: '0 0 10px rgba(0, 255, 136, 0.6)',
                     }}>{evento.inscription_price}</div>
+                  </div>
+                )}
+
+                {evento.inscription_price_cyberpoints && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>🎮 Valor da Inscrição em CyberPoints</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      color: '#a855f7',
+                      fontWeight: 700,
+                      textShadow: '0 0 10px rgba(168, 85, 247, 0.6)',
+                    }}>{evento.inscription_price_cyberpoints} CyberPoints</div>
+                  </div>
+                )}
+
+                {!evento.inscription_price && !evento.inscription_price_cyberpoints && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>💰 Valor da Inscrição</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.3rem',
+                      color: '#00ff88',
+                      fontWeight: 700,
+                      textShadow: '0 0 10px rgba(0, 255, 136, 0.6)',
+                    }}>GRÁTIS</div>
                   </div>
                 )}
 
@@ -1014,6 +1214,260 @@ export default function EventoPage() {
               )}
             </div>
           )}
+
+          {/* Seção de Apostas em Jogadores Vencedores */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
+            border: '2px solid rgba(138, 43, 226, 0.4)',
+            borderRadius: '20px',
+            padding: isMobile ? '30px 20px' : '40px',
+            margin: '50px auto',
+            maxWidth: '1000px',
+            boxShadow: '0 0 30px rgba(138, 43, 226, 0.3)',
+          }}>
+            <h2 style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: isMobile ? '1.8rem' : '2.5rem',
+              fontWeight: 700,
+              color: '#00d9ff',
+              textAlign: 'center',
+              marginBottom: '30px',
+              textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
+            }}>🎯 Aposte no Vencedor!</h2>
+
+            <p style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: '1.1rem',
+              color: 'rgba(255, 255, 255, 0.9)',
+              textAlign: 'center',
+              marginBottom: '30px',
+              lineHeight: '1.6',
+            }}>
+              Faça sua aposta em qual jogador ou equipe você acha que vai vencer este evento!
+              Ganhe CyberPoints extras se seu palpite estiver correto!
+            </p>
+
+            {/* Opções de Aposta */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+              gap: '20px',
+              marginBottom: '30px',
+            }}>
+              {eventParticipants.length > 0 ? (
+                eventParticipants.map((option) => (
+                  <div
+                    key={option.id}
+                    style={{
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '2px solid rgba(0, 217, 255, 0.3)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                    onClick={() => setSelectedBet(option.id)}
+                  >
+                    {/* Efeito de seleção */}
+                    {selectedBet === option.id && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        border: '3px solid #00d9ff',
+                        borderRadius: '12px',
+                        pointerEvents: 'none',
+                        boxShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
+                      }} />
+                    )}
+
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                      margin: '0 auto 15px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '2rem',
+                      overflow: 'hidden',
+                    }}>
+                      <img
+                        src="/default-avatar.png"
+                        alt={option.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => e.target.src='/default-avatar.png'}
+                      />
+                    </div>
+
+                    <h3 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      color: '#fff',
+                      marginBottom: '10px',
+                    }}>{option.name}</h3>
+
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '15px',
+                    }}>
+                      <span style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '0.9rem',
+                        color: '#aaa',
+                      }}>Odd:</span>
+                      <span style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1.3rem',
+                        fontWeight: 700,
+                        color: '#00d9ff',
+                        textShadow: '0 0 10px rgba(0, 217, 255, 0.6)',
+                      }}>{option.odds}</span>
+                    </div>
+
+                    <button style={{
+                      background: selectedBet === option.id
+                        ? 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)'
+                        : 'rgba(0, 217, 255, 0.1)',
+                      border: '2px solid #00d9ff',
+                      color: selectedBet === option.id ? '#000' : '#00d9ff',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}>
+                      {selectedBet === option.id ? 'Selecionado' : 'Apostar'}
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div style={{
+                  gridColumn: '1 / -1',
+                  textAlign: 'center',
+                  padding: '40px',
+                  color: '#aaa',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '1.2rem',
+                }}>
+                  Nenhum participante confirmado para este evento ainda.
+                </div>
+              )}
+            </div>
+
+            {/* Formulário de Aposta */}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(0, 217, 255, 0.2)',
+              borderRadius: '12px',
+              padding: '25px',
+              marginTop: '20px',
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: 'center',
+                gap: '20px',
+              }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{
+                    display: 'block',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    color: '#00d9ff',
+                    marginBottom: '10px',
+                  }}>Quantidade de CyberPoints para apostar:</label>
+                  <div style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: 'rgba(0, 0, 0, 0.5)',
+                    border: '2px solid rgba(0, 217, 255, 0.3)',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                  }}>
+                    10 CyberPoints
+                  </div>
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: '#aaa',
+                    marginTop: '5px',
+                  }}>Aposta fixa de 10 CyberPoints | Seu saldo: {userPoints} CyberPoints</div>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{
+                    display: 'block',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    color: '#00d9ff',
+                    marginBottom: '10px',
+                  }}>Como Funciona:</label>
+                  <div style={{
+                    background: 'rgba(0, 217, 255, 0.1)',
+                    border: '2px solid rgba(0, 217, 255, 0.3)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '0.9rem',
+                    color: '#00d9ff',
+                    lineHeight: '1.5',
+                  }}>
+                    <p style={{ margin: '0 0 8px 0' }}>• Você aposta 10 CyberPoints no jogador</p>
+                    <p style={{ margin: '0 0 8px 0' }}>• Se ele vencer, 75% do total apostado por todos os apostadores de todos os jogadores será dividido entre os acertadores</p>
+                    <p style={{ margin: '0 0 0 0' }}>• O valor exato só é conhecido após o evento</p>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  height: '100%'
+                }}>
+                  <button
+                    disabled={!selectedBet || userPoints < 10}
+                    onClick={placeBet}
+                    style={{
+                      background: !selectedBet || userPoints < 10
+                        ? 'rgba(255, 0, 234, 0.2)'
+                        : 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
+                      border: '2px solid #ff00ea',
+                      color: !selectedBet || userPoints < 10
+                        ? '#666'
+                        : '#fff',
+                      padding: '12px 25px',
+                      borderRadius: '8px',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1rem',
+                      cursor: !selectedBet || userPoints < 10
+                        ? 'not-allowed'
+                        : 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    Confirmar Aposta (10 CyberPoints)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 

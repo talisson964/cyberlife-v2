@@ -85,6 +85,7 @@ const AdminPanel3 = ({ onNavigate }) => {
     prize: '',
     inscription_info: '',
     inscription_price: '',
+    inscription_price_cyberpoints: '',
     max_participants: '',
     type: 'Torneio',
     image_url: '',
@@ -926,9 +927,11 @@ const AdminPanel3 = ({ onNavigate }) => {
         description: eventForm.description || 'Evento sem descrição',
         type: eventForm.type || 'Torneio',
         date: eventForm.date, // Nome correto da coluna: date
+        time: eventForm.time || null, // Adicionando o campo de hora
         prize: eventForm.prize || null,
         inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
         inscription_price: eventForm.inscription_price || null,
+        inscription_price_cyberpoints: eventForm.inscription_price_cyberpoints || null, // Adicionando o campo de preço em CyberPoints
         max_participants: parseInt(eventForm.max_participants) || null,
         image_url: eventForm.image_url || '/images/default-event.png',
         rules: rulesArray,
@@ -1071,17 +1074,18 @@ const AdminPanel3 = ({ onNavigate }) => {
   const loadCustomers = async () => {
     try {
       console.log('Carregando clientes...');
+
+      // Primeiro tenta com o client normal
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('is_admin', false)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Erro ao buscar clientes:', error);
         throw error;
       }
-      
+
       console.log('Clientes carregados:', data?.length || 0);
       setCustomers(data || []);
     } catch (error) {
@@ -2323,7 +2327,17 @@ const AdminPanel3 = ({ onNavigate }) => {
                         />
                       </div>
                     </div>
-                    
+
+                    <div className="form-group">
+                      <label>Valor da Inscrição em CyberPoints</label>
+                      <input
+                        type="number"
+                        placeholder="Ex: 100 (deixe em branco para gratuito em CyberPoints)"
+                        value={eventForm.inscription_price_cyberpoints}
+                        onChange={(e) => setEventForm({...eventForm, inscription_price_cyberpoints: e.target.value})}
+                      />
+                    </div>
+
                     <div className="form-group">
                       <label>Regras (uma por linha)</label>
                       <textarea
@@ -2692,10 +2706,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                                     title: event.title || '',
                                     description: event.description || '',
                                     date: event.date || '',
-                                    time: '', // Campo não existe no banco
+                                    time: event.time || '',
                                     prize: event.prize || '',
                                     inscription_info: event.inscription_info || '',
                                     inscription_price: event.inscription_price || '',
+                                    inscription_price_cyberpoints: event.inscription_price_cyberpoints || '',
                                     max_participants: event.max_participants || '',
                                     type: event.type || 'Torneio',
                                     image_url: event.image_url || '',
@@ -2873,23 +2888,41 @@ const AdminPanel3 = ({ onNavigate }) => {
                       
                       <div className="customer-info">
                         <h4>{customer.full_name || customer.nickname || 'Nome não informado'}</h4>
-                        
+
                         {customer.email && (
                           <div className="customer-email">
                             📧 {customer.email}
                           </div>
                         )}
-                        
-                        {customer.phone && (
-                          <div className="customer-phone">
-                            📱 {customer.phone}
+
+                        {customer.whatsapp && (
+                          <div className="customer-whatsapp">
+                            📱 {customer.whatsapp}
                           </div>
                         )}
-                        
+
                         <div className="customer-joined">
                           📅 Cadastro: {new Date(customer.created_at).toLocaleDateString('pt-BR')}
                         </div>
-                        
+
+                        {customer.city && (
+                          <div className="customer-city">
+                            📍 {customer.city}, {customer.state || ''}
+                          </div>
+                        )}
+
+                        {customer.age && (
+                          <div className="customer-age">
+                            👤 Idade: {customer.age} anos
+                          </div>
+                        )}
+
+                        {customer.cyber_points !== undefined && (
+                          <div className="customer-cyberpoints">
+                            🎮 CyberPoints: {customer.cyber_points}
+                          </div>
+                        )}
+
                         {customer.total_orders && (
                           <div className="customer-stats">
                             <span className="orders-count">🛒 {customer.total_orders} pedidos</span>
@@ -2898,7 +2931,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                             )}
                           </div>
                         )}
-                        
+
                         {customer.last_login && (
                           <div className="customer-last-login">
                             🕐 Último acesso: {new Date(customer.last_login).toLocaleDateString('pt-BR')}
@@ -2943,21 +2976,21 @@ const AdminPanel3 = ({ onNavigate }) => {
               </h3>
               <button onClick={closePreview} className="btn-close-preview">✕</button>
             </div>
-            
+
             <div className="preview-modal-body">
               {/* Preview de Produto */}
               {previewType === 'product' && (
                 <div className="product-preview-container">
                   <div className="product-card-site-preview">
                     <div className="product-image-wrapper-preview">
-                      <img 
-                        src={previewData.image_url} 
+                      <img
+                        src={previewData.image_url}
                         alt={previewData.name}
                         className="product-image-preview default"
                       />
                       {previewData.hover_image_url && (
-                        <img 
-                          src={previewData.hover_image_url} 
+                        <img
+                          src={previewData.hover_image_url}
                           alt={`${previewData.name} - Hover`}
                           className="product-image-preview hover"
                         />
@@ -2983,110 +3016,50 @@ const AdminPanel3 = ({ onNavigate }) => {
               {/* Preview de Banner */}
               {previewType === 'banner' && (
                 <div className="banner-preview-container">
-                  <div className="offer-slide-preview">
-                    <div className="offer-discount-badge-preview">
-                      {previewData.discount || '20% OFF'}
-                    </div>
-                    <div className="offer-split-preview">
-                      <div className="offer-image-side-preview">
-                        <div className="offer-glow-preview"></div>
-                        <img 
-                          src={previewData.image_url} 
-                          alt={previewData.title}
-                          className="offer-image-preview"
-                        />
-                      </div>
-                      <div className="offer-content-side-preview">
-                        <h3 className="offer-title-preview">{previewData.title}</h3>
-                        
-                        {(previewData.original_price || previewData.final_price) && (
-                          <div className="offer-prices-preview">
-                            {previewData.original_price && (
-                              <div className="price-block-preview">
-                                <span className="price-label-preview">De:</span>
-                                <span className="price-original-preview">{previewData.original_price}</span>
-                              </div>
-                            )}
-                            {previewData.final_price && (
-                              <div className="price-block-preview">
-                                <span className="price-label-final-preview">Por apenas:</span>
-                                <span className="price-final-preview">{previewData.final_price}</span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {previewData.description && (
-                          <p className="offer-description-preview">{previewData.description}</p>
-                        )}
-                        <button className="offer-btn-preview">
-                          Ver Ofertas
-                        </button>
-                      </div>
+                  <div className="banner-card-site-preview">
+                    <img
+                      src={previewData.image_url}
+                      alt={previewData.title}
+                      className="banner-image-preview"
+                    />
+                    <div className="banner-info-preview">
+                      <h3 className="banner-title-preview">{previewData.title}</h3>
+                      {previewData.description && (
+                        <p className="banner-description-preview">{previewData.description}</p>
+                      )}
+                      {previewData.original_price && previewData.final_price && (
+                        <div className="banner-price-preview">
+                          <span className="original-price-preview">{previewData.original_price}</span>
+                          <span className="final-price-preview">{previewData.final_price}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <p className="preview-note">💡 Esta é uma prévia de como o banner aparecerá no carrossel da página inicial</p>
+                  <p className="preview-note">💡 Esta é uma prévia de como o banner aparecerá na loja</p>
                 </div>
               )}
 
               {/* Preview de Evento */}
               {previewType === 'event' && (
                 <div className="event-preview-container">
-                  <div className="event-carousel-preview">
-                    <div className="event-carousel-shine"></div>
-                    
-                    <img 
-                      src={previewData.image_url} 
+                  <div className="event-card-site-preview">
+                    <img
+                      src={previewData.image_url}
                       alt={previewData.title}
-                      className="event-carousel-image"
+                      className="event-image-preview"
                     />
-                    
-                    <div className="event-carousel-overlay"></div>
-                    
-                    <div className="event-carousel-content">
-                      <div className="event-tag-preview">// Próximo Evento</div>
-                      
-                      <h2 className="event-title-carousel">{previewData.title}</h2>
-                      
-                      <div className="event-details-carousel">
-                        <div className="event-detail-item">
-                          <span className="detail-icon">📅</span>
-                          <span className="detail-text">
-                            {new Date(previewData.date).toLocaleDateString('pt-BR', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                        
-                        {previewData.prize && (
-                          <div className="event-detail-item">
-                            <span className="detail-icon">🏆</span>
-                            <span className="detail-text">{previewData.prize}</span>
-                          </div>
-                        )}
-                        
-                        {previewData.max_participants && (
-                          <div className="event-detail-item">
-                            <span className="detail-icon">👥</span>
-                            <span className="detail-text">Máx: {previewData.max_participants} participantes</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {previewData.description && (
-                        <p className="event-description-carousel">
-                          {previewData.description}
-                        </p>
+                    <div className="event-info-preview">
+                      <h3 className="event-title-preview">{previewData.title}</h3>
+                      <p className="event-date-preview">📅 {previewData.date}</p>
+                      {previewData.prize && (
+                        <p className="event-prize-preview">🏆 {previewData.prize}</p>
                       )}
-                      
-                      <button className="event-register-carousel-btn">
-                        Inscrever-se Agora
-                      </button>
+                      {previewData.inscription_info && (
+                        <p className="event-inscription-preview">✍️ {previewData.inscription_info}</p>
+                      )}
                     </div>
                   </div>
-                  <p className="preview-note">💡 Esta é uma prévia de como o evento aparecerá no carrossel da página Gamer World</p>
+                  <p className="preview-note">💡 Esta é uma prévia de como o evento aparecerá na página</p>
                 </div>
               )}
             </div>

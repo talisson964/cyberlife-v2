@@ -63,6 +63,8 @@ const AdminPanel2 = ({ onNavigate }) => {
     date: '',
     prize: '',
     inscription_info: '',
+    inscription_price: '', // Preço da inscrição em reais
+    inscription_price_cyberpoints: '', // Preço da inscrição em cyberpoints
     max_participants: null,
     image_url: '',
     rules: [],
@@ -428,7 +430,9 @@ const AdminPanel2 = ({ onNavigate }) => {
           max_participants: eventForm.max_participants ? parseInt(eventForm.max_participants) : null,
           rules: Array.isArray(eventForm.rules) ? eventForm.rules : [],
           schedule: Array.isArray(eventForm.schedule) ? eventForm.schedule : [],
-          reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null
+          reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
+          inscription_price: eventForm.inscription_price ? parseFloat(eventForm.inscription_price) : null,
+          inscription_price_cyberpoints: eventForm.inscription_price_cyberpoints ? parseInt(eventForm.inscription_price_cyberpoints) : null
         }])
         .select();
 
@@ -453,7 +457,9 @@ const AdminPanel2 = ({ onNavigate }) => {
           max_participants: eventForm.max_participants ? parseInt(eventForm.max_participants) : null,
           rules: Array.isArray(eventForm.rules) ? eventForm.rules : [],
           schedule: Array.isArray(eventForm.schedule) ? eventForm.schedule : [],
-          reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null
+          reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
+          inscription_price: eventForm.inscription_price ? parseFloat(eventForm.inscription_price) : null,
+          inscription_price_cyberpoints: eventForm.inscription_price_cyberpoints ? parseInt(eventForm.inscription_price_cyberpoints) : null
         })
         .eq('id', editingEvent);
 
@@ -497,6 +503,8 @@ const AdminPanel2 = ({ onNavigate }) => {
       date: '',
       prize: '',
       inscription_info: '',
+      inscription_price: '',
+      inscription_price_cyberpoints: '',
       max_participants: null,
       image_url: '',
       rules: [],
@@ -1348,7 +1356,22 @@ const AdminPanel2 = ({ onNavigate }) => {
                   value={eventForm.inscription_info}
                   onChange={(e) => setEventForm({...eventForm, inscription_info: e.target.value})}
                 />
-                
+
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Valor da inscrição em reais (ex: 50.00)"
+                  value={eventForm.inscription_price}
+                  onChange={(e) => setEventForm({...eventForm, inscription_price: e.target.value})}
+                />
+
+                <input
+                  type="number"
+                  placeholder="Valor da inscrição em CyberPoints (ex: 100)"
+                  value={eventForm.inscription_price_cyberpoints}
+                  onChange={(e) => setEventForm({...eventForm, inscription_price_cyberpoints: e.target.value})}
+                />
+
                 <input
                   type="number"
                   placeholder="Máximo de participantes (deixe em branco para ilimitado)"
@@ -1477,7 +1500,9 @@ const AdminPanel2 = ({ onNavigate }) => {
                             setEditingEvent(event.id);
                             setEventForm({
                               ...event,
-                              reward_points: event.reward_points ?? ''
+                              reward_points: event.reward_points ?? '',
+                              inscription_price: event.inscription_price ?? '',
+                              inscription_price_cyberpoints: event.inscription_price_cyberpoints ?? ''
                             });
                           }}
                           className="btn-edit"
