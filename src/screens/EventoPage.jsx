@@ -132,14 +132,55 @@ export default function EventoPage() {
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [registrationLoading, setRegistrationLoading] = useState(false);
 
   // Estados para a funcionalidade de apostas
   const [selectedBet, setSelectedBet] = useState(null);
   const [betAmount] = useState(10); // Aposta fixa de 10 CyberPoints
   const [userPoints, setUserPoints] = useState(100); // Isso viria do perfil do usuário
   const [bets, setBets] = useState([]); // Armazena as apostas do usuário
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupType, setPopupType] = useState(''); // 'success', 'error', 'info'
+  const [showPopup, setShowPopup] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationCallback, setConfirmationCallback] = useState(null);
 
-  // Carregar evento do banco de dados
+  // Função para exibir popup personalizado
+  const showCustomPopup = (message, type) => {
+    setPopupMessage(message);
+    setPopupType(type);
+    setShowPopup(true);
+
+    // Fechar o popup automaticamente após 5 segundos
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 5000);
+  };
+
+  // Função para exibir confirmação personalizada
+  const showCustomConfirmation = (message, callback) => {
+    setConfirmationMessage(message);
+    setShowConfirmation(true);
+    setConfirmationCallback(() => callback);
+  };
+
+  // Função para lidar com a confirmação
+  const handleConfirm = () => {
+    if (confirmationCallback) {
+      confirmationCallback(true);
+    }
+    setShowConfirmation(false);
+  };
+
+  // Função para lidar com o cancelamento
+  const handleCancel = () => {
+    if (confirmationCallback) {
+      confirmationCallback(false);
+    }
+    setShowConfirmation(false);
+  };
+
   // Carregar evento do banco de dados
   useEffect(() => {
     const loadEvento = async () => {
@@ -333,14 +374,128 @@ export default function EventoPage() {
     }
   };
 
+  // Função para inscrever-se no evento com verificação de cyberpoints
+  const registerForEvent = async () => {
+    if (!evento) {
+      alert('Evento não carregado.');
+      return;
+    }
+
+    // Verificar se o usuário está logado
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      alert('Você precisa estar logado para se inscrever no evento.');
+      return;
+    }
+
+    // Verificar se o evento tem preço de inscrição em cyberpoints
+    const inscriptionCost = evento.inscription_price_cyberpoints || 0;
+
+    // Se houver custo, verificar se o usuário tem pontos suficientes
+    if (inscriptionCost > 0) {
+      if (userPoints < inscriptionCost) {
+        showCustomPopup(`Você não tem CyberPoints suficientes para se inscrever neste evento.\nCusto: ${inscriptionCost} CyberPoints\nSeu saldo: ${userPoints} CyberPoints`, 'error');
+        return;
+      }
+
+      // Confirmar com o usuário o custo da inscrição usando confirmação personalizada
+      showCustomConfirmation(
+        `<!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Confirmação de Inscrição</title>
+        </head>
+        <body>
+          <div style="font-family: Rajdhani, sans-serif; line-height: 1.8;">
+            <h3 style="color: #00d9ff; margin-top: 0; margin-bottom: 15px; font-size: 1.4em; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Confirmação de Inscrição</h3>
+            <p style="margin: 10px 0; font-size: 1.1em;"><strong>Evento:</strong></p>
+            <p style="margin: 10px 0; font-weight: bold; color: #00d9ff; font-size: 1.2em; text-align: center; padding: 10px; background-color: rgba(0, 217, 255, 0.1); border-radius: 5px; border: 1px solid #00d9ff;">${evento.title}</p>
+            <p style="margin: 15px 0; font-size: 1.1em;"><strong>Custo da inscrição:</strong> <span style="color: #ff00ea; font-weight: bold; font-size: 1.2em;">${inscriptionCost} CyberPoints</span></p>
+            <p style="margin: 15px 0; font-size: 1.1em;"><strong>Seu saldo após inscrição:</strong> <span style="color: #00ff88; font-weight: bold; font-size: 1.2em;">${userPoints - inscriptionCost} CyberPoints</span></p>
+            <p style="margin: 20px 0 0 0; font-size: 1.2em; text-align: center; color: #ffffff; font-weight: bold; padding: 10px; background-color: rgba(0, 217, 255, 0.2); border-radius: 5px;">Deseja confirmar sua inscrição?</p>
+          </div>
+        </body>
+        </html>`,
+        (confirmed) => {
+          if (confirmed) {
+            performRegistration();
+          }
+        }
+      );
+    } else {
+      // Confirmar inscrição gratuita com confirmação personalizada
+      showCustomConfirmation(
+        `<!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Confirmação de Inscrição</title>
+        </head>
+        <body>
+          <div style="font-family: Rajdhani, sans-serif; line-height: 1.8;">
+            <h3 style="color: #00d9ff; margin-top: 0; margin-bottom: 15px; font-size: 1.4em; text-align: center; text-transform: uppercase; letter-spacing: 1px;">Confirmação de Inscrição</h3>
+            <p style="margin: 10px 0; font-size: 1.1em;"><strong>Evento:</strong></p>
+            <p style="margin: 10px 0; font-weight: bold; color: #00d9ff; font-size: 1.2em; text-align: center; padding: 10px; background-color: rgba(0, 217, 255, 0.1); border-radius: 5px; border: 1px solid #00d9ff;">${evento.title}</p>
+            <p style="margin: 15px 0; font-size: 1.2em; text-align: center; color: #00ff88; font-weight: bold; padding: 10px; background-color: rgba(0, 255, 136, 0.1); border-radius: 5px; border: 1px solid #00ff88;">🎉 A inscrição é gratuita!</p>
+            <p style="margin: 20px 0 0 0; font-size: 1.2em; text-align: center; color: #ffffff; font-weight: bold; padding: 10px; background-color: rgba(0, 217, 255, 0.2); border-radius: 5px;">Deseja confirmar sua inscrição?</p>
+          </div>
+        </body>
+        </html>`,
+        (confirmed) => {
+          if (confirmed) {
+            performRegistration();
+          }
+        }
+      );
+    }
+  };
+
+  // Função auxiliar para realizar a inscrição
+  const performRegistration = async () => {
+    setRegistrationLoading(true);
+
+    try {
+      // Chamar a função RPC no banco de dados para inscrever o usuário
+      const { data, error } = await supabase
+        .rpc('register_for_event_with_cyberpoints', { p_event_id: evento.id });
+
+      if (error) {
+        console.error('Erro na inscrição:', error);
+        showCustomPopup(`Erro ao se inscrever no evento: ${error.message}`, 'error');
+        return;
+      }
+
+      if (data && data.success) {
+        // Atualizar o saldo de pontos localmente
+        if (inscriptionCost > 0) {
+          setUserPoints(prev => prev - inscriptionCost);
+        }
+
+        showCustomPopup(data.message, 'success');
+      } else if (data && !data.success) {
+        if (data.already_registered) {
+          showCustomPopup(data.message, 'info');
+        } else {
+          showCustomPopup(`Erro na inscrição: ${data.message}`, 'error');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao se inscrever no evento:', error);
+      showCustomPopup(`Erro inesperado ao se inscrever no evento: ${error.message}`, 'error');
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        background: '#000', 
-        color: '#fff', 
-        display: 'flex', 
-        alignItems: 'center', 
+      <div style={{
+        minHeight: '100vh',
+        background: '#000',
+        color: '#fff',
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
         fontFamily: 'Rajdhani, sans-serif'
       }}>
@@ -383,13 +538,26 @@ export default function EventoPage() {
   }
 
   return (
-    <div className="evento-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
+    <>
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+      <div className="evento-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
       {/* Header igual ao da Gamer World */}
-      <header className="header" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        padding: isMobile ? '10px 16px' : '12px 36px', 
+      <header className="header" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: isMobile ? '10px 16px' : '12px 36px',
         margin: 0,
         background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
         borderBottom: '2px solid #00d9ff',
@@ -401,8 +569,8 @@ export default function EventoPage() {
         boxSizing: 'border-box',
       }}>
         <div className="logo" style={{
-          display: 'flex', 
-          alignItems: 'center', 
+          display: 'flex',
+          alignItems: 'center',
           gap: '10px',
           transition: 'transform 0.3s ease',
           cursor: 'pointer',
@@ -410,20 +578,20 @@ export default function EventoPage() {
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <img 
-            src="/cyberlife-icone2.png" 
-            alt="CyberLife Logo" 
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife Logo"
             style={{
-              height: isMobile ? '32px' : '40px', 
+              height: isMobile ? '32px' : '40px',
               verticalAlign: 'middle',
               filter: 'drop-shadow(0 0 8px rgba(0, 217, 255, 0.6))',
-            }} 
+            }}
           />
           <span style={{
-            fontFamily: 'Rajdhani, sans-serif', 
-            fontWeight: 700, 
-            fontSize: isMobile ? '1.1rem' : '1.4rem', 
-            color: '#00d9ff', 
+            fontFamily: 'Rajdhani, sans-serif',
+            fontWeight: 700,
+            fontSize: isMobile ? '1.1rem' : '1.4rem',
+            color: '#00d9ff',
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
           }}>CyberLife</span>
@@ -476,7 +644,7 @@ export default function EventoPage() {
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
           </button>
-          
+
           <Link to="/gamer-world">
             <button style={{
               background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
@@ -813,9 +981,9 @@ export default function EventoPage() {
                 {/* Link de Transmissão */}
                 {evento.stream_link && (
                   <div style={{ textAlign: 'center' }}>
-                    <a 
-                      href={evento.stream_link} 
-                      target="_blank" 
+                    <a
+                      href={evento.stream_link}
+                      target="_blank"
                       rel="noopener noreferrer"
                       style={{
                         display: 'inline-block',
@@ -1047,32 +1215,45 @@ export default function EventoPage() {
                 )}
               </div>
 
-              {/* Botão de Inscrição */}
-              <button style={{
-                width: '100%',
-                marginTop: '30px',
-                padding: '15px',
-                background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
-                border: 'none',
-                borderRadius: '10px',
-                color: '#000',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                textTransform: 'uppercase',
-                letterSpacing: '2px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 217, 255, 0.5)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}>
-                Inscrever-se Agora
+              {/* Botão de Inscrição - AGORA COM FUNCIONALIDADE */}
+              <button 
+                onClick={registerForEvent}
+                disabled={registrationLoading}
+                style={{
+                  width: '100%',
+                  marginTop: '30px',
+                  padding: '15px',
+                  background: registrationLoading 
+                    ? 'linear-gradient(135deg, #666 0%, #444 100%)' 
+                    : 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#000',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  cursor: registrationLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                }}
+                onMouseEnter={(e) => {
+                  if (!registrationLoading) {
+                    e.currentTarget.style.transform = 'translateY(-3px)';
+                    e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 217, 255, 0.5)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!registrationLoading) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }
+                }}>
+                {registrationLoading 
+                  ? 'PROCESSANDO...' 
+                  : evento.inscription_price_cyberpoints > 0 
+                    ? `Inscrever-se Agora (${evento.inscription_price_cyberpoints} CyberPoints)`
+                    : 'Inscrever-se Agora (GRÁTIS)'}
               </button>
             </div>
 
@@ -1108,8 +1289,8 @@ export default function EventoPage() {
                   border: '2px solid rgba(0, 217, 255, 0.3)',
                   boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)',
                 }}>
-                  <img 
-                    src={evento.image_url} 
+                  <img
+                    src={evento.image_url}
                     alt={evento.title}
                     style={{
                       width: '100%',
@@ -1471,7 +1652,140 @@ export default function EventoPage() {
         </div>
       </section>
 
+      {/* Componente de Popup Personalizado */}
+      {showPopup && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 10000,
+          maxWidth: '400px',
+          animation: 'slideInRight 0.3s ease-out'
+        }}>
+          <div style={{
+            background: popupType === 'success' ? 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)' :
+                     popupType === 'error' ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)' :
+                     'linear-gradient(135deg, #ffd700 0%, #ffcc00 100%)',
+            color: '#000',
+            padding: '15px 20px',
+            borderRadius: '10px',
+            boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+            border: '2px solid rgba(255,255,255,0.2)',
+            fontFamily: 'Rajdhani, sans-serif',
+            fontWeight: 'bold',
+            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <span style={{
+              fontSize: '1.2rem'
+            }}>
+              {popupType === 'success' ? '✅' :
+               popupType === 'error' ? '❌' : 'ℹ️'}
+            </span>
+            <span style={{
+              flex: 1,
+              lineHeight: '1.4'
+            }}>
+              {popupMessage}
+            </span>
+            <button
+              onClick={() => setShowPopup(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#000',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                padding: '0',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Componente de Confirmação Personalizado */}
+      {showConfirmation && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10001
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
+            color: '#fff',
+            padding: '30px',
+            borderRadius: '15px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 217, 255, 0.4)',
+            border: '2px solid #00d9ff',
+            fontFamily: 'Rajdhani, sans-serif'
+          }}>
+            <div
+              dangerouslySetInnerHTML={{ __html: confirmationMessage }}
+              style={{ marginBottom: '20px' }}
+            />
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px',
+              marginTop: '20px'
+            }}>
+              <button
+                onClick={handleCancel}
+                style={{
+                  background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirm}
+                style={{
+                  background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                  color: '#000',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <CommunityFab />
     </div>
+    </>
   );
 }
