@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CommunityFab from '../components/CommunityFab';
 import { Link, useNavigate } from 'react-router-dom';
+import NotificationBell from '../components/NotificationBell';
 import img2 from '../imagens base/2.jpeg';
 import img3 from '../imagens base/3.jpeg';
 import img5 from '../imagens base/5.jpeg';
@@ -159,10 +160,25 @@ export default function GamerWorld() {
   const [currentGame, setCurrentGame] = useState(0);
   const [searchGame, setSearchGame] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [user, setUser] = useState(null);
+
+  // Estados para notificações
+  const [notification, setNotification] = useState(null);
 
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+
+  // Função para mostrar notificações com novo design
+  const showNotification = (message, type = 'info', duration = 5000) => {
+    const id = Date.now();
+    setNotification({ id, message, type });
+
+    // Remover notificação após duração
+    setTimeout(() => {
+      setNotification(null);
+    }, duration);
+  };
   
   // Estado para produtos da loja centralizada
   const [storeProducts, setStoreProducts] = useState([]);
@@ -191,6 +207,25 @@ export default function GamerWorld() {
   useEffect(() => {
     stopAudio()
   }, [])
+
+  // Carregar usuário autenticado
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    checkUser();
+
+    // Ouvir mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   
   // Carregar produtos do banco de dados
   useEffect(() => {
@@ -717,6 +752,9 @@ export default function GamerWorld() {
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
           </button>
+
+          {/* Ícone de Notificações */}
+          {user && <NotificationBell userId={user.id} showNotification={showNotification} />}
 
           <Link to="/menu">
             <button id="inicio-btn" style={{
@@ -2971,7 +3009,11 @@ export default function GamerWorld() {
                       }}>{gameCard.description}</p>
                       
                       {/* Botão de ação */}
-                      <Link to={`/jogo/${gameCard.slug}`} style={{ textDecoration: 'none' }}>
+                      <Link to="#" onClick={(e) => {
+                          e.preventDefault();
+                          showNotification(`Abrindo o jogo ${gameCard.title}`, 'info');
+                          setTimeout(() => navigate(`/jogo/${gameCard.slug}`), 500);
+                        }} style={{ textDecoration: 'none' }}>
                         <button style={{
                           fontFamily: 'Rajdhani, sans-serif',
                           fontSize: isMobile ? '0.95rem' : '1.15rem',
@@ -3830,6 +3872,111 @@ export default function GamerWorld() {
       )}
 
       <CommunityFab />
+
+      {/* Componente de Notificação com Novo Design */}
+      {notification && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 10000,
+          maxWidth: '400px',
+          animation: 'slideInRight 0.3s ease-out, fadeOut 0.5s ease-out 4.5s forwards'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(10, 10, 20, 0.95) 0%, rgba(20, 5, 30, 0.95) 100%)',
+            border: '2px solid',
+            borderColor: notification.type === 'error' ? '#ff0055' :
+                         notification.type === 'success' ? '#00cc66' : '#00d9ff',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            boxShadow: `0 10px 30px rgba(0, 0, 0, 0.5),
+                        0 0 20px ${notification.type === 'error' ? 'rgba(255, 0, 85, 0.4)' :
+                                   notification.type === 'success' ? 'rgba(0, 204, 102, 0.4)' :
+                                   'rgba(0, 217, 255, 0.4)'},
+                        inset 0 0 15px rgba(255, 255, 255, 0.1)`,
+            fontFamily: 'Rajdhani, sans-serif',
+            fontWeight: '500',
+            fontSize: '1rem',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '12px',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)'
+          }}>
+            <div style={{
+              fontSize: '1.4rem',
+              marginTop: '2px'
+            }}>
+              {notification.type === 'error' ? '⚠️' :
+               notification.type === 'success' ? '✅' : '📢'}
+            </div>
+            <div style={{
+              flex: 1,
+              lineHeight: '1.5',
+              textShadow: '0 0 8px rgba(255, 255, 255, 0.3)'
+            }}>
+              {notification.message}
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#fff',
+                fontSize: '1.2rem',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                transition: 'all 0.2s ease',
+                minWidth: '28px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// Adicionando estilos CSS para as animações
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = `
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+`;
+
+// Adicionando os estilos ao documento
+if (!document.querySelector('#notification-styles')) {
+  styleSheet.id = 'notification-styles';
+  document.head.appendChild(styleSheet);
 }

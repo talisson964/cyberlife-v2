@@ -8,6 +8,7 @@ import NextScreen from './screens/NextScreen'
 import LojaGeek from './screens/LojaGeek'
 import AdminPanel3 from './screens/AdminPanel3';
 import CarrinhoPage from './screens/CarrinhoPage'
+import CompraCyberPoints from './screens/CompraCyberPoints'
 import GameHouse from './screens/GamerWorld'
 import PerfilPage from './screens/PerfilPage'
 import EventoPage from './screens/EventoPage'
@@ -140,6 +141,7 @@ export default function App() {
           <Route path="/evento/:eventoId" element={<EventoPage />} />
           <Route path="/atividade/:atividadeId" element={<AtividadePage />} />
           <Route path="/jogo/:jogoId" element={<JogoPage />} />
+          <Route path="/comprar-cyberpoints" element={<CompraCyberPoints />} />
         </Routes>
       </AccessLogger>
     </BrowserRouter>

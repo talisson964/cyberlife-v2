@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import CommunityFab from '../components/CommunityFab';
 import { supabase } from '../supabaseClient';
 
@@ -128,6 +128,7 @@ const eventosData = {
 
 export default function EventoPage() {
   const { eventoId } = useParams();
+  const navigate = useNavigate();
   const [evento, setEvento] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -142,15 +143,17 @@ export default function EventoPage() {
   const [popupMessage, setPopupMessage] = useState('');
   const [popupType, setPopupType] = useState(''); // 'success', 'error', 'info'
   const [showPopup, setShowPopup] = useState(false);
+  const [showBuyButton, setShowBuyButton] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationCallback, setConfirmationCallback] = useState(null);
 
   // Função para exibir popup personalizado
-  const showCustomPopup = (message, type) => {
+  const showCustomPopup = (message, type, showBuyButton = false) => {
     setPopupMessage(message);
     setPopupType(type);
     setShowPopup(true);
+    setShowBuyButton(showBuyButton);
 
     // Fechar o popup automaticamente após 5 segundos
     setTimeout(() => {
@@ -312,21 +315,21 @@ export default function EventoPage() {
   // Função para fazer a aposta
   const placeBet = async () => {
     if (!selectedBet || userPoints < 10) {
-      alert('Por favor, selecione um jogador e tenha pelo menos 10 CyberPoints para apostar.');
+      showCustomPopup('Por favor, selecione um jogador e tenha pelo menos 10 CyberPoints para apostar.', 'error', true);
       return;
     }
 
     try {
       // Verificar se o usuário tem pontos suficientes
       if (userPoints < 10) {
-        alert('Você não tem CyberPoints suficientes para esta aposta (mínimo 10).');
+        showCustomPopup(`Você não tem CyberPoints suficientes para esta aposta (mínimo 10).\nSeu saldo: ${userPoints} CyberPoints`, 'error', true);
         return;
       }
 
       // Obter usuário atual
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert('Você precisa estar logado para fazer uma aposta.');
+        showCustomPopup('Você precisa estar logado para fazer uma aposta.', 'error');
         return;
       }
 
@@ -345,7 +348,7 @@ export default function EventoPage() {
 
       if (betError) {
         console.error('Erro ao salvar aposta:', betError);
-        alert('Erro ao registrar sua aposta. Tente novamente.');
+        showCustomPopup('Erro ao registrar sua aposta. Tente novamente.', 'error');
         return;
       }
 
@@ -358,7 +361,7 @@ export default function EventoPage() {
 
       if (updateError) {
         console.error('Erro ao atualizar pontos:', updateError);
-        alert('Erro ao atualizar seus pontos. Tente novamente.');
+        showCustomPopup('Erro ao atualizar seus pontos. Tente novamente.', 'error');
         return;
       }
 
@@ -367,24 +370,24 @@ export default function EventoPage() {
       setBets([...bets, betData]);
       setSelectedBet(null);
 
-      alert('Aposta registrada com sucesso! Boa sorte!');
+      showCustomPopup('Aposta registrada com sucesso! Boa sorte!', 'success');
     } catch (error) {
       console.error('Erro ao fazer aposta:', error);
-      alert('Erro ao fazer sua aposta. Tente novamente.');
+      showCustomPopup('Erro ao fazer sua aposta. Tente novamente.', 'error');
     }
   };
 
   // Função para inscrever-se no evento com verificação de cyberpoints
   const registerForEvent = async () => {
     if (!evento) {
-      alert('Evento não carregado.');
+      showCustomPopup('Evento não carregado.', 'error');
       return;
     }
 
     // Verificar se o usuário está logado
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      alert('Você precisa estar logado para se inscrever no evento.');
+      showCustomPopup('Você precisa estar logado para se inscrever no evento.', 'error');
       return;
     }
 
@@ -394,7 +397,7 @@ export default function EventoPage() {
     // Se houver custo, verificar se o usuário tem pontos suficientes
     if (inscriptionCost > 0) {
       if (userPoints < inscriptionCost) {
-        showCustomPopup(`Você não tem CyberPoints suficientes para se inscrever neste evento.\nCusto: ${inscriptionCost} CyberPoints\nSeu saldo: ${userPoints} CyberPoints`, 'error');
+        showCustomPopup(`Você não tem CyberPoints suficientes para se inscrever neste evento.\nCusto: ${inscriptionCost} CyberPoints\nSeu saldo: ${userPoints} CyberPoints`, 'error', true);
         return;
       }
 
@@ -1663,51 +1666,99 @@ export default function EventoPage() {
           animation: 'slideInRight 0.3s ease-out'
         }}>
           <div style={{
-            background: popupType === 'success' ? 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)' :
-                     popupType === 'error' ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)' :
-                     'linear-gradient(135deg, #ffd700 0%, #ffcc00 100%)',
-            color: '#000',
+            background: popupType === 'success' ? 'linear-gradient(135deg, rgba(0, 217, 255, 0.9) 0%, rgba(0, 153, 204, 0.9) 100%)' :
+                     popupType === 'error' ? 'linear-gradient(135deg, rgba(255, 0, 234, 0.9) 0%, rgba(255, 0, 138, 0.9) 100%)' :
+                     'linear-gradient(135deg, rgba(0, 217, 255, 0.9) 0%, rgba(255, 0, 234, 0.9) 100%)',
+            color: '#fff',
             padding: '15px 20px',
-            borderRadius: '10px',
-            boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-            border: '2px solid rgba(255,255,255,0.2)',
+            borderRadius: '12px',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 217, 255, 0.3)',
+            border: '2px solid rgba(0, 217, 255, 0.3)',
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: 'bold',
             fontSize: '1rem',
             display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
+            flexDirection: 'column',
+            gap: '10px',
+            backdropFilter: 'blur(10px)'
           }}>
-            <span style={{
-              fontSize: '1.2rem'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
-              {popupType === 'success' ? '✅' :
-               popupType === 'error' ? '❌' : 'ℹ️'}
-            </span>
-            <span style={{
-              flex: 1,
-              lineHeight: '1.4'
-            }}>
-              {popupMessage}
-            </span>
-            <button
-              onClick={() => setShowPopup(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#000',
-                fontSize: '1.2rem',
-                cursor: 'pointer',
-                padding: '0',
-                width: '24px',
-                height: '24px',
+              <span style={{
+                fontSize: '1.4rem',
+                fontWeight: 'normal'
+              }}>
+                {popupType === 'success' ? '✅' :
+                 popupType === 'error' ? '⚠️' : 'ℹ️'}
+              </span>
+              <span style={{
+                flex: 1,
+                lineHeight: '1.4',
+                textShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+              }}>
+                {popupMessage}
+              </span>
+              <button
+                onClick={() => setShowPopup(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: '#fff',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                ×
+              </button>
+            </div>
+            {showBuyButton && (
+              <div style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ×
-            </button>
+                justifyContent: 'center',
+                marginTop: '10px'
+              }}>
+                <button
+                  onClick={() => navigate('/comprar-cyberpoints')}
+                  style={{
+                    background: 'linear-gradient(135deg, #00d9ff 0%, #ff00ea 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    boxShadow: '0 5px 15px rgba(0, 217, 255, 0.4)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 217, 255, 0.4)';
+                  }}
+                >
+                  Comprar CyberPoints
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

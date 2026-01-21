@@ -80,6 +80,113 @@ export default function CarrinhoPage({ onBack }) {
 
   const cyberPointsToEarn = calculateCyberPoints();
 
+  const [userPoints, setUserPoints] = useState(0);
+  const [usingCyberPoints, setUsingCyberPoints] = useState(false);
+  const [popupMessage, setPopupMessage] = useState('');
+  const [popupType, setPopupType] = useState(''); // 'success', 'error', 'info'
+  const [showPopup, setShowPopup] = useState(false);
+  const [showBuyButton, setShowBuyButton] = useState(false);
+
+  // Função para exibir popup personalizado
+  const showCustomPopup = (message, type, showBuyButton = false) => {
+    setPopupMessage(message);
+    setPopupType(type);
+    setShowPopup(true);
+    setShowBuyButton(showBuyButton);
+
+    // Fechar o popup automaticamente após 5 segundos
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 5000);
+  };
+
+  // Carregar pontos do usuário
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('cyber_points')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Erro ao buscar pontos do usuário:', error);
+        } else {
+          setUserPoints(profile.cyber_points || 0);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const handleCheckout = async () => {
+    if (usingCyberPoints) {
+      // Calcular valor total em reais
+      const totalValue = cartItems.reduce((total, item) => {
+        const price = typeof item.price === 'string'
+          ? parseFloat(item.price.replace('R$', '').replace(',', '.').trim())
+          : parseFloat(item.price);
+        return total + (price * item.quantity);
+      }, 0);
+
+      // Converter para cyberpoints (1 real = 1 cyberpoint, por exemplo)
+      const totalInCyberPoints = Math.round(totalValue);
+
+      // Verificar se o usuário tem pontos suficientes
+      if (userPoints < totalInCyberPoints) {
+        showCustomPopup(`Você não tem CyberPoints suficientes para esta compra.\nNecessário: ${totalInCyberPoints} CyberPoints\nSeu saldo: ${userPoints} CyberPoints`, 'error', true);
+        return;
+      }
+
+      // Confirmar pagamento com cyberpoints
+      const confirmPayment = window.confirm(`Você está prestes a pagar ${totalInCyberPoints} CyberPoints pelo seu pedido. Deseja confirmar?`);
+
+      if (confirmPayment) {
+        // Processar pagamento com cyberpoints
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Atualizar saldo de cyberpoints do usuário
+          const newBalance = userPoints - totalInCyberPoints;
+          const { error } = await supabase
+            .from('profiles')
+            .update({ cyber_points: newBalance })
+            .eq('id', user.id);
+
+          if (error) {
+            console.error('Erro ao atualizar pontos do usuário:', error);
+            showCustomPopup('Erro ao processar pagamento com CyberPoints. Tente novamente.', 'error');
+            return;
+          }
+
+          // Registrar histórico de transação
+          await supabase
+            .from('cyber_points_history')
+            .insert([{
+              user_id: user.id,
+              points_change: -totalInCyberPoints,
+              reason: `Pagamento por produto(s) no carrinho`,
+              created_at: new Date().toISOString()
+            }]);
+
+          // Atualizar estado local
+          setUserPoints(newBalance);
+
+          // Limpar carrinho e redirecionar
+          localStorage.removeItem('cyberlife_cart');
+          updateCart([]);
+          showCustomPopup('Pagamento realizado com sucesso usando CyberPoints!', 'success');
+          navigate('/perfil');
+        }
+      }
+    } else {
+      // Navegar para pagamento tradicional
+      navigate('/pagamento-pix');
+    }
+  };
+
   return (
     <div className="carrinho-page">
       <header className="header">
@@ -267,13 +374,155 @@ export default function CarrinhoPage({ onBack }) {
                 </div>
               )}
 
-              <button className="btn-checkout">
-                Finalizar Compra
+              {/* Opção de pagamento com CyberPoints */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.15), rgba(0, 255, 136, 0.15))',
+                border: '2px solid rgba(0, 217, 255, 0.4)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginTop: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                boxShadow: '0 4px 15px rgba(0, 217, 255, 0.2)'
+              }}>
+                <input
+                  type="checkbox"
+                  id="useCyberPoints"
+                  checked={usingCyberPoints}
+                  onChange={(e) => setUsingCyberPoints(e.target.checked)}
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <label htmlFor="useCyberPoints" style={{
+                  flex: 1,
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '1rem',
+                  color: '#fff'
+                }}>
+                  <div style={{fontWeight: 'bold', color: '#00d9ff'}}>Pagar com CyberPoints</div>
+                  <div style={{fontSize: '0.9rem', color: '#ccc'}}>Saldo disponível: {userPoints} CyberPoints</div>
+                </label>
+              </div>
+
+              <button className="btn-checkout" onClick={handleCheckout}>
+                {usingCyberPoints ? `Pagar ${Math.round(total)} CyberPoints` : 'Finalizar Compra'}
               </button>
 
               <button className="btn-clear" onClick={handleClearCart}>
                 Limpar Carrinho
               </button>
+
+              {/* Componente de Popup Personalizado */}
+              {showPopup && (
+                <div style={{
+                  position: 'fixed',
+                  top: '20px',
+                  right: '20px',
+                  zIndex: 10000,
+                  maxWidth: '400px',
+                  animation: 'slideInRight 0.3s ease-out'
+                }}>
+                  <div style={{
+                    background: popupType === 'success' ? 'linear-gradient(135deg, rgba(0, 217, 255, 0.9) 0%, rgba(0, 153, 204, 0.9) 100%)' :
+                             popupType === 'error' ? 'linear-gradient(135deg, rgba(255, 0, 234, 0.9) 0%, rgba(255, 0, 138, 0.9) 100%)' :
+                             'linear-gradient(135deg, rgba(0, 217, 255, 0.9) 0%, rgba(255, 0, 234, 0.9) 100%)',
+                    color: '#fff',
+                    padding: '15px 20px',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 217, 255, 0.3)',
+                    border: '2px solid rgba(0, 217, 255, 0.3)',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px'
+                    }}>
+                      <span style={{
+                        fontSize: '1.4rem',
+                        fontWeight: 'normal'
+                      }}>
+                        {popupType === 'success' ? '✅' :
+                         popupType === 'error' ? '⚠️' : 'ℹ️'}
+                      </span>
+                      <span style={{
+                        flex: 1,
+                        lineHeight: '1.4',
+                        textShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+                      }}>
+                        {popupMessage}
+                      </span>
+                      <button
+                        onClick={() => setShowPopup(false)}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.3)',
+                          color: '#fff',
+                          fontSize: '1.2rem',
+                          cursor: 'pointer',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                          e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 255, 255, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    {showBuyButton && (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        marginTop: '10px'
+                      }}>
+                        <button
+                          onClick={() => navigate('/comprar-cyberpoints')}
+                          style={{
+                            background: 'linear-gradient(135deg, #00d9ff 0%, #ff00ea 100%)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 'bold',
+                            fontSize: '0.9rem',
+                            boxShadow: '0 5px 15px rgba(0, 217, 255, 0.4)',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 217, 255, 0.4)';
+                          }}
+                        >
+                          Comprar CyberPoints
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="summary-benefits">
                 <div className="benefit-item">

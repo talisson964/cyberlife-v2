@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 
-const NotificationBell = ({ userId }) => {
+const NotificationBell = ({ userId, showNotification }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -68,6 +68,11 @@ const NotificationBell = ({ userId }) => {
           console.log('🔔 Nova notificação:', payload.new);
           setNotifications(prev => [payload.new, ...prev]);
           setUnreadCount(prev => prev + 1);
+
+          // Exibir notificação com o novo design
+          if (showNotification) {
+            showNotification(payload.new.title || payload.new.message || 'Nova notificação recebida', 'info');
+          }
         }
       )
       .subscribe();
@@ -139,7 +144,7 @@ const NotificationBell = ({ userId }) => {
         onClick={() => setIsOpen(!isOpen)}
         style={{
           position: 'relative',
-          background: 'rgba(0, 217, 255, 0.1)',
+          background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
           border: '2px solid rgba(0, 217, 255, 0.3)',
           borderRadius: '12px',
           padding: '12px',
@@ -147,17 +152,20 @@ const NotificationBell = ({ userId }) => {
           transition: 'all 0.3s ease',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          backdropFilter: 'blur(10px)'
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(0, 217, 255, 0.2)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.2) 0%, rgba(255, 0, 234, 0.2) 100%)';
           e.currentTarget.style.borderColor = '#00d9ff';
           e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.boxShadow = '0 0 20px rgba(0, 217, 255, 0.4)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(0, 217, 255, 0.1)';
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)';
           e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
           e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = 'none';
         }}
       >
         <span style={{ fontSize: '24px' }}>🔔</span>
@@ -166,7 +174,7 @@ const NotificationBell = ({ userId }) => {
             position: 'absolute',
             top: '-5px',
             right: '-5px',
-            background: 'linear-gradient(135deg, #ff0055, #ff00ea)',
+            background: 'linear-gradient(135deg, #00d9ff, #ff00ea)',
             color: '#fff',
             borderRadius: '50%',
             width: '24px',
@@ -176,7 +184,7 @@ const NotificationBell = ({ userId }) => {
             justifyContent: 'center',
             fontSize: '12px',
             fontWeight: 'bold',
-            boxShadow: '0 0 15px rgba(255, 0, 234, 0.6)',
+            boxShadow: '0 0 15px rgba(0, 217, 255, 0.6), 0 0 25px rgba(255, 0, 234, 0.6)',
             animation: 'pulse 2s ease-in-out infinite'
           }}>
             {unreadCount > 99 ? '99+' : unreadCount}
@@ -192,10 +200,10 @@ const NotificationBell = ({ userId }) => {
           right: '0',
           width: '400px',
           maxHeight: '500px',
-          background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(31, 41, 55, 0.98))',
+          background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(0, 5, 16, 0.98) 100%)',
           border: '2px solid rgba(0, 217, 255, 0.3)',
           borderRadius: '16px',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 217, 255, 0.3)',
           overflow: 'hidden',
           zIndex: 1000,
           backdropFilter: 'blur(10px)'
@@ -208,14 +216,20 @@ const NotificationBell = ({ userId }) => {
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <h3 style={{ margin: 0, color: '#00d9ff', fontSize: '18px', fontWeight: 'bold' }}>
+            <h3 style={{
+              margin: 0,
+              color: '#00d9ff',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              textShadow: '0 0 10px rgba(0, 217, 255, 0.5)'
+            }}>
               Notificações
             </h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
                 style={{
-                  background: 'transparent',
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
                   border: '1px solid rgba(0, 217, 255, 0.4)',
                   color: '#00d9ff',
                   padding: '6px 12px',
@@ -225,10 +239,12 @@ const NotificationBell = ({ userId }) => {
                   transition: 'all 0.2s'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.1)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.2) 0%, rgba(255, 0, 234, 0.2) 100%)';
+                  e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
                 Marcar todas como lidas
@@ -240,15 +256,39 @@ const NotificationBell = ({ userId }) => {
           <div style={{
             maxHeight: '420px',
             overflowY: 'auto',
-            padding: '10px'
+            padding: '10px',
+            background: 'rgba(0, 0, 0, 0.2)'
           }}>
             {loading ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
-                Carregando...
+              <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                color: '#888',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+                <div style={{
+                  fontSize: '24px',
+                  marginBottom: '10px',
+                  animation: 'pulse 1.5s ease-in-out infinite'
+                }}>⏳</div>
+                <div>Carregando notificações...</div>
               </div>
             ) : notifications.length === 0 ? (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
-                <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔕</div>
+              <div style={{
+                padding: '40px',
+                textAlign: 'center',
+                color: '#888',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center'
+              }}>
+                <div style={{
+                  fontSize: '48px',
+                  marginBottom: '10px',
+                  filter: 'grayscale(100%) opacity(0.7)'
+                }}>🔔</div>
                 <div>Nenhuma notificação</div>
               </div>
             ) : (
@@ -259,9 +299,9 @@ const NotificationBell = ({ userId }) => {
                   style={{
                     padding: '15px',
                     marginBottom: '8px',
-                    background: notification.is_read 
-                      ? 'rgba(255, 255, 255, 0.02)' 
-                      : 'rgba(0, 217, 255, 0.08)',
+                    background: notification.is_read
+                      ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(200, 200, 200, 0.02) 100%)'
+                      : 'linear-gradient(90deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)',
                     border: `1px solid ${notification.is_read ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 217, 255, 0.2)'}`,
                     borderRadius: '12px',
                     cursor: notification.is_read ? 'default' : 'pointer',
@@ -270,13 +310,17 @@ const NotificationBell = ({ userId }) => {
                   }}
                   onMouseEnter={(e) => {
                     if (!notification.is_read) {
-                      e.currentTarget.style.background = 'rgba(0, 217, 255, 0.12)';
+                      e.currentTarget.style.background = 'linear-gradient(90deg, rgba(0, 217, 255, 0.12) 0%, rgba(255, 0, 234, 0.12) 100%)';
+                      e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.2)';
+                    } else {
+                      e.currentTarget.style.background = 'linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.05) 100%)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = notification.is_read 
-                      ? 'rgba(255, 255, 255, 0.02)' 
-                      : 'rgba(0, 217, 255, 0.08)';
+                    e.currentTarget.style.background = notification.is_read
+                      ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(200, 200, 200, 0.02) 100%)'
+                      : 'linear-gradient(90deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)';
+                    e.currentTarget.style.boxShadow = 'none';
                   }}
                 >
                   {!notification.is_read && (
@@ -286,12 +330,12 @@ const NotificationBell = ({ userId }) => {
                       right: '15px',
                       width: '8px',
                       height: '8px',
-                      background: '#00d9ff',
+                      background: 'linear-gradient(135deg, #00d9ff, #ff00ea)',
                       borderRadius: '50%',
-                      boxShadow: '0 0 10px #00d9ff'
+                      boxShadow: '0 0 10px rgba(0, 217, 255, 0.8), 0 0 15px rgba(255, 0, 234, 0.6)'
                     }} />
                   )}
-                  
+
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                     <span style={{ fontSize: '28px' }}>{notification.icon}</span>
                     <div style={{ flex: 1 }}>
@@ -299,12 +343,13 @@ const NotificationBell = ({ userId }) => {
                         color: '#fff',
                         fontWeight: 'bold',
                         marginBottom: '4px',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        textShadow: '0 0 5px rgba(255, 255, 255, 0.3)'
                       }}>
                         {notification.title}
                       </div>
                       <div style={{
-                        color: '#aaa',
+                        color: '#ddd',
                         fontSize: '13px',
                         marginBottom: '6px',
                         lineHeight: '1.4'
@@ -312,7 +357,7 @@ const NotificationBell = ({ userId }) => {
                         {notification.message}
                       </div>
                       <div style={{
-                        color: '#666',
+                        color: '#888',
                         fontSize: '11px'
                       }}>
                         {formatTime(notification.created_at)}
