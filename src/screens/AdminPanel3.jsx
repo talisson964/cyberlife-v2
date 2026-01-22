@@ -3337,7 +3337,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     let badgeId = editingBadge;
 
                     if (!editingBadge) {
-                      // Criar insígnia temporária sem imagem
+                      // Criar insígnia temporária sem imagem para obter o ID
                       const { data, error } = await supabase
                         .from('badges')
                         .insert([{...badgeForm, image_url: ''}])
@@ -3347,17 +3347,9 @@ const AdminPanel3 = ({ onNavigate }) => {
                       if (error) throw error;
 
                       badgeId = data.id;
-                    } else {
-                      // Se estiver editando e houver nova imagem, atualizar sem a imagem por enquanto
-                      const { error } = await supabase
-                        .from('badges')
-                        .update({...badgeForm, image_url: ''})
-                        .eq('id', editingBadge);
-
-                      if (error) throw error;
                     }
 
-                    // Fazer upload da imagem
+                    // Fazer upload da imagem com o ID agora disponível
                     const uploadedImageUrl = await uploadBadgeImageToStorage(badgeImageFile, badgeId);
                     if (uploadedImageUrl) {
                       imageUrl = uploadedImageUrl;
