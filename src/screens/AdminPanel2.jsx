@@ -926,7 +926,7 @@ const AdminPanel2 = ({ onNavigate }) => {
                         color: '#999',
                         fontWeight: 'normal',
                         marginTop: '5px'
-                      }}>Deixe vazio para usar regra padrão (R$ 50 = 30 pontos)</span>
+                      }}>Deixe vazio para usar regra padrão (R$ 50 = 2 pontos)</span>
                     </label>
                     <input
                       id="product-reward-points"

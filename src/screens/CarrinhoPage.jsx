@@ -69,8 +69,8 @@ export default function CarrinhoPage({ onBack }) {
       if (item.reward_points && item.reward_points > 0) {
         totalPoints += item.reward_points * item.quantity;
       } else {
-        // Caso contrário, usar a regra padrão: R$50 = 30 pontos
-        const pointsForThisItem = Math.floor((itemTotal / 50) * 30);
+        // Caso contrário, usar a regra padrão: R$50 = 2 pontos
+        const pointsForThisItem = Math.floor((itemTotal / 50) * 2);
         totalPoints += pointsForThisItem;
       }
     });
@@ -162,17 +162,30 @@ export default function CarrinhoPage({ onBack }) {
           }
 
           // Registrar histórico de transação
+          const currentProfile = await supabase
+            .from('profiles')
+            .select('cyber_points')
+            .eq('id', user.id)
+            .single();
+
+          const currentBalance = currentProfile.data?.cyber_points || 0;
+          const updatedBalance = Math.max(0, currentBalance - totalInCyberPoints);
+
           await supabase
             .from('cyber_points_history')
             .insert([{
               user_id: user.id,
-              points_change: -totalInCyberPoints,
-              reason: `Pagamento por produto(s) no carrinho`,
+              points: -totalInCyberPoints,
+              type: 'spent',
+              source: 'purchase',
+              description: `Pagamento por produto(s) no carrinho`,
+              balance_before: currentBalance,
+              balance_after: updatedBalance,
               created_at: new Date().toISOString()
             }]);
 
           // Atualizar estado local
-          setUserPoints(newBalance);
+          setUserPoints(updatedBalance);
 
           // Limpar carrinho e redirecionar
           localStorage.removeItem('cyberlife_cart');

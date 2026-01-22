@@ -11,6 +11,11 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [cyberPointsCustomers, setCyberPointsCustomers] = useState([]);
+  const [searchCyberPointsCustomer, setSearchCyberPointsCustomer] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [showCyberPointsModal, setShowCyberPointsModal] = useState(false);
+  const [cyberPointsChange, setCyberPointsChange] = useState({ operation: 'add', points: 0, reason: '' });
   const [loading, setLoading] = useState(false);
   
   // Dashboard Stats
@@ -133,16 +138,17 @@ const AdminPanel3 = ({ onNavigate }) => {
     try {
       setLoading(true);
       console.log('Iniciando carregamento de dados...');
-      
+
       await Promise.all([
         loadDashboardData(),
         loadProducts(),
         loadBanners(),
         loadEvents(),
         loadOrders(),
-        loadCustomers()
+        loadCustomers(),
+        loadCyberPointsCustomers()
       ]);
-      
+
       console.log('Todos os dados carregados com sucesso!');
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -198,6 +204,9 @@ const AdminPanel3 = ({ onNavigate }) => {
           break;
         case 'customers':
           loadCustomers();
+          break;
+        case 'cyberpoints':
+          loadCyberPointsCustomers();
           break;
         case 'dashboard':
           loadDashboardData();
@@ -405,6 +414,7 @@ const AdminPanel3 = ({ onNavigate }) => {
           price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0,
           reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null,
+          weight: productForm.weight ? parseInt(productForm.weight) : null,
           images: [] // Inicialmente vazio
         }])
         .select();
@@ -537,6 +547,8 @@ const AdminPanel3 = ({ onNavigate }) => {
           ...productForm,
           price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0,
+          reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null,
+          weight: productForm.weight ? parseInt(productForm.weight) : null,
           images: updatedImages,
           image_url: finalImageUrl,
           hover_image_url: finalHoverImageUrl,
@@ -1094,6 +1106,84 @@ const AdminPanel3 = ({ onNavigate }) => {
     }
   };
 
+  // Função para carregar clientes com cyberpoints
+  const loadCyberPointsCustomers = async () => {
+    try {
+      console.log('Carregando clientes com CyberPoints...');
+
+      // Primeiro, carrega os perfis
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('cyber_points', { ascending: false });
+
+      if (profilesError) {
+        console.error('Erro ao buscar clientes com CyberPoints:', profilesError);
+        throw profilesError;
+      }
+
+      // Em seguida, obtem o histórico de pontos para cada cliente para encontrar o máximo e o total
+      const customersWithMaxPoints = await Promise.all(profilesData.map(async (customer) => {
+        const { data: historyData, error: historyError } = await supabase
+          .from('cyber_points_history')
+          .select('balance_after')
+          .eq('user_id', customer.id)
+          .order('balance_after', { ascending: false })
+          .limit(1);
+
+        // Obter o total de pontos ganhos (apenas valores positivos)
+        const { data: totalEarnedData, error: totalEarnedError } = await supabase
+          .from('cyber_points_history')
+          .select('points')
+          .eq('user_id', customer.id)
+          .gt('points', 0); // Apenas pontos ganhos (valores positivos)
+
+        // Obter o total de pontos gastos (valores negativos)
+        const { data: totalSpentData, error: totalSpentError } = await supabase
+          .from('cyber_points_history')
+          .select('points')
+          .eq('user_id', customer.id)
+          .lt('points', 0); // Apenas pontos gastos (valores negativos)
+
+        if (historyError) {
+          console.error('Erro ao buscar histórico de pontos para cliente:', customer.id, historyError);
+          return { ...customer, max_cyber_points: customer.cyber_points || 0, total_earned_cyber_points: 0, total_spent_cyber_points: 0 };
+        }
+
+        const maxHistoryPoint = historyData && historyData.length > 0 ? historyData[0].balance_after : 0;
+        const currentPoints = customer.cyber_points || 0;
+
+        // O máximo é o maior entre o histórico e o saldo atual
+        const maxPoints = Math.max(maxHistoryPoint, currentPoints);
+
+        // Calcular o total de pontos ganhos
+        let totalEarned = 0;
+        if (totalEarnedData && totalEarnedData.length > 0) {
+          totalEarned = totalEarnedData.reduce((sum, record) => sum + record.points, 0);
+        }
+
+        // Calcular o total de pontos gastos (em valor absoluto)
+        let totalSpent = 0;
+        if (totalSpentData && totalSpentData.length > 0) {
+          totalSpent = Math.abs(totalSpentData.reduce((sum, record) => sum + record.points, 0));
+        }
+
+        return {
+          ...customer,
+          max_cyber_points: maxPoints,
+          total_earned_cyber_points: totalEarned,
+          total_spent_cyber_points: totalSpent
+        };
+      }));
+
+      console.log('Clientes com CyberPoints carregados:', customersWithMaxPoints?.length || 0);
+      setCyberPointsCustomers(customersWithMaxPoints || []);
+    } catch (error) {
+      console.error('Erro ao carregar clientes com CyberPoints:', error);
+      setCyberPointsCustomers([]); // Garantir que sempre seja um array
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="admin-login-modern">
@@ -1151,6 +1241,7 @@ const AdminPanel3 = ({ onNavigate }) => {
             { id: 'events', icon: '🏆', label: 'Eventos', color: '#ffd700' },
             { id: 'orders', icon: '🛒', label: 'Pedidos', color: '#ff6600' },
             { id: 'customers', icon: '👥', label: 'Clientes', color: '#9400d3' },
+            { id: 'cyberpoints', icon: '🎮', label: 'CyberPoints', color: '#00ff88' },
             { id: 'logs', icon: '📋', label: 'Logs', color: '#ff4444' }
           ].map(tab => (
             <button
@@ -1632,7 +1723,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                         marginTop: '5px',
                         marginBottom: '10px'
                       }}>
-                        Deixe vazio para usar regra padrão (R$ 50 = 30 pontos)
+                        Deixe vazio para usar regra padrão (R$ 50 = 2 pontos)
                       </small>
                       <input
                         type="number"
@@ -2424,7 +2515,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                         fontSize: '12px',
                         opacity: '0.9'
                       }}>
-                        Deixe em branco para usar o padrão (R$ 50 = 30 pontos)
+                        Deixe em branco para usar o padrão (R$ 50 = 2 pontos)
                       </small>
                     </div>
 
@@ -2919,7 +3010,10 @@ const AdminPanel3 = ({ onNavigate }) => {
 
                         {customer.cyber_points !== undefined && (
                           <div className="customer-cyberpoints">
-                            🎮 CyberPoints: {customer.cyber_points}
+                            🎮 CyberPoints: {customer.cyber_points} <br/>
+                            <small style={{color: 'rgba(0, 255, 136, 0.8)', fontSize: '0.85rem'}}>Máximo: {customer.max_cyber_points || customer.cyber_points}</small> <br/>
+                            <small style={{color: 'rgba(255, 217, 0, 0.8)', fontSize: '0.85rem'}}>Total Obtido: {customer.total_earned_cyber_points || 0}</small> <br/>
+                            <small style={{color: 'rgba(255, 100, 100, 0.8)', fontSize: '0.85rem'}}>Total Gasto: {customer.total_spent_cyber_points || 0}</small>
                           </div>
                         )}
 
@@ -2960,6 +3054,108 @@ const AdminPanel3 = ({ onNavigate }) => {
 
           {activeTab === 'logs' && (
             <AccessLogsView />
+          )}
+
+          {/* CyberPoints Management */}
+          {activeTab === 'cyberpoints' && (
+            <div className="cyberpoints-management">
+              <div className="section-header">
+                <div className="section-title">
+                  <h2>🎮 Gerenciamento de CyberPoints</h2>
+                  <p>Visualize e altere os pontos dos clientes</p>
+                </div>
+                <div className="section-actions">
+                  <div className="search-container">
+                    <input
+                      type="text"
+                      placeholder="🔍 Buscar clientes..."
+                      value={searchCyberPointsCustomer}
+                      onChange={(e) => setSearchCyberPointsCustomer(e.target.value)}
+                      className="search-input-modern"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="customers-grid">
+                {cyberPointsCustomers
+                  .filter(customer =>
+                    searchCyberPointsCustomer === '' ||
+                    customer.full_name?.toLowerCase().includes(searchCyberPointsCustomer.toLowerCase()) ||
+                    customer.nickname?.toLowerCase().includes(searchCyberPointsCustomer.toLowerCase()) ||
+                    customer.email?.toLowerCase().includes(searchCyberPointsCustomer.toLowerCase())
+                  )
+                  .map(customer => (
+                    <div key={customer.id} className="customer-card">
+                      <div className="customer-avatar">
+                        {customer.avatar_url ? (
+                          <img src={customer.avatar_url} alt={customer.full_name} />
+                        ) : (
+                          <div className="avatar-placeholder">👤</div>
+                        )}
+                      </div>
+
+                      <div className="customer-info">
+                        <h4>{customer.full_name || customer.nickname || 'Nome não informado'}</h4>
+
+                        {customer.email && (
+                          <div className="customer-email">
+                            📧 {customer.email}
+                          </div>
+                        )}
+
+                        <div className="customer-joined">
+                          📅 Cadastro: {new Date(customer.created_at).toLocaleDateString('pt-BR')}
+                        </div>
+
+                        {customer.cyber_points !== undefined && (
+                          <div className="customer-cyberpoints">
+                            🎮 CyberPoints: {customer.cyber_points} <br/>
+                            <small style={{color: 'rgba(0, 255, 136, 0.8)', fontSize: '0.85rem'}}>Máximo: {customer.max_cyber_points || customer.cyber_points}</small> <br/>
+                            <small style={{color: 'rgba(255, 217, 0, 0.8)', fontSize: '0.85rem'}}>Total Obtido: {customer.total_earned_cyber_points || 0}</small> <br/>
+                            <small style={{color: 'rgba(255, 100, 100, 0.8)', fontSize: '0.85rem'}}>Total Gasto: {customer.total_spent_cyber_points || 0}</small>
+                          </div>
+                        )}
+
+                        {customer.total_orders && (
+                          <div className="customer-stats">
+                            <span className="orders-count">🛒 {customer.total_orders} pedidos</span>
+                            {customer.total_spent && (
+                              <span className="total-spent">💰 R$ {parseFloat(customer.total_spent).toFixed(2)}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="customer-actions">
+                        <button
+                          className="btn-add-cyberpoints"
+                          title="Adicionar CyberPoints"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            setCyberPointsChange({ operation: 'add', points: 0, reason: '' });
+                            setShowCyberPointsModal(true);
+                          }}
+                        >
+                          ➕
+                        </button>
+                        <button
+                          className="btn-remove-cyberpoints"
+                          title="Remover CyberPoints"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            setCyberPointsChange({ operation: 'subtract', points: 0, reason: '' });
+                            setShowCyberPointsModal(true);
+                          }}
+                        >
+                          ➖
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
           )}
         </main>
       </div>
@@ -3062,6 +3258,149 @@ const AdminPanel3 = ({ onNavigate }) => {
                   <p className="preview-note">💡 Esta é uma prévia de como o evento aparecerá na página</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de CyberPoints */}
+      {showCyberPointsModal && selectedCustomer && (
+        <div className="cyberpoints-modal-overlay" onClick={() => setShowCyberPointsModal(false)}>
+          <div className="cyberpoints-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="cyberpoints-modal-header">
+              <h3>🎮 Editar CyberPoints de {selectedCustomer.nickname || selectedCustomer.full_name}</h3>
+              <button onClick={() => setShowCyberPointsModal(false)} className="btn-close-cyberpoints">✕</button>
+            </div>
+
+            <div className="cyberpoints-modal-body">
+              <div className="current-cyberpoints">
+                <p>Saldo atual: <strong>{selectedCustomer.cyber_points || 0}</strong> CyberPoints</p>
+              </div>
+
+              <div className="operation-type-indicator">
+                <p>Tipo de Operação: <strong>{cyberPointsChange.operation === 'add' ? 'Adicionar (Crédito)' : 'Remover (Débito)'}</strong></p>
+              </div>
+
+              <div className="cyberpoints-input-section">
+                <label htmlFor="cyberpoints-change">Quantidade de CyberPoints</label>
+                <input
+                  id="cyberpoints-change"
+                  type="number"
+                  placeholder="Ex: 100"
+                  value={cyberPointsChange.points}
+                  onChange={(e) => setCyberPointsChange({...cyberPointsChange, points: Math.abs(parseInt(e.target.value) || 0)})}
+                  className="cyberpoints-input"
+                />
+              </div>
+
+              <div className="cyberpoints-reason-section">
+                <label htmlFor="cyberpoints-reason">Motivo da Alteração</label>
+                <input
+                  id="cyberpoints-reason"
+                  type="text"
+                  placeholder="Ex: Bônus de fidelidade, Compra realizada, Penalidade, etc."
+                  value={cyberPointsChange.reason}
+                  onChange={(e) => setCyberPointsChange({...cyberPointsChange, reason: e.target.value})}
+                  className="cyberpoints-input"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  onClick={async () => {
+                    try {
+                      // Verificar se a sessão ainda é válida
+                      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+                      if (!session || sessionError) {
+                        alert('Sua sessão expirou. Faça login novamente para continuar.');
+                        window.location.href = '/login';
+                        return;
+                      }
+
+                      // Debug: Log para verificar os valores
+                      console.log('Operação selecionada:', cyberPointsChange.operation);
+                      console.log('Pontos a alterar:', cyberPointsChange.points);
+
+                      // Determinar o valor baseado na operação
+                      const operationValue = cyberPointsChange.operation === 'add'
+                        ? cyberPointsChange.points
+                        : -cyberPointsChange.points;
+
+                      console.log('Valor da operação (operationValue):', operationValue);
+
+                      // Calcular o novo saldo
+                      const currentBalance = selectedCustomer.cyber_points || 0;
+                      const newBalance = Math.max(0, currentBalance + operationValue);
+
+                      console.log('Saldo atual:', currentBalance);
+                      console.log('Novo saldo:', newBalance);
+
+                      // Atualizar o perfil do usuário
+                      const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ cyber_points: newBalance })
+                        .eq('id', selectedCustomer.id);
+
+                      if (updateError) throw updateError;
+
+                      // Registrar a transação no histórico
+                      const { error: historyError } = await supabase
+                        .from('cyber_points_history')
+                        .insert([{
+                          user_id: selectedCustomer.id,
+                          points: operationValue,
+                          type: cyberPointsChange.operation === 'add' ? 'earned' : 'spent',
+                          source: 'admin',
+                          description: cyberPointsChange.reason || `Operação administrativa: ${cyberPointsChange.operation === 'add' ? '+' : '-'}${cyberPointsChange.points} pontos`,
+                          balance_before: currentBalance,
+                          balance_after: newBalance,
+                          created_at: new Date().toISOString()
+                        }]);
+
+                      if (historyError) throw historyError;
+
+                      // Registrar a notificação
+                      const { error: notificationError } = await supabase
+                        .from('notifications')
+                        .insert([{
+                          user_id: selectedCustomer.id,
+                          type: 'points',
+                          title: 'CyberPoints Atualizados!',
+                          message: `Seu saldo de CyberPoints foi ${cyberPointsChange.operation === 'add' ? 'adicionado' : 'deduzido'} em ${cyberPointsChange.points} pontos. Motivo: ${cyberPointsChange.reason || 'Operação administrativa'}`,
+                          icon: cyberPointsChange.operation === 'add' ? '🎁' : '💸',
+                          points: operationValue
+                        }]);
+
+                      if (notificationError) throw notificationError;
+
+                      // Atualizar a lista de clientes
+                      await loadCustomers();
+                      await loadCyberPointsCustomers(); // Carregar novamente a lista de clientes com cyberpoints
+
+                      setShowCyberPointsModal(false);
+                      alert(`CyberPoints ${cyberPointsChange.operation === 'add' ? 'adicionados' : 'removidos'} com sucesso!`);
+                    } catch (error) {
+                      console.error('Erro ao atualizar CyberPoints:', error);
+                      if (error.message.includes('JWT')) {
+                        alert('Sua sessão expirou. Faça login novamente para continuar.');
+                        window.location.href = '/login';
+                      } else {
+                        alert('Erro ao atualizar CyberPoints: ' + error.message);
+                      }
+                    }
+                  }}
+                  className="btn-update-cyberpoints"
+                >
+                  ✅ Confirmar Alteração
+                </button>
+                <button
+                  onClick={() => setShowCyberPointsModal(false)}
+                  className="btn-cancel-cyberpoints"
+                >
+                  ❌ Cancelar
+                </button>
+              </div>
             </div>
           </div>
         </div>

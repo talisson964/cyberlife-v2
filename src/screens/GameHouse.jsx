@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CommunityFab from '../components/CommunityFab';
 import { Link, useNavigate } from 'react-router-dom';
-import NotificationBell from '../components/NotificationBell';
 import img2 from '../imagens base/2.jpeg';
 import img3 from '../imagens base/3.jpeg';
 import img5 from '../imagens base/5.jpeg';
@@ -753,8 +752,6 @@ export default function GamerWorld() {
             }} />
           </button>
 
-          {/* Ícone de Notificações */}
-          {user && <NotificationBell userId={user.id} showNotification={showNotification} />}
 
           <Link to="/menu">
             <button id="inicio-btn" style={{

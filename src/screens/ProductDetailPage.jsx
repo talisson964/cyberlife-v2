@@ -454,12 +454,12 @@ export default function ProductDetailPage() {
                 <span className="cyber-points-value">
                   {product.reward_points !== null && product.reward_points !== undefined 
                     ? `${product.reward_points} pontos` 
-                    : `${Math.floor(parseFloat(product.price.replace('R$ ', '').replace(',', '.')) / 50) * 30} pontos`}
+                    : `${Math.floor(parseFloat(product.price.replace('R$ ', '').replace(',', '.')) / 50) * 2} pontos`}
                 </span>
                 <span className="cyber-points-hint">
                   {product.reward_points !== null && product.reward_points !== undefined
                     ? 'Pontos especiais deste produto!'
-                    : 'A cada R$ 50 gastos = 30 pontos'}
+                    : 'A cada R$ 50 gastos = 2 pontos'}
                 </span>
               </div>
             </div>

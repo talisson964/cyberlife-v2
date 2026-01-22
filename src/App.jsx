@@ -9,7 +9,8 @@ import LojaGeek from './screens/LojaGeek'
 import AdminPanel3 from './screens/AdminPanel3';
 import CarrinhoPage from './screens/CarrinhoPage'
 import CompraCyberPoints from './screens/CompraCyberPoints'
-import GameHouse from './screens/GamerWorld'
+import GameHouse from './screens/GameHouse'
+import LoginGamer from './screens/LoginGamer'
 import PerfilPage from './screens/PerfilPage'
 import EventoPage from './screens/EventoPage'
 import AtividadePage from './screens/AtividadePage'
@@ -142,6 +143,7 @@ export default function App() {
           <Route path="/atividade/:atividadeId" element={<AtividadePage />} />
           <Route path="/jogo/:jogoId" element={<JogoPage />} />
           <Route path="/comprar-cyberpoints" element={<CompraCyberPoints />} />
+          <Route path="/login" element={<LoginGamer />} />
         </Routes>
       </AccessLogger>
     </BrowserRouter>

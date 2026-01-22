@@ -21,6 +21,32 @@ export default function PerfilPage() {
     state: '',
     whatsapp: ''
   });
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [badges, setBadges] = useState([]);
+  const [loadingBadges, setLoadingBadges] = useState(false);
+
+  const showLoginPrompt = () => {
+    setShowLoginPopup(true);
+  };
+
+  const handleLoginRedirect = () => {
+    setShowLoginPopup(false);
+    window.location.href = '/login';
+  };
+
+  const handleGoHome = () => {
+    setShowLoginPopup(false);
+    window.location.href = '/';
+  };
+
+  const openSettingsModal = () => {
+    setShowSettingsModal(true);
+  };
+
+  const closeSettingsModal = () => {
+    setShowSettingsModal(false);
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -77,6 +103,36 @@ export default function PerfilPage() {
   }, [user?.id]);
 
 
+  const loadBadges = async (userId) => {
+    try {
+      setLoadingBadges(true);
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select(`
+          *,
+          badges (*)
+        `)
+        .eq('user_id', userId)
+        .eq('badges.active', true); // Apenas insígnias ativas
+
+      if (error) throw error;
+
+      // Transformar os dados para incluir informações da insígnia e data de aquisição
+      const badgesWithInfo = data.map(ub => ({
+        ...ub.badges,
+        acquired_at: ub.created_at,
+        user_badge_id: ub.id
+      }));
+
+      setBadges(badgesWithInfo);
+    } catch (error) {
+      console.error('Erro ao carregar insígnias:', error);
+      setBadges([]);
+    } finally {
+      setLoadingBadges(false);
+    }
+  };
+
   const loadUserProfile = async () => {
     try {
       setLoading(true);
@@ -92,12 +148,8 @@ export default function PerfilPage() {
       }
       
       if (!session) {
-        const fazerLogin = confirm('Você precisa estar logado para ver seu perfil.\n\nDeseja fazer login agora?');
-        if (fazerLogin) {
-          window.location.href = '/login';
-        } else {
-          window.location.href = '/';
-        }
+        // Mostrar popup personalizado em vez do confirm padrão
+        showLoginPrompt();
         return;
       }
       
@@ -139,7 +191,9 @@ export default function PerfilPage() {
         state: profileData.state || '',
         whatsapp: profileData.whatsapp || ''
       });
-      
+
+      // Carregar insígnias do usuário
+      await loadBadges(user.id);
     } catch (error) {
       console.error('💥 Erro ao carregar perfil:', error);
       alert('Erro ao carregar perfil. Verifique o console para detalhes.');
@@ -593,6 +647,125 @@ export default function PerfilPage() {
                   )}
                 </div>
 
+                {/* Seção de Insígnias */}
+                <div style={{
+                  marginBottom: '30px',
+                  padding: '20px',
+                  background: 'rgba(255, 217, 0, 0.05)',
+                  border: '2px solid rgba(255, 217, 0, 0.3)',
+                  borderRadius: '12px',
+                  boxShadow: '0 0 20px rgba(255, 217, 0, 0.1)'
+                }}>
+                  <h4 style={{
+                    color: '#ffd900',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontWeight: '700',
+                    fontSize: '1.2rem',
+                    marginBottom: '15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                  }}>
+                    🏆 Minhas Insígnias
+                  </h4>
+
+                  {badges.length > 0 ? (
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '15px'
+                    }}>
+                      {badges.map((badge, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            position: 'relative',
+                            width: '80px',
+                            height: '80px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: 'linear-gradient(135deg, rgba(255, 217, 0, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
+                            border: '2px solid rgba(255, 217, 0, 0.4)',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            overflow: 'hidden'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 217, 0, 0.6)';
+
+                            // Mostrar tooltip
+                            const tooltip = e.currentTarget.querySelector('.badge-tooltip');
+                            if (tooltip) {
+                              tooltip.style.opacity = '1';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = 'none';
+
+                            // Esconder tooltip
+                            const tooltip = e.currentTarget.querySelector('.badge-tooltip');
+                            if (tooltip) {
+                              tooltip.style.opacity = '0';
+                            }
+                          }}
+                        >
+                          <div style={{
+                            fontSize: '2rem',
+                            marginBottom: '5px'
+                          }}>
+                            {badge.icon || '🎮'}
+                          </div>
+                          <div style={{
+                            fontSize: '0.6rem',
+                            textAlign: 'center',
+                            color: '#ffd900',
+                            fontWeight: 'bold',
+                            textShadow: '0 0 5px rgba(255, 217, 0, 0.8)'
+                          }}>
+                            {badge.name}
+                          </div>
+
+                          {/* Tooltip com data de aquisição */}
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '-30px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: 'rgba(0, 0, 0, 0.9)',
+                            color: '#fff',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontSize: '0.8rem',
+                            whiteSpace: 'nowrap',
+                            opacity: 0,
+                            transition: 'opacity 0.3s ease',
+                            pointerEvents: 'none',
+                            zIndex: 1000,
+                            border: '1px solid rgba(255, 217, 0, 0.5)',
+                            boxShadow: '0 5px 15px rgba(0, 0, 0, 0.5)'
+                          }} className="badge-tooltip">
+                            Adquirida em: {new Date(badge.acquired_at).toLocaleDateString('pt-BR')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      textAlign: 'center',
+                      fontStyle: 'italic',
+                      margin: '20px 0'
+                    }}>
+                      Nenhuma insígnia conquistada ainda. Continue interagindo para ganhar insígnias!
+                    </p>
+                  )}
+                </div>
+
                 {/* Botões de Ação */}
                 <div style={{
                   display: 'grid',
@@ -624,26 +797,28 @@ export default function PerfilPage() {
                     ✏️ Editar Perfil
                   </button>
               
-              <button style={{
-                padding: '15px',
-                background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
-                border: '2px solid #00d9ff',
-                borderRadius: '10px',
-                color: '#00d9ff',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontWeight: 'bold',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 217, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}>
+              <button
+                onClick={openSettingsModal}
+                style={{
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
+                  border: '2px solid #00d9ff',
+                  borderRadius: '10px',
+                  color: '#00d9ff',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 217, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}>
                 ⚙️ Configurações
               </button>
             </div>
@@ -932,7 +1107,392 @@ export default function PerfilPage() {
         />
       )}
 
+      {/* Popup de Login */}
+      {showLoginPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(10px)'
+        }} onClick={handleGoHome}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a1f 100%)',
+            border: '2px solid #00d9ff',
+            borderRadius: '20px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 0 50px rgba(0, 217, 255, 0.5), 0 0 100px rgba(0, 217, 255, 0.3)',
+            position: 'relative',
+            overflow: 'hidden',
+            borderImage: 'linear-gradient(45deg, #00d9ff, #ff00ea) 1'
+          }} onClick={(e) => e.stopPropagation()}>
+            {/* Efeitos decorativos */}
+            <div style={{
+              position: 'absolute',
+              top: '-50%',
+              right: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'radial-gradient(circle, rgba(0, 217, 255, 0.1) 0%, transparent 70%)',
+              animation: 'spin 20s linear infinite'
+            }}></div>
+
+            <div style={{
+              position: 'absolute',
+              top: '-30%',
+              left: '-30%',
+              width: '150%',
+              height: '150%',
+              background: 'conic-gradient(from 0deg, transparent, #00d9ff, #ff00ea, transparent)',
+              opacity: 0.3,
+              filter: 'blur(30px)'
+            }}></div>
+
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+
+            <h2 style={{
+              color: '#00d9ff',
+              fontSize: '1.8rem',
+              marginBottom: '20px',
+              textShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
+              fontFamily: 'Rajdhani, sans-serif',
+              fontWeight: '700',
+              position: 'relative',
+              zIndex: 2
+            }}>
+              🔐 Acesso Restrito
+            </h2>
+
+            <p style={{
+              color: '#fff',
+              fontSize: '1.1rem',
+              marginBottom: '30px',
+              lineHeight: '1.6',
+              position: 'relative',
+              zIndex: 2
+            }}>
+              Você precisa estar logado para acessar seu perfil.<br/>
+              Faça login para continuar ou explore nosso site.
+            </p>
+
+            <div style={{
+              display: 'flex',
+              gap: '15px',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              position: 'relative',
+              zIndex: 2
+            }}>
+              <button
+                onClick={handleLoginRedirect}
+                style={{
+                  background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#000',
+                  padding: '12px 25px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  boxShadow: '0 5px 15px rgba(0, 217, 255, 0.4)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-3px)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 5px 15px rgba(0, 217, 255, 0.4)';
+                }}
+              >
+                🔐 Fazer Login
+              </button>
+
+              <button
+                onClick={handleGoHome}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255, 0, 234, 0.2) 0%, rgba(204, 0, 102, 0.2) 100%)',
+                  border: '2px solid #ff00ea',
+                  borderRadius: '10px',
+                  color: '#ff00ea',
+                  padding: '12px 25px',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  boxShadow: '0 5px 15px rgba(255, 0, 234, 0.4)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-3px)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(255, 0, 234, 0.6)';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(255, 0, 234, 0.3) 0%, rgba(204, 0, 102, 0.3) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 5px 15px rgba(255, 0, 234, 0.4)';
+                  e.target.style.background = 'linear-gradient(135deg, rgba(255, 0, 234, 0.2) 0%, rgba(204, 0, 102, 0.2) 100%)';
+                }}
+              >
+                🏠 Ir para Início
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Configurações */}
+      {showSettingsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          backdropFilter: 'blur(10px)'
+        }} onClick={closeSettingsModal}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a1f 100%)',
+            border: '2px solid #00ff88',
+            borderRadius: '20px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 20px 60px rgba(0, 255, 136, 0.3)',
+            backdropFilter: 'blur(10px)',
+            position: 'relative'
+          }} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '25px',
+              paddingBottom: '15px',
+              borderBottom: '1px solid rgba(0, 255, 136, 0.3)'
+            }}>
+              <h3 style={{
+                margin: 0,
+                color: '#00ff88',
+                fontSize: '1.5rem',
+                fontFamily: 'Rajdhani, sans-serif',
+                fontWeight: '700',
+                textShadow: '0 0 10px rgba(0, 255, 136, 0.5)'
+              }}>
+                ⚙️ Configurações da Conta
+              </h3>
+              <button
+                onClick={closeSettingsModal}
+                style={{
+                  background: 'rgba(255, 0, 0, 0.2)',
+                  border: '1px solid rgba(255, 0, 0, 0.4)',
+                  borderRadius: '8px',
+                  color: '#ff4444',
+                  padding: '8px 12px',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minWidth: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 0, 0, 0.3)';
+                  e.currentTarget.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 0, 0, 0.2)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <button
+                onClick={() => {
+                  // Função para alterar senha
+                  alert('Funcionalidade de alteração de senha será implementada em breve!');
+                }}
+                style={{
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '10px',
+                  color: '#00d9ff',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 217, 255, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.2) 0%, rgba(0, 217, 255, 0.1) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
+                }}
+              >
+                🔐 Alterar Senha
+              </button>
+
+              <button
+                onClick={() => {
+                  // Função para alterar email
+                  alert('Funcionalidade de alteração de email será implementada em breve!');
+                }}
+                style={{
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 136, 0.05) 100%)',
+                  border: '2px solid rgba(0, 255, 136, 0.3)',
+                  borderRadius: '10px',
+                  color: '#00ff88',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 255, 136, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 255, 136, 0.1) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 136, 0.05) 100%)';
+                }}
+              >
+                📧 Alterar Email
+              </button>
+
+              <button
+                onClick={() => {
+                  // Função para gerenciar notificações
+                  alert('Funcionalidade de gerenciamento de notificações será implementada em breve!');
+                }}
+                style={{
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, rgba(255, 0, 234, 0.1) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  border: '2px solid rgba(255, 0, 234, 0.3)',
+                  borderRadius: '10px',
+                  color: '#ff00ea',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 0, 234, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 0, 234, 0.2) 0%, rgba(255, 0, 234, 0.1) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 0, 234, 0.1) 0%, rgba(255, 0, 234, 0.05) 100%)';
+                }}
+              >
+                🔔 Gerenciar Notificações
+              </button>
+
+              <button
+                onClick={() => {
+                  // Função para deletar conta
+                  if (window.confirm('Tem certeza que deseja deletar sua conta? Esta ação é irreversível e removerá todos os seus dados.')) {
+                    alert('Funcionalidade de exclusão de conta será implementada em breve!');
+                  }
+                }}
+                style={{
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.1) 0%, rgba(204, 0, 0, 0.1) 100%)',
+                  border: '2px solid rgba(255, 68, 68, 0.3)',
+                  borderRadius: '10px',
+                  color: '#ff4444',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 68, 68, 0.4)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.2) 0%, rgba(204, 0, 0, 0.2) 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 68, 68, 0.1) 0%, rgba(204, 0, 0, 0.1) 100%)';
+                }}
+              >
+                🗑️ Excluir Conta
+              </button>
+            </div>
+
+            <div style={{
+              marginTop: '25px',
+              paddingTop: '15px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              textAlign: 'center',
+              color: 'rgba(255, 255, 255, 0.6)',
+              fontSize: '0.9rem'
+            }}>
+              Suas configurações são sincronizadas automaticamente
+            </div>
+          </div>
+        </div>
+      )}
+
       <CommunityFab />
     </div>
   );
 }
+
