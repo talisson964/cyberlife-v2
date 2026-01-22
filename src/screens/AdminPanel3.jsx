@@ -16,6 +16,75 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCyberPointsModal, setShowCyberPointsModal] = useState(false);
   const [cyberPointsChange, setCyberPointsChange] = useState({ operation: 'add', points: 0, reason: '' });
+
+  // Função para upload de imagem da insígnia
+  const handleBadgeImageUpload = async (file) => {
+    if (!file) return;
+
+    // Verificar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPEG, PNG, GIF)');
+      return;
+    }
+
+    // Verificar tamanho do arquivo (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setBadgeImageFile(file);
+
+    // Criar preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setBadgeImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Função para upload da imagem para o storage do Supabase
+  const uploadBadgeImageToStorage = async (file, badgeId) => {
+    if (!file) return null;
+
+    const fileName = `badges/${badgeId}/insignia_${Date.now()}_${file.name}`;
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('badge-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('badge-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem da insígnia:', error);
+      return null;
+    }
+  };
+
+  // Estados para insígnias
+  const [badges, setBadges] = useState([]);
+  const [editingBadge, setEditingBadge] = useState(null);
+  const [showBadgeForm, setShowBadgeForm] = useState(false);
+  const [searchBadge, setSearchBadge] = useState('');
+  const [badgeFormPosition, setBadgeFormPosition] = useState({ x: 30, y: 120 });
+  const [badgeForm, setBadgeForm] = useState({
+    name: '',
+    description: '',
+    image_url: '',
+    rarity: 'common'
+  });
+  const [badgeImageFile, setBadgeImageFile] = useState(null);
+  const [badgeImagePreview, setBadgeImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
   
   // Dashboard Stats
@@ -207,6 +276,9 @@ const AdminPanel3 = ({ onNavigate }) => {
           break;
         case 'cyberpoints':
           loadCyberPointsCustomers();
+          break;
+        case 'badges':
+          loadBadges();
           break;
         case 'dashboard':
           loadDashboardData();
@@ -1184,6 +1256,28 @@ const AdminPanel3 = ({ onNavigate }) => {
     }
   };
 
+  // Função para carregar insígnias
+  const loadBadges = async () => {
+    try {
+      console.log('Carregando insígnias...');
+      const { data, error } = await supabase
+        .from('badges')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar insígnias:', error);
+        throw error;
+      }
+
+      console.log('Insígnias carregadas:', data?.length || 0);
+      setBadges(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar insígnias:', error);
+      setBadges([]); // Garantir que sempre seja um array
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="admin-login-modern">
@@ -1241,7 +1335,7 @@ const AdminPanel3 = ({ onNavigate }) => {
             { id: 'events', icon: '🏆', label: 'Eventos', color: '#ffd700' },
             { id: 'orders', icon: '🛒', label: 'Pedidos', color: '#ff6600' },
             { id: 'customers', icon: '👥', label: 'Clientes', color: '#9400d3' },
-            { id: 'cyberpoints', icon: '🎮', label: 'CyberPoints', color: '#00ff88' },
+            { id: 'badges', icon: '🎖️', label: 'Insígnias', color: '#ffd700' },
             { id: 'logs', icon: '📋', label: 'Logs', color: '#ff4444' }
           ].map(tab => (
             <button
@@ -3034,7 +3128,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                       </div>
                       
                       <div className="customer-actions">
-                        <button 
+                        <button
                           className="btn-view-modern"
                           title="Ver Pedidos"
                           onClick={() => {
@@ -3043,6 +3137,28 @@ const AdminPanel3 = ({ onNavigate }) => {
                           }}
                         >
                           🛒
+                        </button>
+                        <button
+                          className="btn-add-cyberpoints"
+                          title="Adicionar CyberPoints"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            setCyberPointsChange({ operation: 'add', points: 0, reason: '' });
+                            setShowCyberPointsModal(true);
+                          }}
+                        >
+                          ➕
+                        </button>
+                        <button
+                          className="btn-remove-cyberpoints"
+                          title="Remover CyberPoints"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            setCyberPointsChange({ operation: 'subtract', points: 0, reason: '' });
+                            setShowCyberPointsModal(true);
+                          }}
+                        >
+                          ➖
                         </button>
                       </div>
                     </div>
@@ -3054,6 +3170,369 @@ const AdminPanel3 = ({ onNavigate }) => {
 
           {activeTab === 'logs' && (
             <AccessLogsView />
+          )}
+
+          {/* Badges Management */}
+          {activeTab === 'badges' && (
+            <div className="badges-management">
+              <div className="section-header">
+                <div className="section-title">
+                  <h2>🎖️ Gerenciamento de Insígnias</h2>
+                  <p>Crie, edite e gerencie as insígnias do sistema</p>
+                </div>
+                <div className="section-actions">
+                  <div className="search-container">
+                    <input
+                      type="text"
+                      placeholder="🔍 Buscar insígnias..."
+                      value={searchBadge}
+                      onChange={(e) => setSearchBadge(e.target.value)}
+                      className="search-input-modern"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingBadge(null);
+                      setBadgeForm({
+                        name: '',
+                        description: '',
+                        icon: '🏆',
+                        image_url: '',
+                        rarity: 'common',
+                        points_required: 0,
+                        active: true
+                      });
+                      setShowBadgeForm(true);
+                      setBadgeFormPosition({ x: 30, y: 120 });
+                    }}
+                    className="btn-add-modern"
+                    title="Adicionar Insígnia"
+                  >
+                    ➕ Nova Insígnia
+                  </button>
+                </div>
+              </div>
+
+              <div className="badges-grid">
+                {badges
+                  .filter(badge =>
+                    searchBadge === '' ||
+                    badge.name.toLowerCase().includes(searchBadge.toLowerCase()) ||
+                    badge.description?.toLowerCase().includes(searchBadge.toLowerCase())
+                  )
+                  .map(badge => (
+                    <div key={badge.id} className="badge-card">
+                      <div className="badge-icon">
+                        {badge.image_url ? (
+                          <img src={badge.image_url} alt={badge.name} onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }} />
+                        ) : (
+                          <div className="icon-placeholder" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
+                        )}
+                        {!badge.image_url && (
+                          <div className="icon-placeholder" style={{display: 'none', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
+                        )}
+                      </div>
+
+                      <div className="badge-info">
+                        <h4>{badge.name}</h4>
+                        <p className="badge-description">{badge.description}</p>
+                        <div className="badge-meta">
+                          <span className={`rarity-${badge.rarity}`}>⭐ {badge.rarity}</span>
+                          <span className="points-required">🎮 {badge.points_required} pts</span>
+                          <span className={`status-${badge.active ? 'active' : 'inactive'}`}>
+                            {badge.active ? '🟢 Ativo' : '🔴 Inativo'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="badge-actions">
+                        <button
+                          onClick={() => {
+                            setEditingBadge(badge.id);
+                            setBadgeForm({
+                              name: badge.name || '',
+                              description: badge.description || '',
+                              image_url: badge.image_url || '',
+                              rarity: badge.rarity || 'common'
+                            });
+                            setShowBadgeForm(true);
+                            setBadgeFormPosition({ x: 30, y: 120 });
+                          }}
+                          className="btn-edit-modern"
+                          title="Editar Insígnia"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (confirm('Tem certeza que deseja excluir esta insígnia?')) {
+                              try {
+                                const { error } = await supabase
+                                  .from('badges')
+                                  .delete()
+                                  .eq('id', badge.id);
+
+                                if (error) throw error;
+
+                                await loadBadges(); // Recarregar lista
+                                alert('Insígnia excluída com sucesso!');
+                              } catch (error) {
+                                console.error('Erro ao excluir insígnia:', error);
+                                alert('Erro ao excluir insígnia: ' + error.message);
+                              }
+                            }
+                          }}
+                          className="btn-delete-modern"
+                          title="Excluir Insígnia"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+
+          {/* Formulário de Insígnia */}
+          {showBadgeForm && (
+            <div
+              className="form-panel draggable"
+              style={{
+                left: `${badgeFormPosition.x}px`,
+                top: `${badgeFormPosition.y}px`,
+                cursor: isDragging === 'badge' ? 'grabbing' : 'auto'
+              }}
+            >
+              <div
+                className="panel-header draggable-header"
+                onMouseDown={(e) => handleMouseDown(e, 'badge')}
+                style={{ cursor: 'grab' }}
+              >
+                <h3>{editingBadge ? '✏️ Editar Insígnia' : '➕ Nova Insígnia'}</h3>
+                <div className="header-buttons">
+                  <button
+                    type="button"
+                    onClick={() => setShowBadgeForm(false)}
+                    className="btn-close-float"
+                    title="Fechar formulário"
+                  >
+                    ❌
+                  </button>
+                </div>
+              </div>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setLoading(true);
+                try {
+                  let imageUrl = badgeForm.image_url;
+
+                  // Fazer upload da imagem se houver um novo arquivo
+                  if (badgeImageFile) {
+                    // Primeiro criar ou atualizar o registro para obter o ID
+                    let badgeId = editingBadge;
+
+                    if (!editingBadge) {
+                      // Criar insígnia temporária sem imagem
+                      const { data, error } = await supabase
+                        .from('badges')
+                        .insert([{...badgeForm, image_url: ''}])
+                        .select()
+                        .single();
+
+                      if (error) throw error;
+
+                      badgeId = data.id;
+                    } else {
+                      // Se estiver editando e houver nova imagem, atualizar sem a imagem por enquanto
+                      const { error } = await supabase
+                        .from('badges')
+                        .update({...badgeForm, image_url: ''})
+                        .eq('id', editingBadge);
+
+                      if (error) throw error;
+                    }
+
+                    // Fazer upload da imagem
+                    const uploadedImageUrl = await uploadBadgeImageToStorage(badgeImageFile, badgeId);
+                    if (uploadedImageUrl) {
+                      imageUrl = uploadedImageUrl;
+
+                      // Atualizar o registro com a URL da imagem
+                      const { error } = await supabase
+                        .from('badges')
+                        .update({ image_url: uploadedImageUrl })
+                        .eq('id', badgeId);
+
+                      if (error) throw error;
+                    }
+                  } else if (!editingBadge) {
+                    // Criar nova insígnia sem imagem
+                    const { error } = await supabase
+                      .from('badges')
+                      .insert([badgeForm])
+                      .select();
+
+                    if (error) throw error;
+                  } else {
+                    // Atualizar insígnia existente (mantendo a imagem existente ou usando a URL)
+                    const { error } = await supabase
+                      .from('badges')
+                      .update(badgeForm)
+                      .eq('id', editingBadge);
+
+                    if (error) throw error;
+                  }
+
+                  await loadBadges(); // Recarregar lista
+                  setShowBadgeForm(false);
+                  setBadgeImageFile(null);
+                  setBadgeImagePreview('');
+                  alert(editingBadge ? 'Insígnia atualizada com sucesso!' : 'Insígnia criada com sucesso!');
+                } catch (error) {
+                  console.error('Erro ao salvar insígnia:', error);
+                  alert('Erro ao salvar insígnia: ' + error.message);
+                } finally {
+                  setLoading(false);
+                }
+              }} className="modern-form">
+                <div className="form-group">
+                  <label>Nome da Insígnia</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Aventureiro"
+                    value={badgeForm.name}
+                    onChange={(e) => setBadgeForm({...badgeForm, name: e.target.value})}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Descrição</label>
+                  <textarea
+                    placeholder="Descrição da insígnia..."
+                    value={badgeForm.description}
+                    onChange={(e) => setBadgeForm({...badgeForm, description: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Raridade</label>
+                  <select
+                    value={badgeForm.rarity}
+                    onChange={(e) => setBadgeForm({...badgeForm, rarity: e.target.value})}
+                  >
+                    <option value="common">Comum</option>
+                    <option value="rare">Raro</option>
+                    <option value="epic">Épico</option>
+                    <option value="legendary">Lendário</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Imagem da Insígnia (Opcional)</label>
+                  <div className="image-upload-area" style={{
+                    border: '2px dashed rgba(255, 215, 0, 0.5)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    marginBottom: '15px',
+                    transition: 'border-color 0.3s ease'
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = '#ffd700';
+                  }}
+                  onDragLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      handleBadgeImageUpload(e.dataTransfer.files[0]);
+                    }
+                  }}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleBadgeImageUpload(e.target.files[0]);
+                        }
+                      }}
+                      style={{ display: 'none' }}
+                      id="badge-image-upload"
+                    />
+                    <label htmlFor="badge-image-upload" style={{
+                      cursor: 'pointer',
+                      color: '#ffd700',
+                      fontSize: '1rem'
+                    }}>
+                      {badgeImagePreview ? (
+                        <div>
+                          <img
+                            src={badgeImagePreview}
+                            alt="Prévia da imagem"
+                            style={{
+                              maxWidth: '100px',
+                              maxHeight: '100px',
+                              borderRadius: '8px',
+                              marginBottom: '10px',
+                              display: 'block',
+                              margin: '0 auto 10px'
+                            }}
+                          />
+                          <p>Clique ou arraste para substituir</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p>📁 Clique ou arraste uma imagem aqui</p>
+                          <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>PNG, JPG, GIF até 5MB</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                  <input
+                    type="url"
+                    placeholder="Ou insira URL da imagem..."
+                    value={badgeForm.image_url}
+                    onChange={(e) => setBadgeForm({...badgeForm, image_url: e.target.value})}
+                  />
+                </div>
+
+
+                <div className="form-actions">
+                  <button type="submit" className="btn-primary" disabled={loading}>
+                    {loading ? 'Salvando...' : (editingBadge ? 'Atualizar' : 'Criar')}
+                  </button>
+                  {editingBadge && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingBadge(null);
+                        setBadgeForm({
+                          name: '',
+                          description: '',
+                          image_url: '',
+                          rarity: 'common'
+                        });
+                      }}
+                      className="btn-secondary"
+                    >
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
           )}
 
           {/* CyberPoints Management */}
@@ -3324,8 +3803,8 @@ const AdminPanel3 = ({ onNavigate }) => {
 
                       // Determinar o valor baseado na operação
                       const operationValue = cyberPointsChange.operation === 'add'
-                        ? cyberPointsChange.points
-                        : -cyberPointsChange.points;
+                        ? parseInt(cyberPointsChange.points) || 0
+                        : -(parseInt(cyberPointsChange.points) || 0);
 
                       console.log('Valor da operação (operationValue):', operationValue);
 
