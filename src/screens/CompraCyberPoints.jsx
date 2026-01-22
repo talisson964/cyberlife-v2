@@ -124,8 +124,8 @@ const CompraCyberPoints = () => {
       }}>
         <button
           onClick={() => {
-            console.log('Navigating to home');
-            navigate('/');
+            console.log('Navigating to profile');
+            navigate('/perfil');
           }}
           style={{
             background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
@@ -340,7 +340,7 @@ const CompraCyberPoints = () => {
                   color: '#00ff88',
                   fontWeight: 'bold'
                 }}>✦</span>
-                Seus CyberPoints são creditados imediatamente
+                Seus CyberPoints são creditados assim que o comprovante é confirmado via Whatsapp
               </li>
               <li style={{
                 position: 'relative',

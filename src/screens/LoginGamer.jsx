@@ -157,9 +157,39 @@ export default function LoginGamer({ onLoginSuccess }) {
           // Não lançar erro aqui, pois o usuário já foi criado
         }
 
-        setMessage({ 
-          type: 'success', 
-          text: 'Conta criada com sucesso! Um email de confirmação foi enviado para seu email. Confirme seu email para poder fazer login.' 
+        // Conceder automaticamente a insígnia de boas-vindas
+        try {
+          // Primeiro, encontrar o ID da insígnia "Bem Vindo à CyberLife"
+          const { data: badgeData, error: badgeError } = await supabase
+            .from('badges')
+            .select('id')
+            .eq('name', 'Bem Vindo à CyberLife')
+            .single();
+
+          if (badgeError) {
+            console.error('Erro ao buscar insígnia de boas-vindas:', badgeError);
+          } else if (badgeData) {
+            // Conceder a insígnia ao novo usuário
+            const { error: awardError } = await supabase
+              .from('user_badges')
+              .insert([{
+                user_id: data.user.id,
+                badge_id: badgeData.id
+              }]);
+
+            if (awardError) {
+              console.error('Erro ao conceder insígnia de boas-vindas:', awardError);
+            } else {
+              console.log('Insígnia de boas-vindas concedida com sucesso!');
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao conceder insígnia de boas-vindas:', error);
+        }
+
+        setMessage({
+          type: 'success',
+          text: 'Conta criada com sucesso! Um email de confirmação foi enviado para seu email. Confirme seu email para poder fazer login.'
         });
         setMode('login');
         setFormData({ ...formData, password: '' });

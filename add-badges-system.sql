@@ -156,6 +156,7 @@ ORDER BY table_name, ordinal_position;
 
 -- 12. Inserir algumas insígnias padrão
 INSERT INTO badges (name, description, icon, rarity, points_required, active) VALUES
+  ('Bem Vindo à CyberLife', 'Sua primeira insígnia como membro da comunidade CyberLife!', '👋', 'common', 0, true),
   ('Primeiros Passos', 'Ganhe sua primeira insígnia ao fazer login', '👣', 'common', 0, true),
   ('Aventureiro', 'Ganhe 100 CyberPoints', '⚔️', 'common', 100, true),
   ('Conquistador', 'Ganhe 500 CyberPoints', '👑', 'rare', 500, true),

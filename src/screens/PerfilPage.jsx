@@ -19,12 +19,84 @@ export default function PerfilPage() {
     age: '',
     city: '',
     state: '',
-    whatsapp: ''
+    whatsapp: '',
+    avatar_url: ''
   });
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [badges, setBadges] = useState([]);
+  const [filteredBadges, setFilteredBadges] = useState([]);
   const [loadingBadges, setLoadingBadges] = useState(false);
+  const [enlargedBadge, setEnlargedBadge] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAvatarGallery, setShowAvatarGallery] = useState(false);
+  const [avatarGalleryImages, setAvatarGalleryImages] = useState([]);
+
+  // Efeito para carregar as imagens da galeria de avatares
+  useEffect(() => {
+    // Carregar todas as imagens da pasta perfil-imgs
+    const images = [
+      '/src/perfil-imgs/aloy-perfil.png',
+      '/src/perfil-imgs/ellie-perfil.png',
+      '/src/perfil-imgs/frieren-perfil.png',
+      '/src/perfil-imgs/gojo-perfil.png',
+      '/src/perfil-imgs/grace-perfil.png',
+      '/src/perfil-imgs/kenpachi-perfil.png',
+      '/src/perfil-imgs/leon-perfil.png',
+      '/src/perfil-imgs/maomao-perfil.png',
+      '/src/perfil-imgs/sasuke-perfil.png',
+      '/src/perfil-imgs/zoro-perfil.png'
+    ];
+    setAvatarGalleryImages(images);
+  }, []);
+
+  // Efeito para adicionar estilos de scrollbar personalizada
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #2a2a2a;
+        border-radius: 4px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #ffd700;
+        border-radius: 4px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #ffaa00;
+      }
+
+      .avatar-gallery-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .avatar-gallery-scrollbar::-webkit-scrollbar-track {
+        background: rgba(0, 217, 255, 0.1);
+        border-radius: 3px;
+      }
+
+      .avatar-gallery-scrollbar::-webkit-scrollbar-thumb {
+        background: #00d9ff;
+        border-radius: 3px;
+      }
+
+      .avatar-gallery-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #00ff88;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const showLoginPrompt = () => {
     setShowLoginPopup(true);
@@ -120,14 +192,16 @@ export default function PerfilPage() {
       // Transformar os dados para incluir informações da insígnia e data de aquisição
       const badgesWithInfo = data.map(ub => ({
         ...ub.badges,
-        acquired_at: ub.created_at,
+        acquired_at: ub.acquired_at, // Corrigido: usar acquired_at em vez de created_at
         user_badge_id: ub.id
       }));
 
       setBadges(badgesWithInfo);
+      setFilteredBadges(badgesWithInfo); // Inicialmente mostrar todas as insígnias
     } catch (error) {
       console.error('Erro ao carregar insígnias:', error);
       setBadges([]);
+      setFilteredBadges([]);
     } finally {
       setLoadingBadges(false);
     }
@@ -216,21 +290,30 @@ export default function PerfilPage() {
         age: profile.age || '',
         city: profile.city || '',
         state: profile.state || '',
-        whatsapp: profile.whatsapp || ''
+        whatsapp: profile.whatsapp || '',
+        avatar_url: profile.avatar_url || ''
       });
     }
+  };
+
+  // Função para selecionar uma imagem de avatar
+  const selectAvatarImage = (imageUrl) => {
+    setEditForm(prev => ({
+      ...prev,
+      avatar_url: imageUrl
+    }));
   };
 
   const handleSaveProfile = async () => {
     try {
       if (!user) return;
-      
+
       // Validar nickname
       if (!editForm.nickname || editForm.nickname.trim() === '') {
         alert('Nickname é obrigatório!');
         return;
       }
-      
+
       // Verificar se nickname já está em uso por outro usuário
       const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
@@ -238,16 +321,16 @@ export default function PerfilPage() {
         .eq('nickname', editForm.nickname.trim())
         .neq('id', user.id)
         .maybeSingle();
-      
+
       if (checkError) {
         console.error('Erro ao verificar nickname:', checkError);
       }
-      
+
       if (existingProfile) {
         alert(`O nickname "${editForm.nickname}" já está em uso por outro usuário. Escolha outro nickname.`);
         return;
       }
-      
+
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -256,10 +339,11 @@ export default function PerfilPage() {
           age: editForm.age ? parseInt(editForm.age) : null,
           city: editForm.city,
           state: editForm.state,
-          whatsapp: editForm.whatsapp
+          whatsapp: editForm.whatsapp,
+          avatar_url: editForm.avatar_url // Adicionando a URL do avatar
         })
         .eq('id', user.id);
-      
+
       if (error) {
         // Verificar se é erro de nickname duplicado
         if (error.code === '23505' && error.message.includes('profiles_nickname_unique')) {
@@ -268,11 +352,11 @@ export default function PerfilPage() {
         }
         throw error;
       }
-      
+
       alert('Perfil atualizado com sucesso!');
       setEditMode(false);
       loadUserProfile(); // Recarregar dados
-      
+
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       alert('Erro ao atualizar perfil: ' + error.message);
@@ -281,12 +365,48 @@ export default function PerfilPage() {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Recente';
+
+    // Verificar se a data é válida
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      // Se a data for inválida, tentar converter de diferentes formatos
+      const parsedDate = new Date(dateString.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$2/$1/$3'));
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      }
+      return 'Data desconhecida';
+    }
+
     return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
 
+  // Função para lidar com a pesquisa de insígnias
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+
+    if (term === '') {
+      setFilteredBadges(badges);
+    } else {
+      const filtered = badges.filter(badge =>
+        badge.name.toLowerCase().includes(term) ||
+        (badge.description && badge.description.toLowerCase().includes(term))
+      );
+      setFilteredBadges(filtered);
+    }
+  };
+
   return (
-    <div className="perfil-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
+    <div className="perfil-page" style={{
+      minHeight: '100vh',
+      background: '#000',
+      color: '#fff',
+      margin: 0,
+      padding: 0,
+      /* Estilos para scrollbar personalizada */
+      scrollbarWidth: 'thin',
+      scrollbarColor: '#ffd700 #2a2a2a'
+    }}>
       <header className="header" style={{ 
         display: 'flex', 
         alignItems: 'center', 
@@ -640,9 +760,36 @@ export default function PerfilPage() {
                     </div>
                   )}
                   {profile.cyber_points !== undefined && (
-                    <div>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <p style={{color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px'}}>CyberPoints</p>
-                      <p style={{color: '#00ff88', fontSize: '1.2rem', fontWeight: 700}}>🎮 {profile.cyber_points} pontos</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <p style={{color: '#00ff88', fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>🎮 {profile.cyber_points} pontos</p>
+                        <button
+                          onClick={() => window.location.href = '/comprar-cyberpoints'}
+                          style={{
+                            background: 'linear-gradient(135deg, #ff00ea, #cc0066)',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#fff',
+                            padding: '6px 12px',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                            e.currentTarget.style.boxShadow = '0 5px 15px rgba(255, 0, 234, 0.4)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        >
+                          Comprar
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -652,9 +799,9 @@ export default function PerfilPage() {
                   marginBottom: '30px',
                   padding: '20px',
                   background: 'rgba(255, 217, 0, 0.05)',
-                  border: '2px solid rgba(255, 217, 0, 0.3)',
-                  borderRadius: '12px',
-                  boxShadow: '0 0 20px rgba(255, 217, 0, 0.1)'
+                  border: 'none', /* Remover bordas */
+                  borderRadius: '0', /* Remover cantos arredondados */
+                  boxShadow: 'none' /* Remover sombra */
                 }}>
                   <h4 style={{
                     color: '#ffd900',
@@ -669,63 +816,179 @@ export default function PerfilPage() {
                     🏆 Minhas Insígnias
                   </h4>
 
+                  {/* Campo de pesquisa para insígnias */}
+                  <div style={{
+                    marginBottom: '15px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <input
+                      type="text"
+                      placeholder="🔍 Pesquisar insígnias..."
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      style={{
+                        flex: 1,
+                        padding: '10px 15px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255, 217, 0, 0.3)',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        color: '#fff',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '0.9rem'
+                      }}
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          setFilteredBadges(badges);
+                        }}
+                        style={{
+                          marginLeft: '10px',
+                          padding: '10px 15px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: 'rgba(255, 68, 68, 0.3)',
+                          color: '#fff',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+
                   {badges.length > 0 ? (
-                    <div style={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: '15px'
-                    }}>
-                      {badges.map((badge, index) => (
-                        <div
-                          key={index}
-                          style={{
-                            position: 'relative',
-                            width: '80px',
-                            height: '80px',
+                    <div>
+                      <div
+                        style={{
+                          maxHeight: '200px', /* Altura reduzida para mostrar apenas uma fileira */
+                          overflowY: 'auto', /* Adiciona scrollbar vertical quando necessário */
+                          padding: '5px',
+                          borderRadius: '8px',
+                          /* Estilos personalizados para a scrollbar */
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#ffd700 #2a2a2a'
+                        }}
+                        className="custom-scrollbar"
+                      >
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '40px'
+                        }}>
+                          {filteredBadges.map((badge, index) => (
+                          <div
+                            key={index}
+                            style={{
+                              position: 'relative',
+                              width: '160px',
+                              height: '160px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: 'transparent',
+                              border: 'none',
+                              borderRadius: '0',
+                              cursor: 'pointer',
+                              transition: 'all 0.3s ease',
+                              overflow: 'visible'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.05)';
+                              // Remover sombra ao passar o mouse
+
+                              // Mostrar tooltip
+                              const tooltip = e.currentTarget.querySelector('.badge-tooltip');
+                              if (tooltip) {
+                                tooltip.style.opacity = '1';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              // Remover sombra ao sair o mouse
+
+                              // Esconder tooltip
+                              const tooltip = e.currentTarget.querySelector('.badge-tooltip');
+                              if (tooltip) {
+                                tooltip.style.opacity = '0';
+                              }
+                            }}
+                            onClick={(e) => {
+                              e.currentTarget.style.transform = 'scale(0.95)'; // Efeito de pressionar
+                              setTimeout(() => {
+                                e.currentTarget.style.transform = 'scale(1.05)'; // Volta ao hover
+                              }, 100);
+
+                              // Definir a insígnia ampliada ao clicar
+                              setEnlargedBadge(badge);
+                            }}
+                          >
+                          <div style={{
+                            width: '120px',
+                            height: '120px',
                             display: 'flex',
-                            flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            background: 'linear-gradient(135deg, rgba(255, 217, 0, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
-                            border: '2px solid rgba(255, 217, 0, 0.4)',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            overflow: 'hidden'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 217, 0, 0.6)';
-
-                            // Mostrar tooltip
-                            const tooltip = e.currentTarget.querySelector('.badge-tooltip');
-                            if (tooltip) {
-                              tooltip.style.opacity = '1';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = 'none';
-
-                            // Esconder tooltip
-                            const tooltip = e.currentTarget.querySelector('.badge-tooltip');
-                            if (tooltip) {
-                              tooltip.style.opacity = '0';
-                            }
-                          }}
-                        >
-                          <div style={{
-                            fontSize: '2rem',
-                            marginBottom: '5px'
+                            marginBottom: '5px',
+                            position: 'relative',
+                            zIndex: '1'
                           }}>
-                            {badge.icon || '🎮'}
+                            {badge.image_url ? (
+                              <img
+                                src={badge.image_url}
+                                alt={badge.name}
+                                className="badge-image"
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'contain'
+                                }}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : (
+                              <div style={{
+                                fontSize: '4rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '100%',
+                                height: '100%'
+                              }}>
+                                <span className="badge-image">{badge.icon || '🎮'}</span>
+                              </div>
+                            )}
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '100%',
+                              height: '100%',
+                              fontSize: '3.5rem',
+                              display: 'none'
+                            }}>
+                              {badge.icon || '🎮'}
+                            </div>
                           </div>
                           <div style={{
-                            fontSize: '0.6rem',
+                            fontSize: '0.7rem', // Aumentei o tamanho da fonte para melhor legibilidade
                             textAlign: 'center',
-                            color: '#ffd900',
+                            color: (() => {
+                              switch(badge.rarity) {
+                                case 'common': return '#cccccc'; // Cinza claro
+                                case 'rare': return '#66ccff'; // Azul claro
+                                case 'epic': return '#bb66ff'; // Roxo claro
+                                case 'legendary': return '#ffdd66'; // Amarelo dourado claro
+                                default: return '#ffdd66'; // Amarelo dourado claro padrão
+                              }
+                            })(),
                             fontWeight: 'bold',
-                            textShadow: '0 0 5px rgba(255, 217, 0, 0.8)'
+                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' // Reduzi o efeito de sombra para melhor legibilidade
                           }}>
                             {badge.name}
                           </div>
@@ -749,12 +1012,36 @@ export default function PerfilPage() {
                             border: '1px solid rgba(255, 217, 0, 0.5)',
                             boxShadow: '0 5px 15px rgba(0, 0, 0, 0.5)'
                           }} className="badge-tooltip">
-                            Adquirida em: {new Date(badge.acquired_at).toLocaleDateString('pt-BR')}
+                            Adquirida em: {(() => {
+                              if (!badge.acquired_at) return 'Data desconhecida';
+                              const date = new Date(badge.acquired_at);
+                              if (isNaN(date.getTime())) {
+                                // Tentar diferentes formatos de data
+                                const dateFormats = [
+                                  /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
+                                  /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
+                                  /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
+                                ];
+
+                                for (const format of dateFormats) {
+                                  if (format.test(badge.acquired_at)) {
+                                    const parsedDate = new Date(badge.acquired_at);
+                                    if (!isNaN(parsedDate.getTime())) {
+                                      return parsedDate.toLocaleDateString('pt-BR');
+                                    }
+                                  }
+                                }
+                                return 'Data desconhecida';
+                              }
+                              return date.toLocaleDateString('pt-BR');
+                            })()}
                           </div>
                         </div>
                       ))}
                     </div>
-                  ) : (
+                  </div>
+                </div>
+                ) : (
                     <p style={{
                       color: 'rgba(255, 255, 255, 0.6)',
                       textAlign: 'center',
@@ -1032,6 +1319,110 @@ export default function PerfilPage() {
                     boxSizing: 'border-box',
                   }}
                 />
+              </div>
+
+              {/* Galeria de Avatares */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  color: '#00d9ff',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px',
+                  fontWeight: 600,
+                }}>Escolher Avatar</label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                  gap: '10px',
+                  marginBottom: '15px',
+                  padding: '10px',
+                  background: 'rgba(0, 217, 255, 0.05)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '8px',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  /* Estilos personalizados para a scrollbar */
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#00d9ff rgba(0, 217, 255, 0.1)'
+                }}
+                className="avatar-gallery-scrollbar"
+                >
+                  {avatarGalleryImages.map((img, index) => (
+                    <div
+                      key={index}
+                      onClick={() => selectAvatarImage(img)}
+                      style={{
+                        cursor: 'pointer',
+                        border: editForm.avatar_url === img ? '3px solid #00ff88' : '2px solid transparent',
+                        borderRadius: '50%',
+                        padding: '5px',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                        e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 136, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <img
+                        src={img}
+                        alt={`Avatar ${index + 1}`}
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid rgba(255, 255, 255, 0.2)'
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginTop: '10px'
+                }}>
+                  <span style={{ color: '#00ff88', fontSize: '0.9rem' }}>Avatar atual:</span>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: '2px solid #00d9ff'
+                  }}>
+                    {editForm.avatar_url ? (
+                      <img
+                        src={editForm.avatar_url}
+                        alt="Avatar selecionado"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(0, 217, 255, 0.2)',
+                        fontSize: '1.2rem'
+                      }}>
+                        👤
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Botões */}
@@ -1492,6 +1883,184 @@ export default function PerfilPage() {
       )}
 
       <CommunityFab />
+
+      {/* Overlay para insígnia ampliada */}
+      {enlargedBadge && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            cursor: 'pointer'
+          }}
+          onClick={() => setEnlargedBadge(null)}
+        >
+          <div
+            style={{
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {enlargedBadge.image_url ? (
+              <img
+                src={enlargedBadge.image_url}
+                alt={enlargedBadge.name}
+                style={{
+                  maxWidth: '300px', /* 3x o tamanho original de 100px */
+                  maxHeight: '300px',
+                  objectFit: 'contain', /* Preserva o aspect ratio original */
+                  borderRadius: '0', /* Remover bordas */
+                  boxShadow: 'none' /* Remover sombra */
+                }}
+                onMouseEnter={(e) => {
+                  // Criar tooltip com descrição e data de aquisição
+                  const tooltip = document.createElement('div');
+                  tooltip.className = 'enlarged-badge-tooltip';
+                  const dateText = (() => {
+                    if (!enlargedBadge.acquired_at) return 'Data desconhecida';
+                    const date = new Date(enlargedBadge.acquired_at);
+                    if (isNaN(date.getTime())) {
+                      // Tentar diferentes formatos de data
+                      const dateFormats = [
+                        /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
+                        /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
+                        /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
+                      ];
+
+                      for (const format of dateFormats) {
+                        if (format.test(enlargedBadge.acquired_at)) {
+                          const parsedDate = new Date(enlargedBadge.acquired_at);
+                          if (!isNaN(parsedDate.getTime())) {
+                            return parsedDate.toLocaleDateString('pt-BR');
+                          }
+                        }
+                      }
+                      return 'Data desconhecida';
+                    }
+                    return date.toLocaleDateString('pt-BR');
+                  })();
+                  tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
+                  tooltip.style.position = 'absolute';
+                  tooltip.style.bottom = '10px';
+                  tooltip.style.left = '50%';
+                  tooltip.style.transform = 'translateX(-50%)';
+                  tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
+                  tooltip.style.color = '#fff';
+                  tooltip.style.padding = '10px 15px';
+                  tooltip.style.borderRadius = '8px';
+                  tooltip.style.fontSize = '14px';
+                  tooltip.style.zIndex = '10001';
+                  tooltip.style.maxWidth = '300px';
+                  tooltip.style.textAlign = 'center';
+                  tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+
+                  e.currentTarget.parentElement.appendChild(tooltip);
+                }}
+                onMouseLeave={(e) => {
+                  // Remover tooltip
+                  const tooltip = e.currentTarget.parentElement.querySelector('.enlarged-badge-tooltip');
+                  if (tooltip) {
+                    e.currentTarget.parentElement.removeChild(tooltip);
+                  }
+                }}
+              />
+            ) : (
+              <div style={{
+                fontSize: '6rem', /* 3x o tamanho original de 2rem */
+                color: '#ffd900',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '300px',
+                height: '300px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                borderRadius: '0', /* Remover bordas */
+                boxShadow: 'none' /* Remover sombra */
+              }}
+              onMouseEnter={(e) => {
+                // Criar tooltip com descrição e data de aquisição
+                const tooltip = document.createElement('div');
+                tooltip.className = 'enlarged-badge-tooltip';
+                const dateText = (() => {
+                  if (!enlargedBadge.acquired_at) return 'Data desconhecida';
+                  const date = new Date(enlargedBadge.acquired_at);
+                  if (isNaN(date.getTime())) {
+                    // Tentar diferentes formatos de data
+                    const dateFormats = [
+                      /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
+                      /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
+                      /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
+                    ];
+
+                    for (const format of dateFormats) {
+                      if (format.test(enlargedBadge.acquired_at)) {
+                        const parsedDate = new Date(enlargedBadge.acquired_at);
+                        if (!isNaN(parsedDate.getTime())) {
+                          return parsedDate.toLocaleDateString('pt-BR');
+                        }
+                      }
+                    }
+                    return 'Data desconhecida';
+                  }
+                  return date.toLocaleDateString('pt-BR');
+                })();
+                tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
+                tooltip.style.position = 'absolute';
+                tooltip.style.bottom = '10px';
+                tooltip.style.left = '50%';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
+                tooltip.style.color = '#fff';
+                tooltip.style.padding = '10px 15px';
+                tooltip.style.borderRadius = '8px';
+                tooltip.style.fontSize = '14px';
+                tooltip.style.zIndex = '10001';
+                tooltip.style.maxWidth = '300px';
+                tooltip.style.textAlign = 'center';
+                tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+
+                e.currentTarget.parentElement.appendChild(tooltip);
+              }}
+              onMouseLeave={(e) => {
+                // Remover tooltip
+                const tooltip = e.currentTarget.parentElement.querySelector('.enlarged-badge-tooltip');
+                if (tooltip) {
+                  e.currentTarget.parentElement.removeChild(tooltip);
+                }
+              }}
+              >
+                {enlargedBadge.icon || '🎮'}
+              </div>
+            )}
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'rgba(0, 0, 0, 0.7)',
+              color: '#fff',
+              borderRadius: '50%',
+              width: '30px',
+              height: '30px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '1.2rem'
+            }}
+            onClick={() => setEnlargedBadge(null)}
+            >
+              ×
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

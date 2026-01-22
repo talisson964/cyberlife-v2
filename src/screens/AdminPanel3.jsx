@@ -86,6 +86,13 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [badgeImageFile, setBadgeImageFile] = useState(null);
   const [badgeImagePreview, setBadgeImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Estados para atribuição de insígnias
+  const [showAssignBadgeModal, setShowAssignBadgeModal] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [customersForAssignment, setCustomersForAssignment] = useState([]);
+  const [selectedCustomerForAssignment, setSelectedCustomerForAssignment] = useState('');
+  const [searchCustomerForAssignment, setSearchCustomerForAssignment] = useState('');
   
   // Dashboard Stats
   const [dashboardStats, setDashboardStats] = useState(null);
@@ -186,6 +193,12 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [customers, setCustomers] = useState([]);
   const [searchCustomer, setSearchCustomer] = useState('');
 
+  // Estados para gerenciamento de insígnias do cliente
+  const [showManageBadgesModal, setShowManageBadgesModal] = useState(false);
+  const [selectedCustomerBadges, setSelectedCustomerBadges] = useState([]);
+  const [allBadges, setAllBadges] = useState([]);
+  const [loadingBadges, setLoadingBadges] = useState(false);
+
   // Preview Modal
   const [showPreview, setShowPreview] = useState(false);
   const [previewType, setPreviewType] = useState(null); // 'product', 'banner', 'event'
@@ -215,7 +228,8 @@ const AdminPanel3 = ({ onNavigate }) => {
         loadEvents(),
         loadOrders(),
         loadCustomers(),
-        loadCyberPointsCustomers()
+        loadCyberPointsCustomers(),
+        loadCustomersForAssignment() // Carregar clientes para atribuição de insígnias
       ]);
 
       console.log('Todos os dados carregados com sucesso!');
@@ -279,6 +293,7 @@ const AdminPanel3 = ({ onNavigate }) => {
           break;
         case 'badges':
           loadBadges();
+          loadCustomersForAssignment(); // Carregar clientes para atribuição de insígnias
           break;
         case 'dashboard':
           loadDashboardData();
@@ -293,47 +308,191 @@ const AdminPanel3 = ({ onNavigate }) => {
   const loadDashboardData = async () => {
     try {
       console.log('Carregando dados do dashboard...');
-      
+
+      // Carregar estatísticas principais
       const { data: stats, error: statsError } = await supabase
-        .from('dashboard_stats')
-        .select('*')
-        .single();
+        .rpc('get_dashboard_stats');
 
+      // Se a função RPC não existir, calcular estatísticas manualmente
+      if (statsError) {
+        console.warn('Função RPC get_dashboard_stats não encontrada:', statsError.message);
+
+        // Calcular receita total a partir dos pedidos completos
+        const { data: completedOrders, error: ordersTotalError } = await supabase
+          .from('orders')
+          .select('total')
+          .eq('status', 'completed');
+
+        let totalRevenue = 0;
+        if (!ordersTotalError && completedOrders) {
+          totalRevenue = completedOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
+        }
+
+        // Definir estatísticas com cálculos manuais
+        setDashboardStats({
+          total_revenue: totalRevenue,
+          total_orders: 0, // Será atualizado posteriormente
+          total_customers: 0, // Será atualizado posteriormente
+          total_products: 0, // Será atualizado posteriormente
+          low_stock_products: 0,
+          pending_orders: 0 // Será atualizado posteriormente
+        });
+      } else {
+        setDashboardStats(stats[0] || {
+          total_revenue: 0,
+          total_orders: 0,
+          total_customers: 0,
+          total_products: 0,
+          low_stock_products: 0,
+          pending_orders: 0
+        });
+      }
+
+      // Carregar pedidos recentes
       const { data: orders, error: ordersError } = await supabase
-        .from('recent_orders')
-        .select('*')
+        .from('orders')
+        .select(`
+          *,
+          profiles (full_name, nickname)
+        `)
+        .order('created_at', { ascending: false })
         .limit(10);
 
+      if (ordersError) {
+        console.warn('Erro ao carregar pedidos recentes:', ordersError.message);
+        setRecentOrders([]);
+      } else {
+        // Processar os dados para ter o formato esperado
+        const processedOrders = orders.map(order => ({
+          id: order.id,
+          order_number: order.id,
+          total: order.total,
+          status: order.status,
+          created_at: order.created_at,
+          user_name: order.profiles?.full_name || order.profiles?.nickname || 'Cliente'
+        }));
+        setRecentOrders(processedOrders);
+
+        // Calcular estatísticas de pedidos
+        const totalOrders = orders.length;
+        const pendingOrders = orders.filter(order => order.status === 'pending').length;
+
+        // Atualizar as estatísticas com a contagem real de pedidos
+        setDashboardStats(prevStats => ({
+          ...prevStats,
+          total_orders: totalOrders,
+          pending_orders: pendingOrders
+        }));
+      }
+
+      // Carregar clientes
       const { data: customers, error: customersError } = await supabase
-        .from('top_customers')
+        .from('profiles')
         .select('*')
+        .order('created_at', { ascending: false })
         .limit(10);
 
-      const { data: categories, error: categoriesError } = await supabase
-        .from('sales_by_category')
-        .select('*');
+      if (customersError) {
+        console.warn('Erro ao carregar clientes:', customersError.message);
+        setTopCustomers([]);
+      } else {
+        setTopCustomers(customers);
+      }
 
+      // Carregar contagem total de clientes para estatísticas
+      const { count: totalCustomersCount, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        console.warn('Erro ao contar clientes:', countError.message);
+      } else {
+        // Atualizar as estatísticas com a contagem real de clientes
+        setDashboardStats(prevStats => ({
+          ...prevStats,
+          total_customers: totalCustomersCount || 0
+        }));
+      }
+
+      // Carregar categorias/produtos
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (productsError) {
+        console.warn('Erro ao carregar produtos:', productsError.message);
+        setSalesByCategory([]);
+      } else {
+        // Agrupar produtos por categoria para simular vendas por categoria
+        const productsByCategory = products.reduce((acc, product) => {
+          const category = acc.find(cat => cat.category === product.category);
+          if (category) {
+            category.count = (category.count || 0) + 1;
+          } else {
+            acc.push({ category: product.category, count: 1 });
+          }
+          return acc;
+        }, []);
+        setSalesByCategory(productsByCategory);
+      }
+
+      // Carregar contagem total de produtos para estatísticas
+      const { count: totalProductsCount, error: productsCountError } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+      if (productsCountError) {
+        console.warn('Erro ao contar produtos:', productsCountError.message);
+      } else {
+        // Atualizar as estatísticas com a contagem real de produtos
+        setDashboardStats(prevStats => ({
+          ...prevStats,
+          total_products: totalProductsCount || 0
+        }));
+      }
+
+      // Carregar produtos com estoque baixo
       const { data: lowStockData, error: lowStockError } = await supabase
-        .from('low_stock_alert')
-        .select('*');
+        .from('products')
+        .select('*')
+        .lte('stock', 5)
+        .gt('stock', 0)
+        .order('stock', { ascending: true })
+        .limit(10);
 
-      // Não gerar erro se as views não existirem ainda
-      if (statsError) console.warn('View dashboard_stats não encontrada:', statsError.message);
-      if (ordersError) console.warn('View recent_orders não encontrada:', ordersError.message);
-      if (customersError) console.warn('View top_customers não encontrada:', customersError.message);
-      if (categoriesError) console.warn('View sales_by_category não encontrada:', categoriesError.message);
-      if (lowStockError) console.warn('View low_stock_alert não encontrada:', lowStockError.message);
+      const { data: outOfStockData, error: outOfStockError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('stock', 0)
+        .limit(10);
 
-      if (!statsError) setDashboardStats(stats);
-      if (!ordersError) setRecentOrders(orders || []);
-      if (!customersError) setTopCustomers(customers || []);
-      if (!categoriesError) setSalesByCategory(categories || []);
-      if (!lowStockError) setLowStock(lowStockData || []);
-      
+      if (lowStockError) {
+        console.warn('Erro ao carregar produtos com estoque baixo:', lowStockError.message);
+      }
+      if (outOfStockError) {
+        console.warn('Erro ao carregar produtos sem estoque:', outOfStockError.message);
+      }
+
+      const allLowStock = [
+        ...(lowStockData || []),
+        ...(outOfStockData || [])
+      ];
+      setLowStock(allLowStock);
+
       console.log('Dados do dashboard carregados');
 
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
+      // Definir valores padrão em caso de erro
+      setDashboardStats({
+        total_revenue: 0,
+        total_orders: 0,
+        total_customers: 0,
+        total_products: 0,
+        low_stock_products: 0,
+        pending_orders: 0
+      });
     }
   };
 
@@ -1178,6 +1337,135 @@ const AdminPanel3 = ({ onNavigate }) => {
     }
   };
 
+  // Função para carregar todas as insígnias
+  const loadAllBadges = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('badges')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+
+      setAllBadges(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar insígnias:', error);
+      setAllBadges([]);
+      alert('Erro ao carregar insígnias: ' + error.message);
+    }
+  };
+
+  // Função para carregar insígnias do cliente
+  const loadCustomerBadges = async (customerId) => {
+    try {
+      setLoadingBadges(true);
+
+      // Carregar todas as insígnias
+      await loadAllBadges();
+
+      // Carregar insígnias do cliente
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select(`
+          *,
+          badges (*)
+        `)
+        .eq('user_id', customerId);
+
+      if (error) throw error;
+
+      setSelectedCustomerBadges(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar insígnias do cliente:', error);
+      setSelectedCustomerBadges([]);
+      alert('Erro ao carregar insígnias do cliente: ' + error.message);
+    } finally {
+      setLoadingBadges(false);
+    }
+  };
+
+  // Função para desatribuir uma insígnia do cliente
+  const removeBadgeFromCustomer = async (userBadgeId, badgeName) => {
+    if (!confirm(`Tem certeza que deseja remover a insígnia "${badgeName}" do cliente?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('user_badges')
+        .delete()
+        .eq('id', userBadgeId);
+
+      if (error) throw error;
+
+      // Recarregar insígnias do cliente
+      await loadCustomerBadges(selectedCustomerBadges[0]?.user_id || selectedCustomer?.id);
+      alert('Insígnia removida com sucesso!');
+    } catch (error) {
+      console.error('Erro ao remover insígnia:', error);
+      alert('Erro ao remover insígnia: ' + error.message);
+    }
+  };
+
+  // Função para atribuir uma insígnia ao cliente
+  const assignBadgeToCustomerFromManagement = async (customerId, badgeId) => {
+    try {
+      // Verificar se o cliente já tem essa insígnia
+      const { data: existingBadge, error: checkError } = await supabase
+        .from('user_badges')
+        .select('*')
+        .eq('user_id', customerId)
+        .eq('badge_id', badgeId);
+
+      if (checkError) throw checkError;
+
+      if (existingBadge && existingBadge.length > 0) {
+        alert('Este cliente já possui esta insígnia!');
+        return;
+      }
+
+      // Atribuir a insígnia ao cliente
+      const { error: insertError } = await supabase
+        .from('user_badges')
+        .insert({
+          user_id: customerId,
+          badge_id: badgeId
+        });
+
+      if (insertError) throw insertError;
+
+      // Criar notificação para o usuário
+      const { data: badgeData } = await supabase
+        .from('badges')
+        .select('name, icon')
+        .eq('id', badgeId)
+        .single();
+
+      if (badgeData) {
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: customerId,
+            type: 'badge',
+            title: 'Nova Insígnia Recebida!',
+            message: `Você recebeu a insígnia "${badgeData.name}"`,
+            icon: badgeData.icon || '🏆'
+          });
+
+        if (notificationError) {
+          console.error('Erro ao criar notificação:', notificationError);
+        }
+      }
+
+      // Recarregar insígnias do cliente
+      await loadCustomerBadges(customerId);
+      alert('Insígnia atribuída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atribuir insígnia:', error);
+      alert('Erro ao atribuir insígnia: ' + error.message);
+    }
+  };
+
   // Função para carregar clientes com cyberpoints
   const loadCyberPointsCustomers = async () => {
     try {
@@ -1260,7 +1548,7 @@ const AdminPanel3 = ({ onNavigate }) => {
   const loadBadges = async () => {
     try {
       console.log('Carregando insígnias...');
-      const { data, error } = await supabase
+      const { data: badgesData, error } = await supabase
         .from('badges')
         .select('*')
         .order('created_at', { ascending: false });
@@ -1270,11 +1558,105 @@ const AdminPanel3 = ({ onNavigate }) => {
         throw error;
       }
 
-      console.log('Insígnias carregadas:', data?.length || 0);
-      setBadges(data || []);
+      // Para cada insígnia, contar quantos usuários a possuem
+      const badgesWithCounts = await Promise.all(badgesData.map(async (badge) => {
+        const { count, error: countError } = await supabase
+          .from('user_badges')
+          .select('*', { count: 'exact', head: true })
+          .eq('badge_id', badge.id);
+
+        if (countError) {
+          console.error('Erro ao contar usuários com insígnia:', countError);
+          return { ...badge, user_count: 0 };
+        }
+
+        return { ...badge, user_count: count || 0 };
+      }));
+
+      console.log('Insígnias carregadas:', badgesWithCounts?.length || 0);
+      setBadges(badgesWithCounts || []);
     } catch (error) {
       console.error('Erro ao carregar insígnias:', error);
       setBadges([]); // Garantir que sempre seja um array
+    }
+  };
+
+  // Função para carregar clientes para atribuição de insígnias
+  const loadCustomersForAssignment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, nickname, email, avatar_url')
+        .order('full_name', { ascending: true });
+
+      if (error) throw error;
+
+      setCustomersForAssignment(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar clientes para atribuição:', error);
+      setCustomersForAssignment([]);
+      alert('Erro ao carregar clientes: ' + error.message);
+    }
+  };
+
+  // Função para atribuir insígnia a um cliente
+  const assignBadgeToCustomer = async () => {
+    if (!selectedBadge || !selectedCustomerForAssignment) {
+      alert('Selecione uma insígnia e um cliente para continuar.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Verificar se o cliente já tem essa insígnia
+      const { data: existingBadge, error: checkError } = await supabase
+        .from('user_badges')
+        .select('*')
+        .eq('user_id', selectedCustomerForAssignment)
+        .eq('badge_id', selectedBadge.id);
+
+      if (checkError) throw checkError;
+
+      if (existingBadge && existingBadge.length > 0) {
+        alert('Este cliente já possui esta insígnia!');
+        setShowAssignBadgeModal(false);
+        return;
+      }
+
+      // Atribuir a insígnia ao cliente
+      const { error: insertError } = await supabase
+        .from('user_badges')
+        .insert({
+          user_id: selectedCustomerForAssignment,
+          badge_id: selectedBadge.id
+        });
+
+      if (insertError) throw insertError;
+
+      // Criar notificação para o usuário
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: selectedCustomerForAssignment,
+          type: 'badge',
+          title: 'Nova Insígnia Recebida!',
+          message: `Você recebeu a insígnia "${selectedBadge.name}"`,
+          icon: selectedBadge.icon || '🏆'
+        });
+
+      if (notificationError) {
+        console.error('Erro ao criar notificação:', notificationError);
+      }
+
+      alert('Insígnia atribuída com sucesso!');
+      setShowAssignBadgeModal(false);
+      setSelectedCustomerForAssignment('');
+    } catch (error) {
+      console.error('Erro ao atribuir insígnia:', error);
+      alert('Erro ao atribuir insígnia: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -3160,6 +3542,17 @@ const AdminPanel3 = ({ onNavigate }) => {
                         >
                           ➖
                         </button>
+                        <button
+                          className="btn-manage-badges"
+                          title="Gerenciar Insígnias"
+                          onClick={() => {
+                            setSelectedCustomer(customer);
+                            loadCustomerBadges(customer.id);
+                            setShowManageBadgesModal(true);
+                          }}
+                        >
+                          🏆
+                        </button>
                       </div>
                     </div>
                   ))
@@ -3222,29 +3615,34 @@ const AdminPanel3 = ({ onNavigate }) => {
                   )
                   .map(badge => (
                     <div key={badge.id} className="badge-card">
-                      <div className="badge-icon">
-                        {badge.image_url ? (
-                          <img src={badge.image_url} alt={badge.name} onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }} />
-                        ) : (
-                          <div className="icon-placeholder" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
-                        )}
-                        {!badge.image_url && (
-                          <div className="icon-placeholder" style={{display: 'none', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
-                        )}
-                      </div>
+                      <div className="badge-header">
+                        <div className="badge-icon">
+                          {badge.image_url ? (
+                            <img src={badge.image_url} alt={badge.name} onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }} />
+                          ) : (
+                            <div className="icon-placeholder" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
+                          )}
+                          {!badge.image_url && (
+                            <div className="icon-placeholder" style={{display: 'none', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
+                          )}
+                        </div>
 
-                      <div className="badge-info">
-                        <h4>{badge.name}</h4>
-                        <p className="badge-description">{badge.description}</p>
-                        <div className="badge-meta">
-                          <span className={`rarity-${badge.rarity}`}>⭐ {badge.rarity}</span>
-                          <span className="points-required">🎮 {badge.points_required} pts</span>
-                          <span className={`status-${badge.active ? 'active' : 'inactive'}`}>
-                            {badge.active ? '🟢 Ativo' : '🔴 Inativo'}
-                          </span>
+                        <div className="badge-content">
+                          <div className="badge-info">
+                            <h4>{badge.name}</h4>
+                            <p className="badge-description">{badge.description}</p>
+                          </div>
+
+                          <div className="badge-meta">
+                            <span className={`rarity-${badge.rarity}`}>⭐ {badge.rarity}</span>
+                            <span className="users-count">👥 {badge.user_count} usuários</span>
+                            <span className={`status-${badge.active ? 'active' : 'inactive'}`}>
+                              {badge.active ? '🟢 Ativo' : '🔴 Inativo'}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -3290,6 +3688,16 @@ const AdminPanel3 = ({ onNavigate }) => {
                         >
                           🗑️
                         </button>
+                        <button
+                          onClick={() => {
+                            setSelectedBadge(badge);
+                            setShowAssignBadgeModal(true);
+                          }}
+                          className="btn-assign-modern"
+                          title="Atribuir Insígnia"
+                        >
+                          👤+
+                        </button>
                       </div>
                     </div>
                   ))
@@ -3329,6 +3737,15 @@ const AdminPanel3 = ({ onNavigate }) => {
                 e.preventDefault();
                 setLoading(true);
                 try {
+                  // Verificar se o token ainda é válido antes de prosseguir
+                  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+                  if (!session || sessionError) {
+                    alert('Sua sessão expirou. Por favor, faça login novamente.');
+                    handleLogout();
+                    return;
+                  }
+
                   let imageUrl = badgeForm.image_url;
 
                   // Fazer upload da imagem se houver um novo arquivo
@@ -3387,7 +3804,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                   alert(editingBadge ? 'Insígnia atualizada com sucesso!' : 'Insígnia criada com sucesso!');
                 } catch (error) {
                   console.error('Erro ao salvar insígnia:', error);
-                  alert('Erro ao salvar insígnia: ' + error.message);
+                  if (error.message.includes('JWT') || error.message.includes('expired')) {
+                    alert('Sua sessão expirou. Por favor, faça login novamente.');
+                    handleLogout();
+                  } else {
+                    alert('Erro ao salvar insígnia: ' + error.message);
+                  }
                 } finally {
                   setLoading(false);
                 }
@@ -3872,6 +4294,189 @@ const AdminPanel3 = ({ onNavigate }) => {
                   ❌ Cancelar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Atribuição de Insígnia */}
+      {showAssignBadgeModal && selectedBadge && (
+        <div className="modal-overlay" onClick={() => setShowAssignBadgeModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>👤 Atribuir Insígnia</h3>
+              <button onClick={() => setShowAssignBadgeModal(false)} className="btn-close-modal">✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="selected-badge-preview">
+                <h4>Insígnia Selecionada:</h4>
+                <div className="badge-preview-item">
+                  <div className="badge-icon-large">
+                    {selectedBadge.image_url ? (
+                      <img src={selectedBadge.image_url} alt={selectedBadge.name} />
+                    ) : (
+                      <div className="icon-placeholder-large">{selectedBadge.icon}</div>
+                    )}
+                  </div>
+                  <div className="badge-info-preview">
+                    <h5>{selectedBadge.name}</h5>
+                    <p>{selectedBadge.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="assign-customer-section">
+                <h4>Selecione o Cliente:</h4>
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="🔍 Buscar cliente..."
+                    value={searchCustomerForAssignment}
+                    onChange={(e) => setSearchCustomerForAssignment(e.target.value)}
+                    className="search-input-modern"
+                  />
+                </div>
+
+                <div className="customers-list-assignment">
+                  {customersForAssignment
+                    .filter(customer =>
+                      searchCustomerForAssignment === '' ||
+                      customer.full_name?.toLowerCase().includes(searchCustomerForAssignment.toLowerCase()) ||
+                      customer.nickname?.toLowerCase().includes(searchCustomerForAssignment.toLowerCase()) ||
+                      customer.email?.toLowerCase().includes(searchCustomerForAssignment.toLowerCase())
+                    )
+                    .map(customer => (
+                      <div
+                        key={customer.id}
+                        className={`customer-option ${selectedCustomerForAssignment === customer.id ? 'selected' : ''}`}
+                        onClick={() => setSelectedCustomerForAssignment(customer.id)}
+                      >
+                        <div className="customer-avatar-small">
+                          {customer.avatar_url ? (
+                            <img src={customer.avatar_url} alt={customer.full_name} />
+                          ) : (
+                            <div className="avatar-placeholder">👤</div>
+                          )}
+                        </div>
+                        <div className="customer-info-small">
+                          <strong>{customer.full_name || customer.nickname || 'Nome não informado'}</strong>
+                          <small>{customer.email}</small>
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                onClick={assignBadgeToCustomer}
+                className="btn-primary-modern"
+                disabled={!selectedCustomerForAssignment || loading}
+              >
+                {loading ? 'Atribuindo...' : '✅ Atribuir Insígnia'}
+              </button>
+              <button
+                onClick={() => setShowAssignBadgeModal(false)}
+                className="btn-secondary-modern"
+              >
+                ❌ Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gerenciamento de Insígnias do Cliente */}
+      {showManageBadgesModal && selectedCustomer && (
+        <div className="modal-overlay" onClick={() => setShowManageBadgesModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>🏆 Gerenciar Insígnias de {selectedCustomer.full_name || selectedCustomer.nickname || 'Cliente'}</h3>
+              <button onClick={() => setShowManageBadgesModal(false)} className="btn-close-modal">✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="manage-badges-section">
+                <h4>Insígnias do Cliente:</h4>
+                {loadingBadges ? (
+                  <p>Carregando insígnias...</p>
+                ) : selectedCustomerBadges.length > 0 ? (
+                  <div className="customer-badges-list">
+                    {selectedCustomerBadges.map((userBadge) => (
+                      <div key={userBadge.id} className="customer-badge-item">
+                        <div className="badge-info-small">
+                          {userBadge.badges?.image_url ? (
+                            <img src={userBadge.badges.image_url} alt={userBadge.badges.name} className="badge-icon-small" />
+                          ) : (
+                            <span className="badge-icon-placeholder">{userBadge.badges?.icon || '🎮'}</span>
+                          )}
+                          <div>
+                            <strong>{userBadge.badges?.name}</strong>
+                            <small>{userBadge.badges?.description}</small>
+                            <p className="acquired-date">
+                              Adquirida em: {(() => {
+                                const date = new Date(userBadge.created_at);
+                                return isNaN(date.getTime()) ? 'Data desconhecida' : date.toLocaleDateString('pt-BR');
+                              })()}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          className="btn-remove-customer-badge"
+                          onClick={() => removeBadgeFromCustomer(userBadge.id, userBadge.badges?.name)}
+                          title="Remover insígnia"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>Nenhuma insígnia atribuída a este cliente.</p>
+                )}
+              </div>
+
+              <div className="assign-new-badge-section">
+                <h4>Atribuir Nova Insígnia:</h4>
+                <div className="available-badges-list">
+                  {allBadges
+                    .filter(badge => !selectedCustomerBadges.some(cb => cb.badge_id === badge.id))
+                    .map(badge => (
+                      <div key={badge.id} className="available-badge-item">
+                        <div className="badge-info-small">
+                          {badge.image_url ? (
+                            <img src={badge.image_url} alt={badge.name} className="badge-icon-small" />
+                          ) : (
+                            <span className="badge-icon-placeholder">{badge.icon || '🎮'}</span>
+                          )}
+                          <div>
+                            <strong>{badge.name}</strong>
+                            <small>{badge.description}</small>
+                          </div>
+                        </div>
+                        <button
+                          className="btn-assign-customer-badge"
+                          onClick={() => assignBadgeToCustomerFromManagement(selectedCustomer.id, badge.id)}
+                          title="Atribuir insígnia"
+                        >
+                          ➕
+                        </button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                onClick={() => setShowManageBadgesModal(false)}
+                className="btn-secondary-modern"
+              >
+                ✅ Fechar
+              </button>
             </div>
           </div>
         </div>

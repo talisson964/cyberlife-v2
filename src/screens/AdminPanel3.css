@@ -2018,6 +2018,537 @@
   flex-shrink: 0;
 }
 
+/* Badge Card Styles */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 25px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+.badge-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-radius: 20px;
+  padding: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.badge-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 15px 40px rgba(255, 215, 0, 0.2);
+}
+
+.badge-header {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.badge-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+}
+
+.badge-icon img {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.icon-placeholder {
+  width: 180px;
+  height: 180px;
+  border-radius: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+}
+
+.badge-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.badge-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.badge-info h4 {
+  color: #fff;
+  margin: 0 0 8px 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.badge-description {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.badge-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rarity-common {
+  background: rgba(169, 169, 169, 0.2);
+  color: #a9a9a9;
+}
+
+.rarity-rare {
+  background: rgba(0, 191, 255, 0.2);
+  color: #00bfff;
+}
+
+.rarity-epic {
+  background: rgba(138, 43, 226, 0.2);
+  color: #8a2be2;
+}
+
+.rarity-legendary {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.rarity-common,
+.rarity-rare,
+.rarity-epic,
+.rarity-legendary,
+.points-required,
+.users-count,
+.status-active,
+.status-inactive {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-active {
+  background: rgba(0, 255, 0, 0.2);
+  color: #00ff00;
+}
+
+.status-inactive {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff0000;
+}
+
+.badge-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Badge Assignment Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 20px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(255, 215, 0, 0.4);
+  animation: slideUp 0.4s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #ffd700;
+  font-weight: 700;
+}
+
+.btn-close-modal {
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-modal:hover {
+  background: rgba(255, 68, 68, 0.3);
+  border-color: rgba(255, 68, 68, 0.6);
+  transform: rotate(90deg) scale(1.1);
+}
+
+.modal-body {
+  padding: 30px;
+}
+
+.selected-badge-preview {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.selected-badge-preview h4 {
+  margin: 0 0 15px 0;
+  color: #ffd700;
+  font-size: 1.1rem;
+}
+
+.badge-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.badge-icon-large img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+.icon-placeholder-large {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+.badge-info-preview h5 {
+  margin: 0 0 5px 0;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.badge-info-preview p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.assign-customer-section h4 {
+  margin: 0 0 15px 0;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.customers-list-assignment {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.customer-option {
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.customer-option:last-child {
+  border-bottom: none;
+}
+
+.customer-option:hover {
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.customer-option.selected {
+  background: rgba(255, 215, 0, 0.2);
+  border-left: 3px solid #ffd700;
+}
+
+.customer-avatar-small {
+  flex-shrink: 0;
+}
+
+.customer-avatar-small img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.customer-info-small {
+  flex: 1;
+}
+
+.customer-info-small strong {
+  display: block;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.customer-info-small small {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+.modal-actions {
+  padding: 20px 30px;
+  border-top: 1px solid rgba(255, 215, 0, 0.2);
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+}
+
+/* Button for assigning badges */
+.btn-assign-modern {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #ffd700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  min-width: 40px;
+  height: 40px;
+}
+
+.btn-assign-modern:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+/* Customer Badge Management */
+.manage-badges-section,
+.assign-new-badge-section {
+  margin-bottom: 25px;
+}
+
+.manage-badges-section h4,
+.assign-new-badge-section h4 {
+  margin: 0 0 15px 0;
+  color: #ffd700;
+  font-size: 1.1rem;
+}
+
+.customer-badges-list,
+.available-badges-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.customer-badge-item,
+.available-badge-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 215, 0, 0.05);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.customer-badge-item:last-child,
+.available-badge-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.badge-info-small {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.badge-icon-small {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.badge-icon-placeholder {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.badge-info-small strong {
+  display: block;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.badge-info-small small {
+  display: block;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.acquired-date {
+  margin: 5px 0 0 0;
+  font-size: 0.8rem;
+  color: rgba(255, 215, 0, 0.8);
+  font-style: italic;
+}
+
+.btn-remove-customer-badge,
+.btn-assign-customer-badge {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: #ff4444;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  min-width: 35px;
+  height: 35px;
+}
+
+.btn-assign-customer-badge {
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  color: #00ff88;
+}
+
+.btn-remove-customer-badge:hover {
+  background: rgba(255, 68, 68, 0.2);
+  border-color: rgba(255, 68, 68, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+}
+
+.btn-assign-customer-badge:hover {
+  background: rgba(0, 255, 136, 0.2);
+  border-color: rgba(0, 255, 136, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.btn-manage-badges {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #ffd700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  min-width: 40px;
+  height: 40px;
+}
+
+.btn-manage-badges:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
 /* ============================================
    FORM IMPROVEMENTS
    ============================================ */

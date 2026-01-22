@@ -4,11 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import img2 from '../imagens base/2.jpeg';
 import img3 from '../imagens base/3.jpeg';
 import img5 from '../imagens base/5.jpeg';
-import imgPlague from '../imagens base/A plague tale.webp';
-import imgBeyond from '../imagens base/beyond.webp';
-import imgConcret from '../imagens base/concret.webp';
-import imgFortnite from '../imagens base/fortnite.jpg';
-import imgHollow from '../imagens base/hollow.webp';
 import imgSubzero from '../imagens/subzero.png';
 import imgChunLi from '../imagens base/Chun-li.png';
 import caraJogando from '../imagens/cara-jogando.png';
@@ -30,121 +25,121 @@ const gamesData = [
   {
     title: 'A Plague Tale',
     slug: 'a-plague-tale',
-    image: imgPlague,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/752350/header.jpg',
     description: 'Uma jornada emocionante através da França medieval devastada pela peste negra. Acompanhe Amicia e Hugo em sua luta pela sobrevivência.',
   },
   {
     title: 'Beyond: Two Souls',
     slug: 'beyond-two-souls',
-    image: imgBeyond,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/234370/header.jpg',
     description: 'Uma experiência cinematográfica única que explora a conexão entre Jodie e uma entidade sobrenatural chamada Aiden.',
   },
   {
     title: 'Concrete Genie',
     slug: 'concrete-genie',
-    image: imgConcret,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1049330/header.jpg',
     description: 'Use o poder da arte para transformar uma cidade cinzenta em um lugar cheio de vida e cor nesta aventura mágica.',
   },
   {
     title: 'Fortnite',
     slug: 'fortnite',
-    image: imgFortnite,
+    image: 'https://cdn2.unrealengine.com/fortnite-br-featured-image-1920x1080-1920x1080-1920x1080-0d8b6eaf.jpg',
     description: 'O battle royale mais popular do mundo. Lute, construa e seja o último jogador em pé em partidas épicas com até 100 jogadores.',
   },
   {
     title: 'Hollow Knight',
     slug: 'hollow-knight',
-    image: imgHollow,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/367520/header.jpg',
     description: 'Explore um reino vasto e em ruínas repleto de insetos e heróis neste desafiador jogo de ação e aventura em 2D.',
   },
   {
     title: 'Cyberpunk Series',
     slug: 'cyberpunk-series',
-    image: img2,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1091500/header.jpg',
     description: 'Mergulhe em um mundo futurista de alta tecnologia e baixa vida, onde cada escolha molda seu destino em Night City.',
   },
   {
     title: 'The Last of Us',
     slug: 'the-last-of-us',
-    image: img3,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/245900/header.jpg',
     description: 'Uma história comovente de sobrevivência em um mundo pós-apocalíptico infestado por infectados e a busca pela humanidade.',
   },
   {
     title: 'God of War',
     slug: 'god-of-war',
-    image: img5,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1113220/header.jpg',
     description: 'Acompanhe Kratos e Atreus em uma jornada épica pela mitologia nórdica cheia de batalhas intensas e momentos emocionantes.',
   },
   {
     title: 'Red Dead Redemption 2',
     slug: 'red-dead-redemption-2',
-    image: imgPlague,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg',
     description: 'Viva a vida de um fora da lei no Velho Oeste americano em uma das narrativas mais envolventes já criadas.',
   },
   {
     title: 'Spider-Man',
     slug: 'spider-man',
-    image: imgBeyond,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/843380/header.jpg',
     description: 'Balance-se pelos arranha-céus de Nova York como o amigável vizinho Spider-Man e proteja a cidade dos vilões.',
   },
   {
     title: 'Ghost of Tsushima',
     slug: 'ghost-of-tsushima',
-    image: imgConcret,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1144860/header.jpg',
     description: 'Explore a bela ilha de Tsushima como um samurai em uma jornada para libertar sua terra da invasão mongol.',
   },
   {
     title: 'Horizon Zero Dawn',
     slug: 'horizon-zero-dawn',
-    image: imgFortnite,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1151640/header.jpg',
     description: 'Descubra os mistérios de um mundo pós-apocalíptico dominado por máquinas em forma de dinossauros.',
   },
   {
     title: 'Uncharted 4',
     slug: 'uncharted-4',
-    image: imgHollow,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/276410/header.jpg',
     description: 'Junte-se a Nathan Drake em sua última aventura em busca do tesouro perdido do pirata Henry Avery.',
   },
   {
     title: 'Bloodborne',
     slug: 'bloodborne',
-    image: img2,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/234450/header.jpg',
     description: 'Enfrente os horrores de Yharnam neste desafiador action RPG gótico dos criadores de Dark Souls.',
   },
   {
     title: 'Persona 5',
     slug: 'persona-5',
-    image: img3,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/629730/header.jpg',
     description: 'Viva a vida dupla de um estudante do ensino médio e ladrão fantasma que muda os corações das pessoas corruptas.',
   },
   {
     title: 'Final Fantasy VII Remake',
     slug: 'final-fantasy-vii-remake',
-    image: img5,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1462040/header.jpg',
     description: 'Reviva o clássico JRPG reimaginado com gráficos modernos e sistema de combate renovado.',
   },
   {
     title: 'Resident Evil Village',
     slug: 'resident-evil-village',
-    image: imgPlague,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1199780/header.jpg',
     description: 'Continue a história de Ethan Winters em uma vila misteriosa cheia de criaturas aterrorizantes e segredos obscuros.',
   },
   {
     title: 'Elden Ring',
     slug: 'elden-ring',
-    image: imgBeyond,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1245620/header.jpg',
     description: 'Explore as Terras Intermédias em um mundo aberto épico criado por FromSoftware e George R.R. Martin.',
   },
   {
     title: 'Assassins Creed Valhalla',
     slug: 'assassins-creed-valhalla',
-    image: imgConcret,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/1548520/header.jpg',
     description: 'Conduza seu clã viking da Noruega para a Inglaterra medieval e construa um novo lar através da conquista.',
   },
   {
     title: 'The Witcher 3',
     slug: 'the-witcher-3',
-    image: imgFortnite,
+    image: 'https://cdn.akamai.steamstatic.com/steam/apps/292030/header.jpg',
     description: 'Siga Geralt de Rivia em sua busca para encontrar Ciri enquanto navega por um mundo repleto de monstros e intrigas políticas.',
   },
 ];
@@ -485,7 +480,7 @@ export default function GamerWorld() {
     },
     {
       title: "Perfil",
-      description: "Acesse suas informações pessoais e histórico de atividades.",
+      description: "Acesse suas informações pessoais, visualize suas insígnias conquistadas, compre CyberPoints e edite seu perfil como quiser!",
       elementId: "perfil-link",
       position: "bottom-left"
     }
