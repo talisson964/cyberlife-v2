@@ -964,13 +964,12 @@ export default function PerfilPage() {
                               </div>
                             )}
                             <div style={{
-                              display: 'flex',
+                              display: 'none',
                               alignItems: 'center',
                               justifyContent: 'center',
                               width: '100%',
                               height: '100%',
-                              fontSize: '3.5rem',
-                              display: 'none'
+                              fontSize: '3.5rem'
                             }}>
                               {badge.icon || '🎮'}
                             </div>
