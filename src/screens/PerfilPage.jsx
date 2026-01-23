@@ -34,18 +34,18 @@ export default function PerfilPage() {
 
   // Efeito para carregar as imagens da galeria de avatares
   useEffect(() => {
-    // Carregar todas as imagens da pasta perfil-imgs
+    // Carregar todas as imagens da pasta public/images/avatars
     const images = [
-      '/src/perfil-imgs/aloy-perfil.png',
-      '/src/perfil-imgs/ellie-perfil.png',
-      '/src/perfil-imgs/frieren-perfil.png',
-      '/src/perfil-imgs/gojo-perfil.png',
-      '/src/perfil-imgs/grace-perfil.png',
-      '/src/perfil-imgs/kenpachi-perfil.png',
-      '/src/perfil-imgs/leon-perfil.png',
-      '/src/perfil-imgs/maomao-perfil.png',
-      '/src/perfil-imgs/sasuke-perfil.png',
-      '/src/perfil-imgs/zoro-perfil.png'
+      '/images/avatars/aloy-perfil.png',
+      '/images/avatars/ellie-perfil.png',
+      '/images/avatars/frieren-perfil.png',
+      '/images/avatars/gojo-perfil.png',
+      '/images/avatars/grace-perfil.png',
+      '/images/avatars/kenpachi-perfil.png',
+      '/images/avatars/leon-perfil.png',
+      '/images/avatars/maomao-perfil.png',
+      '/images/avatars/sasuke-perfil.png',
+      '/images/avatars/zoro-perfil.png'
     ];
     setAvatarGalleryImages(images);
   }, []);
