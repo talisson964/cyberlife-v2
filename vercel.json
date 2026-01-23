@@ -11,6 +11,22 @@
   ],
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/images/avatars/(.*)",
+      "destination": "/images/avatars/$1"
+    },
+    {
+      "source": "/perfil-imgs/(.*)",
+      "destination": "/perfil-imgs/$1"
+    },
+    {
+      "source": "/images/(.*)",
+      "destination": "/images/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
