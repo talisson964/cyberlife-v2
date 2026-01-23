@@ -1960,8 +1960,6 @@ export default function LojaGeek({ onBack }){
               zIndex: 2,
             }}>
               <button
-                onMouseEnter={() => setCatMood('sad')}
-                onMouseLeave={() => setCatMood('neutral')}
                 onClick={handleConfirmYes}
                 style={{
                   flex: 1,
