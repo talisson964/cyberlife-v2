@@ -250,13 +250,28 @@ O componente `<model-viewer>` já está carregado via script no `index.html`:
 
 ```jsx
 <model-viewer
-  src={url}              // URL do arquivo .glb
+  src={url?.replace('https://your-project.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || url}  // URL do arquivo .glb com proxy para evitar problemas CORS
   alt={description}      // Texto alternativo
   auto-rotate           // Rotação automática
   camera-controls       // Controles de câmera (arrastar, zoom)
   ar                    // Suporte a realidade aumentada
   shadow-intensity="1"  // Intensidade da sombra
 ></model-viewer>
+```
+
+### Proxy Vercel para Modelos 3D
+
+Para resolver problemas de CORS entre o Supabase Storage e o Vercel, adicionamos uma rota de proxy no `vercel.json`:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/models/3d/(.*)",
+      "destination": "https://your-project.supabase.co/storage/v1/object/public/product-3d-models/products/$1"
+    }
+  ]
+}
 ```
 
 ### Performance

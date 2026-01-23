@@ -396,7 +396,7 @@ export default function ProductDetailPage() {
           {product.model_3d && !showImageInstead3D ? (
             <div className="model-3d-viewer" onClick={handleModelViewerClick}>
               <model-viewer
-                src={product.model_3d}
+                src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
                 alt={`Modelo 3D de ${product.name}`}
                 auto-rotate
                 camera-controls

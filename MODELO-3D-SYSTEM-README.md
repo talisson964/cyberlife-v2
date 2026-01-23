@@ -226,7 +226,7 @@ const upload3DModelToStorage = async (modelFile, productId) => {
 {product.model_3d && (
   <div className="model-3d-viewer">
     <model-viewer
-      src={product.model_3d}
+      src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
       alt={`Modelo 3D de ${product.name}`}
       auto-rotate
       camera-controls
@@ -372,6 +372,31 @@ gltf-pipeline -i model.glb -o model-draco.glb -d
 - ✅ Verificar políticas de Storage (PUBLIC)
 - ✅ Console do navegador para erros
 - ✅ Verificar se Three.js foi carregado corretamente
+
+### Modelo aparece em branco (problema de CORS)
+- ✅ Configurar política de acesso público no Supabase Storage:
+  ```sql
+  CREATE POLICY "Public can view product 3D models"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'product-3d-models');
+  ```
+- ✅ Configurar proxy no Vercel para evitar problemas CORS:
+  - Adicione rota no `vercel.json`:
+    ```json
+    {
+      "rewrites": [
+        {
+          "source": "/models/3d/(.*)",
+          "destination": "https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/products/$1"
+        }
+      ]
+    }
+    ```
+  - Atualize o src do model-viewer para usar o proxy:
+    ```jsx
+    src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+    ```
 
 ### Modelo carrega lento
 - ⚠️ **Use compressão Draco** (reduz 90% do tamanho)

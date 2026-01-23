@@ -921,7 +921,7 @@ export default function LojaGeek({ onBack }){
                 {product.model_3d ? (
                   <div className="product-3d-container">
                     <model-viewer
-                      src={product.model_3d}
+                      src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
                       alt={`Modelo 3D de ${product.name}`}
                       shadow-intensity="1"
                       disable-pan

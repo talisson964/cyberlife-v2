@@ -15,6 +15,10 @@
       "destination": "/api/$1"
     },
     {
+      "source": "/src/imagens/(.*)",
+      "destination": "/src/imagens/$1"
+    },
+    {
       "source": "/images/avatars/(.*)",
       "destination": "/images/avatars/$1"
     },
@@ -25,6 +29,10 @@
     {
       "source": "/images/(.*)",
       "destination": "/images/$1"
+    },
+    {
+      "source": "/models/3d/(.*)",
+      "destination": "https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/products/$1"
     },
     {
       "source": "/(.*)",
@@ -41,7 +49,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ajax.googleapis.com https://*.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://*.supabase.co https://*.supabase.com wss://*.supabase.co wss://*.supabase.com; media-src 'self' https://*.supabase.co https://*.supabase.com; object-src 'self' https://*.supabase.co https://*.supabase.com; model-src 'self' https://*.supabase.co https://*.supabase.com;"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://ajax.googleapis.com https://*.googleapis.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https://*.supabase.co https://*.supabase.com wss://*.supabase.co wss://*.supabase.com; media-src 'self' https://*.supabase.co https://*.supabase.com; object-src 'self' https://*.supabase.co https://*.supabase.com; model-src 'self' https://*.supabase.co https://*.supabase.com https://tvukdcbvqweechmawdac.supabase.co;"
         }
       ]
     }

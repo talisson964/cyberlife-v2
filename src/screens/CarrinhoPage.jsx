@@ -257,7 +257,7 @@ export default function CarrinhoPage({ onBack }) {
                   <div className="item-image">
                     {item.model_3d ? (
                       <model-viewer
-                        src={item.model_3d}
+                        src={item.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || item.model_3d}
                         alt={`Modelo 3D de ${item.name}`}
                         shadow-intensity="1"
                         disable-pan

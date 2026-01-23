@@ -3476,7 +3476,7 @@ export default function GamerWorld() {
                   {product.model_3d ? (
                     <>
                       <model-viewer
-                        src={product.model_3d}
+                        src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
                         alt={`Modelo 3D de ${product.name}`}
                         shadow-intensity="1"
                         disable-pan
