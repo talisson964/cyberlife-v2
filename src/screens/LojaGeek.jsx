@@ -1997,8 +1997,6 @@ export default function LojaGeek({ onBack }){
               </button>
               
               <button
-                onMouseEnter={() => setCatMood('happy')}
-                onMouseLeave={() => setCatMood('neutral')}
                 onClick={handleConfirmNo}
                 style={{
                   flex: 1,
