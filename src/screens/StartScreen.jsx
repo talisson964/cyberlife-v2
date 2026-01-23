@@ -41,15 +41,27 @@ export default function StartScreen({ onStart }){
   })
   const [rememberMe, setRememberMe] = useState(false)
 
-  // Background image carousel
+  // Pré-carregar todas as imagens para evitar flashes brancos
+  useEffect(() => {
+    const preloadImages = images.map(src => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+  }, []);
+
+  // Background image carousel - com transições mais suaves
   useEffect(() => {
     const t = setInterval(() => {
       setFade(false)
       setTimeout(() => {
         setIndex(i => (i + 1) % images.length)
-        setFade(true)
-      }, 500)
-    }, 5000)
+        // Pequeno delay antes de iniciar a transição de fadeIn para garantir que a nova imagem esteja carregada
+        setTimeout(() => {
+          setFade(true)
+        }, 100) // Aumentei o delay para garantir que a imagem esteja completamente carregada
+      }, 1200) // Aumentei o tempo para completar a transição de fade-out
+    }, 7000) // Ajustei o intervalo total para dar tempo suficiente para as transições
     return () => clearInterval(t)
   }, [])
 
@@ -417,10 +429,13 @@ export default function StartScreen({ onStart }){
 
   return (
     <div className="start-screen">
-      <div
-        className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
-        style={{backgroundImage:`url(${images[index]})`}}
-      />
+      {/* Container de fundo permanente para evitar flashes brancos */}
+      <div className="background-container">
+        <div
+          className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
+          style={{backgroundImage:`url(${images[index]})`}}
+        />
+      </div>
       {!showLogin ? (
         <>
           <button className="start-button" onClick={() => {

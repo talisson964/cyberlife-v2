@@ -79,22 +79,35 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif}
     justify-content: center;
   }
 }
-.background-image{
-  position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background-size:cover;
-  background-position:center;
-  z-index:0;
-  filter:blur(1px) brightness(0.9);
+.background-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); /* Fundo escuro para evitar flashes brancos */
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out; /* Transição suave para mudanças diretas */
+  z-index: -1;
+  filter: blur(1px) brightness(0.9);
 }
 .background-image.fade-in{
-  animation:parallaxIn 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation:parallaxIn 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 .background-image.fade-out{
-  animation:parallaxOut 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation:parallaxOut 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 @keyframes parallaxIn{
   0%{
@@ -123,7 +136,7 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif}
     filter:grayscale(20%) brightness(1.03);
   }
   100%{
-    opacity:0;
+    opacity:0; /* Zerar completamente para que a próxima imagem entre limpa */
     transform:translateY(-10px) scale(1.02);
     filter:grayscale(80%) brightness(1.05);
   }
