@@ -89,6 +89,16 @@ export default function PerfilPage() {
       .avatar-gallery-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #00ff88;
       }
+
+      /* Estilos para rolagem em dispositivos móveis */
+      .touch-scroll {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Melhorar experiência de rolagem em mobile */
+      .custom-scrollbar {
+        -webkit-overflow-scrolling: touch;
+      }
     `;
     document.head.appendChild(style);
 
@@ -803,7 +813,7 @@ export default function PerfilPage() {
                 {/* Seção de Insígnias */}
                 <div style={{
                   marginBottom: '30px',
-                  padding: '20px',
+                  padding: isMobile ? '15px' : '20px',
                   background: 'rgba(255, 217, 0, 0.05)',
                   border: 'none', /* Remover bordas */
                   borderRadius: '0', /* Remover cantos arredondados */
@@ -813,11 +823,11 @@ export default function PerfilPage() {
                     color: '#ffd900',
                     fontFamily: 'Rajdhani, sans-serif',
                     fontWeight: '700',
-                    fontSize: '1.2rem',
+                    fontSize: isMobile ? '1.1rem' : '1.2rem',
                     marginBottom: '15px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px'
+                    gap: isMobile ? '8px' : '10px'
                   }}>
                     🏆 Minhas Insígnias
                   </h4>
@@ -826,7 +836,9 @@ export default function PerfilPage() {
                   <div style={{
                     marginBottom: '15px',
                     display: 'flex',
-                    alignItems: 'center'
+                    flexDirection: isMobile ? 'column' : 'row',
+                    alignItems: 'center',
+                    gap: isMobile ? '10px' : '0'
                   }}>
                     <input
                       type="text"
@@ -835,13 +847,14 @@ export default function PerfilPage() {
                       onChange={handleSearch}
                       style={{
                         flex: 1,
-                        padding: '10px 15px',
+                        padding: isMobile ? '12px' : '10px 15px',
                         borderRadius: '8px',
                         border: '1px solid rgba(255, 217, 0, 0.3)',
                         background: 'rgba(0, 0, 0, 0.3)',
                         color: '#fff',
                         fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '0.9rem'
+                        fontSize: isMobile ? '1rem' : '0.9rem',
+                        width: '100%'
                       }}
                     />
                     {searchTerm && (
@@ -851,13 +864,14 @@ export default function PerfilPage() {
                           setFilteredBadges(badges);
                         }}
                         style={{
-                          marginLeft: '10px',
-                          padding: '10px 15px',
+                          marginLeft: isMobile ? '0' : '10px',
+                          padding: isMobile ? '12px 15px' : '10px 15px',
                           borderRadius: '8px',
                           border: 'none',
                           background: 'rgba(255, 68, 68, 0.3)',
                           color: '#fff',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          width: isMobile ? '100%' : 'auto'
                         }}
                       >
                         Limpar
@@ -869,28 +883,33 @@ export default function PerfilPage() {
                     <div>
                       <div
                         style={{
-                          maxHeight: '200px', /* Altura reduzida para mostrar apenas uma fileira */
+                          maxHeight: isMobile ? '300px' : '200px', /* Aumentar altura em mobile */
                           overflowY: 'auto', /* Adiciona scrollbar vertical quando necessário */
                           padding: '5px',
                           borderRadius: '8px',
                           /* Estilos personalizados para a scrollbar */
-                          scrollbarWidth: 'thin',
-                          scrollbarColor: '#ffd700 #2a2a2a'
+                          scrollbarWidth: isMobile ? 'none' : 'thin', /* Ocultar scrollbar em mobile */
+                          scrollbarColor: isMobile ? 'transparent transparent' : '#ffd700 #2a2a2a', /* Cores da scrollbar */
+                          /* Estilo alternativo para Webkit (Chrome, Safari, Edge) */
+                          ...(isMobile ? {} : {
+                            /* Estilos para Webkit */
+                            WebkitOverflowScrolling: 'touch', // Para rolagem suave em dispositivos touch
+                          })
                         }}
                         className="custom-scrollbar"
                       >
                         <div style={{
                           display: 'flex',
                           flexWrap: 'wrap',
-                          gap: '40px'
+                          gap: isMobile ? '15px' : '40px' /* Menor gap em mobile */
                         }}>
                           {filteredBadges.map((badge, index) => (
                           <div
                             key={index}
                             style={{
                               position: 'relative',
-                              width: '160px',
-                              height: '160px',
+                              width: isMobile ? '100px' : '160px', /* Menor tamanho em mobile */
+                              height: isMobile ? '100px' : '160px',
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
@@ -933,8 +952,8 @@ export default function PerfilPage() {
                             }}
                           >
                           <div style={{
-                            width: '120px',
-                            height: '120px',
+                            width: isMobile ? '70px' : '120px',
+                            height: isMobile ? '70px' : '120px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -959,7 +978,7 @@ export default function PerfilPage() {
                               />
                             ) : (
                               <div style={{
-                                fontSize: '4rem',
+                                fontSize: isMobile ? '2.5rem' : '4rem',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -975,13 +994,13 @@ export default function PerfilPage() {
                               justifyContent: 'center',
                               width: '100%',
                               height: '100%',
-                              fontSize: '3.5rem'
+                              fontSize: isMobile ? '2rem' : '3.5rem'
                             }}>
                               {badge.icon || '🎮'}
                             </div>
                           </div>
                           <div style={{
-                            fontSize: '0.7rem', // Aumentei o tamanho da fonte para melhor legibilidade
+                            fontSize: isMobile ? '0.6rem' : '0.7rem', // Ajustar tamanho da fonte para mobile
                             textAlign: 'center',
                             color: (() => {
                               switch(badge.rarity) {
@@ -1909,7 +1928,8 @@ export default function PerfilPage() {
         >
           <div
             style={{
-              position: 'relative'
+              position: 'relative',
+              padding: isMobile ? '10px' : '0' // Adiciona padding em mobile para evitar que fique muito perto das bordas
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1918,8 +1938,8 @@ export default function PerfilPage() {
                 src={enlargedBadge.image_url}
                 alt={enlargedBadge.name}
                 style={{
-                  maxWidth: '300px', /* 3x o tamanho original de 100px */
-                  maxHeight: '300px',
+                  maxWidth: isMobile ? '90vw' : '300px', /* Em mobile, usar 90% da largura da viewport */
+                  maxHeight: isMobile ? '70vh' : '300px', /* Em mobile, usar 70% da altura da viewport */
                   objectFit: 'contain', /* Preserva o aspect ratio original */
                   borderRadius: '0', /* Remover bordas */
                   boxShadow: 'none' /* Remover sombra */
@@ -1953,16 +1973,16 @@ export default function PerfilPage() {
                   })();
                   tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
                   tooltip.style.position = 'absolute';
-                  tooltip.style.bottom = '10px';
+                  tooltip.style.bottom = isMobile ? '5px' : '10px'; // Posição do tooltip mais próxima em mobile
                   tooltip.style.left = '50%';
                   tooltip.style.transform = 'translateX(-50%)';
                   tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
                   tooltip.style.color = '#fff';
-                  tooltip.style.padding = '10px 15px';
+                  tooltip.style.padding = isMobile ? '8px 12px' : '10px 15px'; // Menor padding em mobile
                   tooltip.style.borderRadius = '8px';
-                  tooltip.style.fontSize = '14px';
+                  tooltip.style.fontSize = isMobile ? '12px' : '14px'; // Fonte menor em mobile
                   tooltip.style.zIndex = '10001';
-                  tooltip.style.maxWidth = '300px';
+                  tooltip.style.maxWidth = isMobile ? '90vw' : '300px'; // Largura máxima em mobile
                   tooltip.style.textAlign = 'center';
                   tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
 
@@ -1978,13 +1998,13 @@ export default function PerfilPage() {
               />
             ) : (
               <div style={{
-                fontSize: '6rem', /* 3x o tamanho original de 2rem */
+                fontSize: isMobile ? '5rem' : '6rem', /* Tamanho menor em mobile */
                 color: '#ffd900',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '300px',
-                height: '300px',
+                width: isMobile ? '250px' : '300px', // Tamanho menor em mobile
+                height: isMobile ? '250px' : '300px',
                 background: 'rgba(0, 0, 0, 0.5)',
                 borderRadius: '0', /* Remover bordas */
                 boxShadow: 'none' /* Remover sombra */
@@ -2018,16 +2038,16 @@ export default function PerfilPage() {
                 })();
                 tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
                 tooltip.style.position = 'absolute';
-                tooltip.style.bottom = '10px';
+                tooltip.style.bottom = isMobile ? '5px' : '10px'; // Posição do tooltip mais próxima em mobile
                 tooltip.style.left = '50%';
                 tooltip.style.transform = 'translateX(-50%)';
                 tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
                 tooltip.style.color = '#fff';
-                tooltip.style.padding = '10px 15px';
+                tooltip.style.padding = isMobile ? '8px 12px' : '10px 15px'; // Menor padding em mobile
                 tooltip.style.borderRadius = '8px';
-                tooltip.style.fontSize = '14px';
+                tooltip.style.fontSize = isMobile ? '12px' : '14px'; // Fonte menor em mobile
                 tooltip.style.zIndex = '10001';
-                tooltip.style.maxWidth = '300px';
+                tooltip.style.maxWidth = isMobile ? '90vw' : '300px'; // Largura máxima em mobile
                 tooltip.style.textAlign = 'center';
                 tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
 
@@ -2046,18 +2066,18 @@ export default function PerfilPage() {
             )}
             <div style={{
               position: 'absolute',
-              top: '10px',
-              right: '10px',
+              top: isMobile ? '5px' : '10px', // Posição mais próxima da borda em mobile
+              right: isMobile ? '5px' : '10px',
               background: 'rgba(0, 0, 0, 0.7)',
               color: '#fff',
               borderRadius: '50%',
-              width: '30px',
-              height: '30px',
+              width: isMobile ? '25px' : '30px', // Tamanho menor em mobile
+              height: isMobile ? '25px' : '30px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '1.2rem'
+              fontSize: isMobile ? '1rem' : '1.2rem' // Fonte menor em mobile
             }}
             onClick={() => setEnlargedBadge(null)}
             >

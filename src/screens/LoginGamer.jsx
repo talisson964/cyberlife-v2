@@ -597,12 +597,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                     required
                     style={{
                       width: '100%',
-                      padding: '12px 15px',
+                      padding: isMobile ? '14px 15px' : '12px 15px',
                       background: 'rgba(0, 217, 255, 0.05)',
                       border: '2px solid rgba(0, 217, 255, 0.3)',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '1.1rem' : '1rem',
                       fontFamily: 'Rajdhani, sans-serif',
                       boxSizing: 'border-box',
                     }}
@@ -626,12 +626,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       required
                       style={{
                         width: '100%',
-                        padding: '12px 45px 12px 15px',
+                        padding: isMobile ? '14px 45px 14px 15px' : '12px 45px 12px 15px',
                         background: 'rgba(0, 217, 255, 0.05)',
                         border: '2px solid rgba(0, 217, 255, 0.3)',
                         borderRadius: '8px',
                         color: '#fff',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '1.1rem' : '1rem',
                         fontFamily: 'Rajdhani, sans-serif',
                         boxSizing: 'border-box',
                       }}
@@ -773,12 +773,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                     required
                     style={{
                       width: '100%',
-                      padding: '12px 15px',
+                      padding: isMobile ? '14px 15px' : '12px 15px',
                       background: 'rgba(0, 217, 255, 0.05)',
                       border: '2px solid rgba(0, 217, 255, 0.3)',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '1.1rem' : '1rem',
                       fontFamily: 'Rajdhani, sans-serif',
                       boxSizing: 'border-box',
                     }}
@@ -801,12 +801,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                     required
                     style={{
                       width: '100%',
-                      padding: '12px 15px',
+                      padding: isMobile ? '14px 15px' : '12px 15px',
                       background: 'rgba(0, 217, 255, 0.05)',
                       border: '2px solid rgba(0, 217, 255, 0.3)',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '1.1rem' : '1rem',
                       fontFamily: 'Rajdhani, sans-serif',
                       boxSizing: 'border-box',
                     }}
@@ -831,12 +831,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       minLength="6"
                       style={{
                         width: '100%',
-                        padding: '12px 45px 12px 15px',
+                        padding: isMobile ? '14px 45px 14px 15px' : '12px 45px 12px 15px',
                         background: 'rgba(0, 217, 255, 0.05)',
                         border: '2px solid rgba(0, 217, 255, 0.3)',
                         borderRadius: '8px',
                         color: '#fff',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '1.1rem' : '1rem',
                         fontFamily: 'Rajdhani, sans-serif',
                         boxSizing: 'border-box',
                       }}
@@ -879,12 +879,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       max="120"
                       style={{
                         width: '100%',
-                        padding: '12px 15px',
+                        padding: isMobile ? '14px 15px' : '12px 15px',
                         background: 'rgba(0, 217, 255, 0.05)',
                         border: '2px solid rgba(0, 217, 255, 0.3)',
                         borderRadius: '8px',
                         color: '#fff',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '1.1rem' : '1rem',
                         fontFamily: 'Rajdhani, sans-serif',
                         boxSizing: 'border-box',
                       }}
@@ -907,12 +907,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       placeholder="(XX) XXXXX-XXXX"
                       style={{
                         width: '100%',
-                        padding: '12px 15px',
+                        padding: isMobile ? '14px 15px' : '12px 15px',
                         background: 'rgba(0, 217, 255, 0.05)',
                         border: '2px solid rgba(0, 217, 255, 0.3)',
                         borderRadius: '8px',
                         color: '#fff',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '1.1rem' : '1rem',
                         fontFamily: 'Rajdhani, sans-serif',
                         boxSizing: 'border-box',
                       }}
@@ -936,12 +936,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       onChange={handleChange}
                       style={{
                         width: '100%',
-                        padding: '12px 15px',
+                        padding: isMobile ? '14px 15px' : '12px 15px',
                         background: 'rgba(0, 217, 255, 0.05)',
                         border: '2px solid rgba(0, 217, 255, 0.3)',
                         borderRadius: '8px',
                         color: '#fff',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '1.1rem' : '1rem',
                         fontFamily: 'Rajdhani, sans-serif',
                         boxSizing: 'border-box',
                       }}
@@ -965,12 +965,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       placeholder="SP"
                       style={{
                         width: '100%',
-                        padding: '12px 15px',
+                        padding: isMobile ? '14px 15px' : '12px 15px',
                         background: 'rgba(0, 217, 255, 0.05)',
                         border: '2px solid rgba(0, 217, 255, 0.3)',
                         borderRadius: '8px',
                         color: '#fff',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '1.1rem' : '1rem',
                         fontFamily: 'Rajdhani, sans-serif',
                         textTransform: 'uppercase',
                         boxSizing: 'border-box',
@@ -1046,12 +1046,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                     placeholder="Digite seu email cadastrado"
                     style={{
                       width: '100%',
-                      padding: '12px 15px',
+                      padding: isMobile ? '14px 15px' : '12px 15px',
                       background: 'rgba(0, 217, 255, 0.05)',
                       border: '2px solid rgba(0, 217, 255, 0.3)',
                       borderRadius: '8px',
                       color: '#fff',
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '1.1rem' : '1rem',
                       fontFamily: 'Rajdhani, sans-serif',
                       boxSizing: 'border-box',
                     }}
