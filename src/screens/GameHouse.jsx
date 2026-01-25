@@ -1532,36 +1532,34 @@ export default function GamerWorld() {
           left: 0,
           top: '50%',
           transform: 'translateY(-50%)',
-          width: isMobile ? '200px' : '400px',
-          height: isMobile ? '250px' : '500px',
+          width: isMobile ? '100px' : '400px',
+          height: isMobile ? '125px' : '500px',
           backgroundImage: `url(${imgChunLi})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'left center',
-          opacity: isMobile ? 0.15 : 0.3,
+          opacity: isMobile ? 0.1 : 0.3,
           filter: 'drop-shadow(0 0 30px rgba(0, 217, 255, 0.4))',
           animation: 'floatSlow 6s ease-in-out infinite',
           zIndex: 1,
-          display: isMobile ? 'none' : 'block',
         }} />
-        
+
         {/* Background Subzero - Direita */}
         <div style={{
           position: 'absolute',
           right: 0,
           top: '50%',
           transform: 'translateY(-50%)',
-          width: isMobile ? '200px' : '400px',
-          height: isMobile ? '250px' : '500px',
+          width: isMobile ? '100px' : '400px',
+          height: isMobile ? '125px' : '500px',
           backgroundImage: `url(${imgSubzero})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'right center',
-          opacity: isMobile ? 0.15 : 0.3,
+          opacity: isMobile ? 0.1 : 0.3,
           filter: 'drop-shadow(0 0 30px rgba(255, 0, 234, 0.4))',
           animation: 'floatSlow 6s ease-in-out infinite 3s',
           zIndex: 1,
-          display: isMobile ? 'none' : 'block',
         }} />
         
         {/* Overlay com gradiente */}
@@ -1860,7 +1858,7 @@ export default function GamerWorld() {
               position: 'relative',
               maxWidth: isMobile ? '100%' : '1100px',
               margin: '0 auto',
-              height: isMobile ? '350px' : '500px',
+              height: isMobile ? '450px' : '500px',  /* Aumentei a altura para mobile */
               borderRadius: isMobile ? '12px' : '20px',
               overflow: 'hidden',
               border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
@@ -1940,10 +1938,10 @@ export default function GamerWorld() {
               {displayEvents.map((event, index) => (
                 <div key={index} style={{
                   position: 'absolute',
-                  left: '70px',
+                  left: isMobile ? '20px' : '70px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  maxWidth: isMobile ? '95%' : '500px',
+                  maxWidth: isMobile ? '85%' : '500px',
                   opacity: index === currentEvent ? 1 : 0,
                   transition: 'opacity 0.8s ease-in-out',
                   zIndex: index === currentEvent ? 20 : 0,
@@ -1952,6 +1950,8 @@ export default function GamerWorld() {
                   paddingRight: isMobile ? '10px' : '20px',
                   paddingLeft: isMobile ? '10px' : '0',
                   boxSizing: 'border-box',
+                  maxHeight: isMobile ? '85%' : 'none',  /* Limitar altura em dispositivos móveis */
+                  overflowY: isMobile ? 'auto' : 'visible',  /* Permitir rolagem em dispositivos móveis */
                 }}>
                   {/* Tag superior */}
                   <div style={{
