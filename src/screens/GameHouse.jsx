@@ -549,7 +549,8 @@ export default function GamerWorld() {
           if (sectionMap[nextStepData.elementId]) {
             // Scroll to the corresponding section
             const sectionElement = document.getElementById(sectionMap[nextStepData.elementId]);
-            if (sectionElement) {
+            // Only scroll to 'galeria' section if not on mobile (since we hid it)
+            if (sectionElement && !(isMobile && nextStepData.elementId === 'galeria-link')) {
               sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           } else {
@@ -613,7 +614,8 @@ export default function GamerWorld() {
           if (sectionMap[prevStepData.elementId]) {
             // Scroll to the corresponding section
             const sectionElement = document.getElementById(sectionMap[prevStepData.elementId]);
-            if (sectionElement) {
+            // Only scroll to 'galeria' section if not on mobile (since we hid it)
+            if (sectionElement && !(isMobile && prevStepData.elementId === 'galeria-link')) {
               sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           } else {
@@ -2657,7 +2659,8 @@ export default function GamerWorld() {
         `}</style>
       </section>
 
-      {/* Seção Explore Jogos */}
+      {/* Seção Explore Jogos - Oculta em dispositivos móveis */}
+      {isMobile ? null : (
       <section id="galeria" style={{
         padding: '120px 48px',
         background: `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`,
@@ -3251,15 +3254,74 @@ export default function GamerWorld() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
-        padding: '10px 48px',
-        background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
-        borderTop: '1px solid rgba(0, 217, 255, 0.2)',
-        marginTop: '-5%',
+        padding: isMobile ? '60px 20px' : '10px 48px',
+        background: isMobile
+          ? `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`
+          : 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center right',
+        backgroundAttachment: isMobile ? 'fixed' : 'scroll',
+        position: 'relative',
+        overflow: 'hidden',
+        clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+        marginTop: isMobile ? '0' : '-5%',
+        marginBottom: isMobile ? '0' : '-5%',
       }}>
-        <div style={{maxWidth: '1200px', margin: '0 auto'}}>
+        {isMobile && (
+          <>
+            {/* Bordas diagonais brilhantes - apenas mobile */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, transparent 0%, rgba(138, 43, 226, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
+              transform: 'skewY(-2deg)',
+              boxShadow: '0 0 20px rgba(138, 43, 226, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
+              animation: 'borderSlide 3s linear infinite',
+              zIndex: 2,
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255, 0, 234, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
+              transform: 'skewY(-2deg)',
+              boxShadow: '0 0 20px rgba(255, 0, 234, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
+              animation: 'borderSlide 3s linear infinite reverse',
+              zIndex: 2,
+            }} />
+
+            {/* Elementos flutuantes decorativos - apenas mobile */}
+            {[...Array(6)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                width: `${150 + Math.random() * 200}px`,
+                height: `${150 + Math.random() * 200}px`,
+                background: i % 3 === 0
+                  ? 'radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%)'
+                  : i % 3 === 1
+                  ? 'radial-gradient(ellipse, rgba(0, 217, 255, 0.12) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(255, 0, 234, 0.1) 0%, transparent 70%)',
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animation: `randomFloat${(i % 3) + 1} ${15 + Math.random() * 10}s ease-in-out infinite, morphShape ${20 + Math.random() * 15}s ease-in-out infinite`,
+                borderRadius: '50%',
+                filter: 'blur(40px)',
+                opacity: 0.6,
+                zIndex: 0,
+              }} />
+            ))}
+          </>
+        )}
+        <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1}}>
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: 700,
@@ -3738,33 +3800,43 @@ export default function GamerWorld() {
             overflowY: isMobile ? 'auto' : 'visible',
             // Position the tutorial modal near the element being highlighted
             ...(currentTutorialStep.elementId && (() => {
-              const element = document.getElementById(currentTutorialStep.elementId);
-              if (element) {
-                const rect = element.getBoundingClientRect();
-                // Calculate position to ensure it fits on screen
-                const modalWidth = isMobile ? window.innerWidth * 0.9 : 500; // Adjust for mobile
-                const adjustedLeft = Math.max(
-                  10, // Minimum left margin
-                  Math.min(
-                    rect.left + rect.width / 2 - (modalWidth / 2), // Centered position
-                    window.innerWidth - modalWidth - 10 // Maximum right margin
-                  )
-                );
+              try {
+                const element = document.getElementById(currentTutorialStep.elementId);
+                if (element && !isMobile) { // Only use element positioning on desktop
+                  const rect = element.getBoundingClientRect();
+                  // Calculate position to ensure it fits on screen
+                  const modalWidth = 500; // Desktop width
+                  const adjustedLeft = Math.max(
+                    10, // Minimum left margin
+                    Math.min(
+                      rect.left + rect.width / 2 - (modalWidth / 2), // Centered position
+                      window.innerWidth - modalWidth - 10 // Maximum right margin
+                    )
+                  );
 
-                // Calculate top position to ensure it's visible on screen
-                const topPosition = Math.min(
-                  rect.bottom + 20 + window.scrollY, // Default position below element
-                  window.innerHeight - 200 + window.scrollY // Ensure it doesn't go off screen
-                );
+                  // Calculate top position to ensure it's visible on screen
+                  const topPosition = Math.min(
+                    rect.bottom + 20 + window.scrollY, // Default position below element
+                    window.innerHeight - 200 + window.scrollY // Ensure it doesn't go off screen
+                  );
 
-                return {
-                  position: 'fixed',
-                  top: topPosition + 'px',
-                  left: adjustedLeft + 'px',
-                  transform: isMobile ? 'none' : 'translateX(-50%)',
-                };
+                  return {
+                    position: 'fixed',
+                    top: topPosition + 'px',
+                    left: adjustedLeft + 'px',
+                    transform: 'translateX(-50%)',
+                  };
+                }
+              } catch (error) {
+                console.warn('Error positioning tutorial modal:', error);
               }
-              return {};
+              // For mobile or when element is not found, use center positioning
+              return isMobile ? {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              } : {};
             })())
           }}>
             <div style={{
@@ -3862,24 +3934,28 @@ export default function GamerWorld() {
 
           {/* Highlight overlay for the current element */}
           {currentTutorialStep.elementId && (() => {
-            const element = document.getElementById(currentTutorialStep.elementId);
-            if (element) {
-              const rect = element.getBoundingClientRect();
-              return (
-                <div style={{
-                  position: 'fixed',
-                  top: rect.top + window.scrollY + 'px',
-                  left: rect.left + window.scrollX + 'px',
-                  width: rect.width + 'px',
-                  height: rect.height + 'px',
-                  border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
-                  borderRadius: '8px',
-                  boxShadow: '0 0 15px #00d9ff, 0 0 25px rgba(0, 217, 255, 0.8)',
-                  zIndex: 9999,
-                  pointerEvents: 'none',
-                  animation: 'pulse-glow 1.5s infinite',
-                }}></div>
-              );
+            try {
+              const element = document.getElementById(currentTutorialStep.elementId);
+              if (element) {
+                const rect = element.getBoundingClientRect();
+                return (
+                  <div style={{
+                    position: 'fixed',
+                    top: rect.top + window.scrollY + 'px',
+                    left: rect.left + window.scrollX + 'px',
+                    width: rect.width + 'px',
+                    height: rect.height + 'px',
+                    border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
+                    borderRadius: '8px',
+                    boxShadow: '0 0 15px #00d9ff, 0 0 25px rgba(0, 217, 255, 0.8)',
+                    zIndex: 9999,
+                    pointerEvents: 'none',
+                    animation: 'pulse-glow 1.5s infinite',
+                  }}></div>
+                );
+              }
+            } catch (error) {
+              console.warn('Error highlighting tutorial element:', error);
             }
             return null;
           })()}
@@ -4006,6 +4082,39 @@ styleSheet.innerText = `
     to {
       opacity: 0;
     }
+  }
+
+  @keyframes randomFloat1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -40px) scale(1.2); }
+    50% { transform: translate(-20px, 30px) scale(0.9); }
+    75% { transform: translate(40px, 20px) scale(1.1); }
+  }
+
+  @keyframes randomFloat2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-50px, 20px) scale(1.3); }
+    66% { transform: translate(30px, -30px) scale(0.8); }
+  }
+
+  @keyframes randomFloat3 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(20px, -50px) rotate(45deg); }
+    40% { transform: translate(-40px, 10px) rotate(-30deg); }
+    60% { transform: translate(10px, 40px) rotate(60deg); }
+    80% { transform: translate(-30px, -20px) rotate(-45deg); }
+  }
+
+  @keyframes morphShape {
+    0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+    50% { border-radius: 50% 30% 50% 60% / 30% 50% 70% 40%; }
+    75% { border-radius: 40% 70% 60% 30% / 70% 40% 50% 60%; }
+  }
+
+  @keyframes borderSlide {
+    0% { transform: translateX(-100%) skewY(-2deg); }
+    100% { transform: translateX(100%) skewY(-2deg); }
   }
 `;
 

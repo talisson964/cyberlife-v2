@@ -3238,6 +3238,24 @@ body{
   }
 }
 
+/* Password Input Mobile Fix */
+@media (max-width: 640px) {
+  .password-input {
+    width: 100%;
+  }
+
+  .password-input input {
+    padding-right: 35px; /* Reduced padding for mobile */
+    font-size: 0.9rem; /* Slightly smaller font to fit better */
+    box-sizing: border-box;
+  }
+
+  .toggle-password {
+    right: 6px; /* Adjust position for mobile */
+    padding: 2px; /* Smaller padding on mobile */
+  }
+}
+
 /* Date Input Wrapper Styles */
 .date-input-wrapper {
   position: relative;
