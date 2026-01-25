@@ -1592,7 +1592,7 @@ export default function GamerWorld() {
 
       {/* Seção Sobre CyberHouse */}
       <section id="cyberhouse" style={{
-        padding: isMobile ? '60px 20px' : '120px 48px',
+        padding: isMobile ? '100px 20px' : '120px 48px',  // Aumentei o padding vertical em mobile
         background: 'linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%)',
         borderTop: 'none',
         position: 'relative',
@@ -1794,7 +1794,7 @@ export default function GamerWorld() {
 
       {/* Seção Eventos */}
       <section id="eventos" style={{
-        padding: isMobile ? '50px 15px' : '100px 48px',
+        padding: isMobile ? '90px 15px' : '100px 48px',  // Aumentei o padding vertical em mobile
         background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
         borderTop: '1px solid rgba(0, 217, 255, 0.2)',
         position: 'relative',
