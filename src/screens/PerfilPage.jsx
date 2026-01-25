@@ -1238,13 +1238,26 @@ export default function PerfilPage() {
                   fontSize: '0.9rem',
                   marginBottom: '8px',
                   fontWeight: 600,
-                }}>Idade</label>
+                }}>Data de Nascimento</label>
                 <input
-                  type="number"
-                  min="0"
-                  max="150"
-                  value={editForm.age}
-                  onChange={(e) => setEditForm({...editForm, age: e.target.value})}
+                  type="date"
+                  value={editForm.age ? new Date(Date.now() - (editForm.age * 365.25 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0] : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const birthDate = new Date(e.target.value);
+                      const today = new Date();
+                      let age = today.getFullYear() - birthDate.getFullYear();
+                      const monthDiff = today.getMonth() - birthDate.getMonth();
+
+                      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                      }
+
+                      setEditForm({...editForm, age: age.toString()});
+                    } else {
+                      setEditForm({...editForm, age: ''});
+                    }
+                  }}
                   style={{
                     width: '100%',
                     padding: '12px 15px',

@@ -127,7 +127,7 @@ export default function LoginGamer({ onLoginSuccess }) {
           data: {
             full_name: formData.fullName,
             email: formData.email,
-            age: formData.age ? parseInt(formData.age) : null,
+            age: formData.age ? new Date().getFullYear() - new Date(formData.age).getFullYear() : null,
             city: formData.city,
             state: formData.state,
             whatsapp: formData.whatsapp
@@ -145,7 +145,7 @@ export default function LoginGamer({ onLoginSuccess }) {
             id: data.user.id,
             full_name: formData.fullName,
             email: formData.email,
-            age: formData.age ? parseInt(formData.age) : null,
+            age: formData.age ? new Date().getFullYear() - new Date(formData.age).getFullYear() : null,
             city: formData.city,
             state: formData.state,
             whatsapp: formData.whatsapp,
@@ -869,14 +869,12 @@ export default function LoginGamer({ onLoginSuccess }) {
                       fontSize: '0.9rem',
                       marginBottom: '8px',
                       fontWeight: 600,
-                    }}>🎂 Idade</label>
+                    }}>🎂 Data de Nascimento</label>
                     <input
-                      type="number"
+                      type="date"
                       name="age"
                       value={formData.age}
                       onChange={handleChange}
-                      min="13"
-                      max="120"
                       style={{
                         width: '100%',
                         padding: isMobile ? '14px 15px' : '12px 15px',
