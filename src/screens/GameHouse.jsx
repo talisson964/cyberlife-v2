@@ -15,6 +15,52 @@ import caraJogando from '../imagens/cara-jogando.png';
 import { supabase } from '../supabaseClient';
 import { stopAudio } from '../utils/audioPlayer';
 
+// Função auxiliar para lazy loading otimizado em mobile
+const useLazyLoading = () => {
+  const [isMobileState] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    if (isMobileState) {
+      const observerOptions = {
+        root: null,
+        rootMargin: '50px',
+        threshold: 0.1
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const element = entry.target;
+            const dataSrc = element.getAttribute('data-src');
+            if (dataSrc) {
+              element.src = dataSrc;
+              element.removeAttribute('data-src');
+              if (element.classList) {
+                element.classList.remove('lazy-load');
+              }
+              observer.unobserve(element);
+            }
+          }
+        });
+      }, observerOptions);
+
+      // Observar todas as imagens com data-src após o componente montar
+      setTimeout(() => {
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        lazyImages.forEach(img => observer.observe(img));
+
+        // Observar modelos 3D também
+        const lazyModels = document.querySelectorAll('model-viewer[data-src]');
+        lazyModels.forEach(model => observer.observe(model));
+      }, 100);
+
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [isMobileState]);
+};
+
 const images = [
   img2,
   img3,
@@ -167,6 +213,9 @@ export default function GamerWorld() {
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+
+  // Executar lazy loading
+  useLazyLoading();
 
   // Função para mostrar notificações com novo design
   const showNotification = (message, type = 'info', duration = 5000) => {
@@ -433,10 +482,14 @@ export default function GamerWorld() {
     };
   }, [menuOpen]);
 
-  // Show tutorial on every visit
+  // Show tutorial randomly with 1/3 chance on every visit
   useEffect(() => {
     setTimeout(() => {
-      setShowTutorial(true);
+      // Generate a random number between 1 and 3
+      const shouldShowTutorial = Math.random() < 1/3;
+      if (shouldShowTutorial) {
+        setShowTutorial(true);
+      }
     }, 1000); // Show tutorial after 1 second to allow page to load
   }, []);
 
@@ -533,7 +586,9 @@ export default function GamerWorld() {
       const nextStep = tutorialStep + 1;
       setTutorialStep(nextStep);
 
+      // Removed auto-scroll functionality during tutorial
       // Scroll to the section for the new step if it has an elementId
+      /*
       setTimeout(() => {
         const nextStepData = tutorialSteps[nextStep];
         if (nextStepData && nextStepData.elementId) {
@@ -562,6 +617,7 @@ export default function GamerWorld() {
           }
         }
       }, 100);
+      */
     } else {
       setShowTutorial(false);
       setTutorialStep(0);
@@ -569,6 +625,8 @@ export default function GamerWorld() {
       if (menuOpen) {
         setMenuOpen(false);
       }
+      // Removed auto-scroll functionality when tutorial ends
+      /*
       // Scroll to top of hero section when tutorial ends
       setTimeout(() => {
         const heroSection = document.getElementById('hero');
@@ -579,6 +637,7 @@ export default function GamerWorld() {
           window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
         }
       }, 10);
+      */
     }
   };
 
@@ -598,7 +657,9 @@ export default function GamerWorld() {
       const prevStep = tutorialStep - 1;
       setTutorialStep(prevStep);
 
+      // Removed auto-scroll functionality during tutorial
       // Scroll to the section for the previous step if it has an elementId
+      /*
       setTimeout(() => {
         const prevStepData = tutorialSteps[prevStep];
         if (prevStepData && prevStepData.elementId) {
@@ -627,6 +688,7 @@ export default function GamerWorld() {
           }
         }
       }, 100);
+      */
     }
   };
 
@@ -637,6 +699,8 @@ export default function GamerWorld() {
     if (menuOpen) {
       setMenuOpen(false);
     }
+    // Removed auto-scroll functionality when tutorial is skipped
+    /*
     // Scroll to top of hero section when tutorial is skipped
     setTimeout(() => {
       const heroSection = document.getElementById('hero');
@@ -647,6 +711,7 @@ export default function GamerWorld() {
         window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       }
     }, 10);
+    */
   };
 
   // Detectar mudanças no tamanho da tela
@@ -938,13 +1003,14 @@ export default function GamerWorld() {
         margin: 0,
         boxShadow: '0 20px 60px rgba(0, 217, 255, 0.4)',
       }}>
-        {/* Carrossel ocupando toda a seção */}
+        {/* Carrossel ocupando toda a seção - com lazy loading otimizado para mobile */}
         {images.map((img, index) => (
           <img
             key={index}
-            src={img}
+            src={index === current ? img : (isMobile ? null : img)} // Apenas carrega imagem atual no mobile para economizar banda
+            data-src={img}
             alt="Gamer World Banner"
-            loading="lazy"
+            loading={index === current ? "eager" : "lazy"} // Carrega imediatamente a imagem visível
             decoding="async"
             style={{
               width: '100%',
@@ -954,9 +1020,16 @@ export default function GamerWorld() {
               position: 'absolute',
               top: 0,
               left: 0,
-              opacity: index === current ? 1 : 0,
+              opacity: index === current ? (isMobile ? 1 : 1) : 0, // Garante visibilidade da imagem atual
               transition: 'opacity 1.5s ease-in-out',
               zIndex: index === current ? 1 : 0,
+            }}
+            onLoad={(e) => {
+              // Quando a imagem carrega, define o src definitivo
+              if (e.target.dataset.src) {
+                e.target.src = e.target.dataset.src;
+                e.target.removeAttribute('data-src');
+              }
             }}
           />
         ))}
@@ -1898,13 +1971,14 @@ export default function GamerWorld() {
                 }} />
               ))}
               
-              {/* Imagens do carrossel */}
+              {/* Imagens do carrossel - otimizado para mobile */}
               {displayEventImages.map((img, index) => (
                 <img
                   key={index}
-                  src={img}
+                  src={index === currentEvent ? img : (isMobile ? null : img)} // Apenas carrega imagem atual no mobile
+                  data-src={img}
                   alt={`Evento ${index + 1}`}
-                  loading="lazy"
+                  loading={index === currentEvent ? "eager" : "lazy"} // Carrega a imagem visível imediatamente
                   decoding="async"
                   style={{
                     width: '100%',
@@ -1918,6 +1992,13 @@ export default function GamerWorld() {
                     transition: 'opacity 1s ease-in-out, transform 1s ease-in-out',
                     zIndex: index === currentEvent ? 1 : 0,
                     borderRadius: '20px',
+                  }}
+                  onLoad={(e) => {
+                    // Quando a imagem carrega, define o src definitivo
+                    if (e.target.dataset.src) {
+                      e.target.src = e.target.dataset.src;
+                      e.target.removeAttribute('data-src');
+                    }
                   }}
                 />
               ))}
@@ -3573,7 +3654,8 @@ export default function GamerWorld() {
                   {product.model_3d ? (
                     <>
                       <model-viewer
-                        src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                        src={isMobile ? null : (product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d)}
+                        data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
                         alt={`Modelo 3D de ${product.name}`}
                         shadow-intensity="1"
                         disable-pan
@@ -3590,14 +3672,18 @@ export default function GamerWorld() {
                           e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
                         }}
                         onMouseEnter={(e) => {
-                          e.target.setAttribute('auto-rotate', '');
-                          e.target.setAttribute('rotation-per-second', '60deg');
-                          e.target.setAttribute('camera-controls', '');
+                          if (!isMobile) { // Não habilitar recursos 3D em mobile para economizar recursos
+                            e.target.setAttribute('auto-rotate', '');
+                            e.target.setAttribute('rotation-per-second', '60deg');
+                            e.target.setAttribute('camera-controls', '');
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.target.removeAttribute('auto-rotate');
-                          e.target.removeAttribute('camera-controls');
-                          e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                          if (!isMobile) {
+                            e.target.removeAttribute('auto-rotate');
+                            e.target.removeAttribute('camera-controls');
+                            e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                          }
                         }}
                       />
                       <div style={{
@@ -3619,7 +3705,8 @@ export default function GamerWorld() {
                     </>
                   ) : product.images && product.images.length > 0 ? (
                     <img
-                      src={product.images[0]}
+                      src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
+                      data-src={product.images[0]}
                       alt={product.name}
                       loading="lazy"
                       decoding="async"
@@ -3628,6 +3715,16 @@ export default function GamerWorld() {
                         height: '100%',
                         objectFit: 'cover',
                         transition: 'transform 0.3s ease',
+                      }}
+                      onLoad={(e) => {
+                        // Carrega a imagem somente quando visível em mobile
+                        if (isMobile) {
+                          const rect = e.target.getBoundingClientRect();
+                          if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                            e.target.src = e.target.dataset.src;
+                            e.target.removeAttribute('data-src');
+                          }
+                        }
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}

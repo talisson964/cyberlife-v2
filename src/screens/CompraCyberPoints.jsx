@@ -9,6 +9,17 @@ const CompraCyberPoints = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Detectar mudança no tamanho da tela
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Check if user is authenticated
   useEffect(() => {
@@ -110,7 +121,8 @@ const CompraCyberPoints = () => {
       flexDirection: 'column',
       alignItems: 'center',
       position: 'relative',
-      overflow: 'hidden'
+      overflowX: 'hidden',  // Mantém o overflow-y para permitir rolagem
+      overflowY: 'auto'     // Permite rolagem vertical quando necessário
     }}>
       {/* Header with personalized back to home button */}
       <header style={{
@@ -466,11 +478,12 @@ const CompraCyberPoints = () => {
         position: 'relative',
         zIndex: 1,
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: '25px',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: isMobile ? '20px' : '25px',
         maxWidth: '1200px',
         width: '100%',
-        margin: '0 auto 40px'
+        margin: '0 auto 40px',
+        padding: isMobile ? '0 10px' : '0'
       }}>
         {pacotes.map((pacote) => (
           <div
@@ -651,20 +664,22 @@ const CompraCyberPoints = () => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 10001,
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          overflow: 'auto' // Permitir rolagem se necessário
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
             color: '#fff',
-            padding: '40px',
+            padding: isMobile ? '20px' : '40px',
             borderRadius: '20px',
             maxWidth: '550px',
-            width: '90%',
+            width: isMobile ? '95%' : '90%',
             boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 217, 255, 0.3)',
             border: '2px solid #00d9ff',
             fontFamily: 'Rajdhani, sans-serif',
             position: 'relative',
-            overflow: 'hidden',
+            overflow: 'auto', // Permitir rolagem interna se necessário
+            maxHeight: isMobile ? '90vh' : 'none',
             animation: 'modalAppear 0.5s ease-out'
           }}>
             {/* Efeito de brilho no modal */}
@@ -811,20 +826,22 @@ const CompraCyberPoints = () => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 10001,
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          overflow: 'auto' // Permitir rolagem se necessário
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
             color: '#fff',
-            padding: '40px',
+            padding: isMobile ? '20px' : '40px',
             borderRadius: '20px',
             maxWidth: '600px',
-            width: '90%',
+            width: isMobile ? '95%' : '90%',
             boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 217, 255, 0.3)',
             border: '2px solid #00d9ff',
             fontFamily: 'Rajdhani, sans-serif',
             position: 'relative',
-            overflow: 'hidden',
+            overflow: 'auto', // Permitir rolagem interna se necessário
+            maxHeight: isMobile ? '90vh' : 'none',
             animation: 'modalAppear 0.5s ease-out'
           }}>
             {/* Efeito de brilho no modal */}
