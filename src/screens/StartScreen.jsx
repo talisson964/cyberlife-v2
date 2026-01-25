@@ -758,14 +758,69 @@ export default function StartScreen({ onStart }){
                     <Calendar size={18} />
                     Data de Nascimento
                   </label>
-                  <input
-                    type="date"
-                    name="birthDate"
-                    value={formData.birthDate}
-                    onChange={handleChange}
-                    max={new Date().toISOString().split('T')[0]}
-                    required
-                  />
+                  <div className="date-input-wrapper">
+                    <input
+                      type="date"
+                      name="birthDate"
+                      value={formData.birthDate}
+                      onChange={handleChange}
+                      max={new Date().toISOString().split('T')[0]}
+                      required
+                      className="date-input-calendar"
+                    />
+                    <input
+                      type="text"
+                      name="birthDate"
+                      value={formData.birthDate ? new Date(formData.birthDate).toLocaleDateString('pt-BR') : ''}
+                      onChange={(e) => {
+                        // Handle manual input - convert DD/MM/YYYY to YYYY-MM-DD format for internal storage
+                        const value = e.target.value;
+                        if (/^\d{0,2}\/?\d{0,2}\/?\d{0,4}$/.test(value)) {
+                          // Format the input as DD/MM/YYYY as the user types
+                          let formattedValue = value.replace(/\D/g, '');
+
+                          if (formattedValue.length > 2) {
+                            formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
+                          }
+
+                          if (formattedValue.length > 5) {
+                            formattedValue = formattedValue.substring(0, 5) + '/' + formattedValue.substring(5, 10);
+                          }
+
+                          // Update the displayed value
+                          e.target.value = formattedValue;
+
+                          // Convert to YYYY-MM-DD format for internal storage if complete
+                          if (formattedValue.length === 10) {
+                            const [day, month, year] = formattedValue.split('/');
+                            if (day.length === 2 && month.length === 2 && year.length === 4) {
+                              // Validate the date by creating it and checking if it's valid
+                              // Using a different approach to validate the date
+                              const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
+                              if (!isNaN(dateObj.getTime())) {
+                                // Check if the date components match the input (to catch invalid dates like 30th Feb)
+                                const utcYear = dateObj.getUTCFullYear();
+                                const utcMonth = dateObj.getUTCMonth() + 1; // Month is 0-indexed
+                                const utcDay = dateObj.getUTCDate();
+
+                                if (parseInt(day) === utcDay && parseInt(month) === utcMonth && parseInt(year) === utcYear) {
+                                  // Additional validation to ensure the date is not in the future
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  if (dateObj <= today) {
+                                    setFormData({...formData, birthDate: dateObj.toISOString().split('T')[0]});
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }}
+                      placeholder="DD/MM/AAAA"
+                      className="date-input-text"
+                      maxLength="10"
+                    />
+                  </div>
                 </div>
 
                 <div className="form-group">
