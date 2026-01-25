@@ -288,6 +288,8 @@ export default function LoginGamer({ onLoginSuccess }) {
           <img
             src="/cyberlife-icone2.png"
             alt="CyberLife Logo"
+            loading="lazy"
+            decoding="async"
             style={{
               height: isMobile ? '32px' : '40px',
               verticalAlign: 'middle',

@@ -612,237 +612,220 @@ export default function LojaGeek({ onBack }){
           padding: '0 20px',
         }}>
           {offers.length > 0 ? (
-            <div className="offer-card-large" style={{
-              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-              border: '2px solid rgba(0, 217, 255, 0.3)',
-              borderRadius: '24px',
-              padding: '40px',
-              position: 'relative',
-              overflow: 'hidden',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-            }}>
-              {/* Animação de fundo */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'radial-gradient(circle at 30% 50%, rgba(0, 217, 255, 0.15) 0%, transparent 50%)',
-                animation: 'pulse 3s ease-in-out infinite',
-                pointerEvents: 'none',
-              }}></div>
-              
-              <div className="offer-tag" style={{
-                position: 'absolute',
-                top: '30px',
-                left: '30px',
-                background: 'linear-gradient(135deg, #ff00ea, #cc00ba)',
-                color: '#fff',
-                padding: '10px 25px',
-                borderRadius: '25px',
-                fontSize: '0.9rem',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '2px',
-                zIndex: 3,
-                boxShadow: '0 4px 20px rgba(255, 0, 234, 0.5)',
-              }}>{offer.tag}</div>
-              
-              <div className="offer-discount-badge" style={{
-                position: 'absolute',
-                top: '30px',
-                right: '30px',
-                background: 'linear-gradient(135deg, #00ff88, #00cc66)',
-                color: '#000',
-                padding: '15px 30px',
-                borderRadius: '50px',
-                fontSize: '1.8rem',
-                fontWeight: 900,
-                fontFamily: 'Rajdhani, sans-serif',
-                zIndex: 3,
-                boxShadow: '0 8px 30px rgba(0, 255, 136, 0.6)',
-                animation: 'bounce 2s infinite',
-              }}>{offer.discount}</div>
-              
-              <div className="offer-split" style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '50px',
-                alignItems: 'center',
-                marginTop: '80px',
-                position: 'relative',
-                zIndex: 2,
-              }}>
-                <div className="offer-image-side" style={{
+            offers.map((offer, index) => (
+              <div
+                key={offer.id || index}
+                className={`offer-card-large ${index === currentOffer ? 'active' : 'inactive'}`}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '24px',
+                  padding: '40px',
                   position: 'relative',
-                  borderRadius: '20px',
                   overflow: 'hidden',
-                  height: '400px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                  <div className="offer-glow" style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    background: 'radial-gradient(circle, rgba(0, 217, 255, 0.3) 0%, transparent 70%)',
-                    animation: 'pulse 2s ease-in-out infinite',
-                  }}></div>
-                  <img src={offer.image} alt={offer.title} className="offer-image" style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '16px',
-                    transition: 'transform 0.5s ease',
-                  }} onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'} />
-                </div>
-                
-                <div className="offer-content-side" style={{
-                  padding: '20px',
-                }}>
-                  <h3 className="offer-title" style={{
-                    fontSize: '2.5rem',
-                    fontWeight: 800,
-                    color: '#fff',
-                    marginBottom: '30px',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    lineHeight: '1.2',
-                    textShadow: '0 2px 10px rgba(0, 217, 255, 0.5)',
-                  }}>{offer.title}</h3>
-                  
-                  {(offer.originalPrice || offer.finalPrice) && (
-                    <div className="offer-prices" style={{
-                      display: 'flex',
-                      gap: '30px',
-                      marginBottom: '40px',
-                      flexWrap: 'wrap',
-                    }}>
-                      {offer.originalPrice && (
-                        <div className="price-block" style={{
-                          flex: 1,
-                          minWidth: '150px',
-                        }}>
-                          <span className="price-label" style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            marginBottom: '8px',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            letterSpacing: '1px',
-                          }}>De:</span>
-                          <span className="price-original" style={{
-                            display: 'block',
-                            fontSize: '1.5rem',
-                            color: 'rgba(255, 255, 255, 0.4)',
-                            textDecoration: 'line-through',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontWeight: 600,
-                          }}>{offer.originalPrice}</span>
-                        </div>
-                      )}
-                      {offer.finalPrice && (
-                        <div className="price-block" style={{
-                          flex: 1,
-                          minWidth: '150px',
-                        }}>
-                          <span className="price-label" style={{
-                            display: 'block',
-                            fontSize: '0.9rem',
-                            color: '#00ff88',
-                            marginBottom: '8px',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            letterSpacing: '1px',
-                            fontWeight: 700,
-                          }}>Por apenas:</span>
-                          <span className="price-final" style={{
-                            display: 'block',
-                            fontSize: '2.5rem',
-                            color: '#00ff88',
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontWeight: 900,
-                            textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
-                          }}>{offer.finalPrice}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <button 
-                    className="offer-button" 
-                    onClick={() => {
-                      if (offer.product_id) {
-                        // Se o banner tem produto associado, navegar para página do produto
-                        navigate(`/produto/${offer.product_id}`);
-                      } else if (offer.link) {
-                        // Se tem link customizado, abrir
-                        window.open(offer.link, '_blank');
-                      } else {
-                        // Fallback: rolar para catálogo
-                        scrollToCatalog();
-                      }
-                    }}
-                    style={{
-                    width: '100%',
-                    padding: '18px 40px',
-                    background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
-                    border: 'none',
-                    borderRadius: '50px',
-                    color: '#fff',
-                    fontSize: '1.3rem',
-                    fontWeight: 700,
-                    fontFamily: 'Rajdhani, sans-serif',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    textTransform: 'uppercase',
-                    letterSpacing: '2px',
-                    boxShadow: '0 10px 40px rgba(255, 0, 234, 0.4)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ff 0%, #ff00ea 100%)';
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 15px 50px rgba(255, 0, 234, 0.6)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 10px 40px rgba(255, 0, 234, 0.4)';
-                  }}>🛒 Comprar Agora</button>
-                </div>
-              </div>
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+                  display: index === currentOffer ? 'block' : 'none',
+                }}
+              >
+                {/* Animação de fundo */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'radial-gradient(circle at 30% 50%, rgba(0, 217, 255, 0.15) 0%, transparent 50%)',
+                  animation: 'pulse 3s ease-in-out infinite',
+                  pointerEvents: 'none',
+                }}></div>
 
-              <div className="carousel-indicators" style={{
-                display: 'flex',
-                gap: '12px',
-                justifyContent: 'center',
-                marginTop: '40px',
-                position: 'relative',
-                zIndex: 2,
-              }}>
-                {offers.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`indicator ${index === currentOffer ? 'active' : ''}`}
-                    onClick={() => setCurrentOffer(index)}
-                    style={{
-                      width: index === currentOffer ? '50px' : '15px',
-                      height: '15px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: index === currentOffer 
-                        ? 'linear-gradient(135deg, #00d9ff, #ff00ea)'
-                        : 'rgba(255, 255, 255, 0.2)',
-                      cursor: 'pointer',
-                      transition: 'all 0.4s ease',
-                      boxShadow: index === currentOffer ? '0 4px 15px rgba(0, 217, 255, 0.5)' : 'none',
+                <div className="offer-tag" style={{
+                  position: 'absolute',
+                  top: '30px',
+                  left: '30px',
+                  background: 'linear-gradient(135deg, #ff00ea, #cc00ba)',
+                  color: '#fff',
+                  padding: '10px 25px',
+                  borderRadius: '25px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '2px',
+                  zIndex: 3,
+                  boxShadow: '0 4px 20px rgba(255, 0, 234, 0.5)',
+                }}>{offer.tag}</div>
+
+                <div className="offer-discount-badge" style={{
+                  position: 'absolute',
+                  top: '30px',
+                  right: '30px',
+                  background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+                  color: '#000',
+                  padding: '15px 30px',
+                  borderRadius: '50px',
+                  fontSize: '1.8rem',
+                  fontWeight: 900,
+                  fontFamily: 'Rajdhani, sans-serif',
+                  zIndex: 3,
+                  boxShadow: '0 8px 30px rgba(0, 255, 136, 0.6)',
+                  animation: 'bounce 2s infinite',
+                }}>{offer.discount}</div>
+
+                <div className="offer-split" style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '50px',
+                  alignItems: 'center',
+                  marginTop: '80px',
+                  position: 'relative',
+                  zIndex: 2,
+                }}>
+                  <div className="offer-image-side" style={{
+                    position: 'relative',
+                    borderRadius: '20px',
+                    overflow: 'hidden',
+                    height: '400px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <div className="offer-glow" style={{
+                      position: 'absolute',
+                      width: '100%',
+                      height: '100%',
+                      background: 'radial-gradient(circle, rgba(0, 217, 255, 0.3) 0%, transparent 70%)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                    }}></div>
+                    <img
+                      src={offer.image}
+                      alt={offer.title}
+                      className="offer-image"
+                      style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '12px'
                     }}
-                  />
-                ))}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+
+                  <div className="offer-content-side" style={{
+                    padding: '20px',
+                  }}>
+                    <h3 className="offer-title" style={{
+                      fontSize: '2.5rem',
+                      fontWeight: 800,
+                      color: '#fff',
+                      marginBottom: '30px',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      lineHeight: '1.2',
+                      textShadow: '0 2px 10px rgba(0, 217, 255, 0.5)',
+                    }}>{offer.title}</h3>
+
+                    {(offer.originalPrice || offer.finalPrice) && (
+                      <div className="offer-prices" style={{
+                        display: 'flex',
+                        gap: '30px',
+                        marginBottom: '40px',
+                        flexWrap: 'wrap',
+                      }}>
+                        {offer.originalPrice && (
+                          <div className="price-block" style={{
+                            flex: 1,
+                            minWidth: '150px',
+                          }}>
+                            <span className="price-label" style={{
+                              display: 'block',
+                              fontSize: '0.9rem',
+                              color: 'rgba(255, 255, 255, 0.5)',
+                              marginBottom: '8px',
+                              fontFamily: 'Rajdhani, sans-serif',
+                              letterSpacing: '1px',
+                            }}>De:</span>
+                            <span className="price-original" style={{
+                              display: 'block',
+                              fontSize: '1.5rem',
+                              color: 'rgba(255, 255, 255, 0.4)',
+                              textDecoration: 'line-through',
+                              fontFamily: 'Rajdhani, sans-serif',
+                              fontWeight: 600,
+                            }}>{offer.originalPrice}</span>
+                          </div>
+                        )}
+                        {offer.finalPrice && (
+                          <div className="price-block" style={{
+                            flex: 1,
+                            minWidth: '150px',
+                          }}>
+                            <span className="price-label" style={{
+                              display: 'block',
+                              fontSize: '0.9rem',
+                              color: '#00ff88',
+                              marginBottom: '8px',
+                              fontFamily: 'Rajdhani, sans-serif',
+                              letterSpacing: '1px',
+                              fontWeight: 700,
+                            }}>Por apenas:</span>
+                            <span className="price-final" style={{
+                              display: 'block',
+                              fontSize: '2.5rem',
+                              color: '#00ff88',
+                              fontFamily: 'Rajdhani, sans-serif',
+                              fontWeight: 900,
+                              textShadow: '0 0 20px rgba(0, 255, 136, 0.8)',
+                            }}>{offer.finalPrice}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <button
+                      className="offer-button"
+                      onClick={() => {
+                        if (offer.product_id) {
+                          // Se o banner tem produto associado, navegar para página do produto
+                          navigate(`/produto/${offer.product_id}`);
+                        } else if (offer.link) {
+                          // Se tem link customizado, abrir
+                          window.open(offer.link, '_blank');
+                        } else {
+                          // Fallback: rolar para catálogo
+                          scrollToCatalog();
+                        }
+                      }}
+                      style={{
+                      width: '100%',
+                      padding: '18px 40px',
+                      background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
+                      border: 'none',
+                      borderRadius: '50px',
+                      color: '#fff',
+                      fontSize: '1.3rem',
+                      fontWeight: 700,
+                      fontFamily: 'Rajdhani, sans-serif',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      textTransform: 'uppercase',
+                      letterSpacing: '2px',
+                      boxShadow: '0 10px 40px rgba(255, 0, 234, 0.4)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ff 0%, #ff00ea 100%)';
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 15px 50px rgba(255, 0, 234, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 10px 40px rgba(255, 0, 234, 0.4)';
+                    }}>🛒 Comprar Agora</button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))
           ) : (
             <div style={{
               textAlign: 'center',
@@ -855,6 +838,35 @@ export default function LojaGeek({ onBack }){
               <p style={{fontSize: '0.9rem', marginTop: '10px'}}>Adicione ofertas no painel admin</p>
             </div>
           )}
+          {/* Indicadores de carrossel fora do bloco de ofertas individuais */}
+          <div className="carousel-indicators" style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+            marginTop: '40px',
+            position: 'relative',
+            zIndex: 2,
+          }}>
+            {offers.map((_, index) => (
+              <button
+                key={index}
+                className={`indicator ${index === currentOffer ? 'active' : ''}`}
+                onClick={() => setCurrentOffer(index)}
+                style={{
+                  width: index === currentOffer ? '50px' : '15px',
+                  height: '15px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: index === currentOffer
+                    ? 'linear-gradient(135deg, #00d9ff, #ff00ea)'
+                    : 'rgba(255, 255, 255, 0.2)',
+                  cursor: 'pointer',
+                  transition: 'all 0.4s ease',
+                  boxShadow: index === currentOffer ? '0 4px 15px rgba(0, 217, 255, 0.5)' : 'none',
+                }}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -952,8 +964,20 @@ export default function LojaGeek({ onBack }){
                   </div>
                 ) : (
                   <>
-                    <img src={product.image} alt={product.name} className="product-image default" />
-                    <img src={product.hoverImage} alt={product.name} className="product-image hover" />
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="product-image default"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <img
+                      src={product.hoverImage}
+                      alt={product.name}
+                      className="product-image hover"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </>
                 )}
               </div>

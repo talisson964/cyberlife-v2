@@ -210,6 +210,8 @@ export default function EventoPage() {
             month: 'long',
             year: 'numeric'
           });
+        } else {
+          formattedDate = 'Data ainda não determinada';
         }
 
         setEvento({
@@ -584,6 +586,8 @@ export default function EventoPage() {
           <img
             src="/cyberlife-icone2.png"
             alt="CyberLife Logo"
+            loading="lazy"
+            decoding="async"
             style={{
               height: isMobile ? '32px' : '40px',
               verticalAlign: 'middle',
@@ -1076,22 +1080,22 @@ export default function EventoPage() {
                   }}>{evento.date}</div>
                 </div>
 
-                {evento.time && (
-                  <div>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '0.9rem',
-                      color: '#aaa',
-                      marginBottom: '5px',
-                    }}>🕐 Horário</div>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1.2rem',
-                      color: '#00d9ff',
-                      fontWeight: 600,
-                    }}>{evento.time}</div>
+                <div>
+                  <div style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '0.9rem',
+                    color: '#aaa',
+                    marginBottom: '5px',
+                  }}>🕐 Horário</div>
+                  <div style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.2rem',
+                    color: evento.time ? '#00d9ff' : '#666',
+                    fontWeight: 600,
+                  }}>
+                    {evento.time ? evento.time : 'Horário ainda não determinado'}
                   </div>
-                )}
+                </div>
 
                 {evento.prize && (
                   <div>

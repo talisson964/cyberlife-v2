@@ -30,7 +30,13 @@ export default function NextScreen({ onNavigate }){
     <div className="next-screen" style={{backgroundImage:`url(${bgGif})`}}>
       <header className="header">
         <div className="logo" style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-          <img src="/cyberlife-icone2.png" alt="CyberLife Logo" style={{height: '60px', verticalAlign: 'middle'}} />
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife Logo"
+            style={{height: '60px', verticalAlign: 'middle'}}
+            loading="lazy"
+            decoding="async"
+          />
           <span style={{fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '1.7rem', color: '#00d9ff', letterSpacing: '2px'}}>CyberLife</span>
         </div>
         <nav className="nav">

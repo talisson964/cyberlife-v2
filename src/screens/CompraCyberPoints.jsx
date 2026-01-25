@@ -410,6 +410,8 @@ const CompraCyberPoints = () => {
                 <img
                   src="/src/imagens/cyberpoint.png"
                   alt="CyberPoint"
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     maxWidth: '250px',
                     maxHeight: '250px',
@@ -540,6 +542,8 @@ const CompraCyberPoints = () => {
               <img
                 src="/src/imagens/cyberpoint.png"
                 alt="CyberPoint"
+                loading="lazy"
+                decoding="async"
                 style={{
                   maxWidth: '180px',
                   maxHeight: '180px',

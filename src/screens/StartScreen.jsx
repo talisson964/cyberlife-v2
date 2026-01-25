@@ -431,9 +431,12 @@ export default function StartScreen({ onStart }){
     <div className="start-screen">
       {/* Container de fundo permanente para evitar flashes brancos */}
       <div className="background-container">
+        {/* Carregamento otimizado para mobile - apenas uma imagem visível por vez */}
         <div
           className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
           style={{backgroundImage:`url(${images[index]})`}}
+          // Otimização para mobile: carregamento preguiçoso
+          loading="lazy"
         />
       </div>
       {!showLogin ? (

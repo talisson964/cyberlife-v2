@@ -348,11 +348,12 @@ export default function GamerWorld() {
         // Converter eventos do banco para o formato esperado
         const formattedEvents = events.map(event => ({
           title: event.title,
-          date: new Date(event.date).toLocaleDateString('pt-BR', {
+          date: event.date ? new Date(event.date).toLocaleDateString('pt-BR', {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
-          }),
+          }) : 'Data ainda não determinada',
+          time: event.time || null, // Adicionando o campo de horário
           prize: event.prize || '',
           inscription: `Inscrições abertas`,
           slug: event.slug, // Usar o slug do banco de dados
@@ -686,6 +687,8 @@ export default function GamerWorld() {
           <img
             src="/cyberlife-icone2.png"
             alt="CyberLife Logo"
+            loading="lazy"
+            decoding="async"
             style={{
               height: isMobile ? '32px' : '40px',
               verticalAlign: 'middle',
@@ -939,6 +942,8 @@ export default function GamerWorld() {
             key={index}
             src={img}
             alt="Gamer World Banner"
+            loading="lazy"
+            decoding="async"
             style={{
               width: '100%',
               height: '100%',
@@ -1899,6 +1904,8 @@ export default function GamerWorld() {
                   key={index}
                   src={img}
                   alt={`Evento ${index + 1}`}
+                  loading="lazy"
+                  decoding="async"
                   style={{
                     width: '100%',
                     height: '100%',
@@ -2079,6 +2086,34 @@ export default function GamerWorld() {
                       </div>
                     )}
                     
+                    {/* Horário */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '15px',
+                    }}>
+                      <div style={{
+                        fontSize: '1.5rem',
+                      }}>🕐</div>
+                      <div>
+                        <div style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: '0.9rem',
+                          color: '#aaa',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                        }}>Horário</div>
+                        <div style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: '1.1rem',
+                          color: event.time ? '#00d9ff' : '#666',
+                          fontWeight: 600,
+                        }}>
+                          {event.time ? event.time : 'Horário ainda não determinado'}
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Inscrição */}
                     <div style={{
                       display: 'flex',
@@ -3521,9 +3556,11 @@ export default function GamerWorld() {
                       </div>
                     </>
                   ) : product.images && product.images.length > 0 ? (
-                    <img 
-                      src={product.images[0]} 
+                    <img
+                      src={product.images[0]}
                       alt={product.name}
+                      loading="lazy"
+                      decoding="async"
                       style={{
                         width: '100%',
                         height: '100%',

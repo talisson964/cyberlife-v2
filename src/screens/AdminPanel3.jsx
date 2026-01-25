@@ -183,6 +183,81 @@ const AdminPanel3 = ({ onNavigate }) => {
     live_comments: ''
   });
 
+  // Estados para upload de imagem do evento
+  const [eventImageFile, setEventImageFile] = useState(null);
+  const [eventImagePreview, setEventImagePreview] = useState('');
+
+  // Função para upload da imagem do evento para o storage do Supabase
+  const uploadEventImageToStorage = async (file, eventId) => {
+    if (!file) return null;
+
+    // Verificar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPEG, PNG, GIF)');
+      return null;
+    }
+
+    // Verificar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB');
+      return null;
+    }
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `events/${eventId}/event_image_${Date.now()}.${fileExt}`;
+
+      // Fazer upload para o storage
+      const { error: uploadError } = await supabase.storage
+        .from('product-images') // Usando o mesmo bucket que outros uploads
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Obter URL pública
+      const { data: { publicUrl }, error: urlError } = await supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      if (urlError) throw urlError;
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem do evento:', error);
+      alert('Erro ao fazer upload da imagem do evento: ' + error.message);
+      return null;
+    }
+  };
+
+  // Função para manipular o upload de imagem do evento
+  const handleEventImageUpload = async (file) => {
+    if (!file) return;
+
+    // Verificar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPEG, PNG, GIF)');
+      return;
+    }
+
+    // Verificar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setEventImageFile(file);
+
+    // Criar preview da imagem
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setEventImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Pedidos
   const [orders, setOrders] = useState([]);
   const [searchOrder, setSearchOrder] = useState('');
@@ -1083,7 +1158,7 @@ const AdminPanel3 = ({ onNavigate }) => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .order('date', { ascending: false });
+        .order('date', { ascending: false, nullsFirst: false });
 
       if (error) {
         console.error('Erro ao buscar eventos:', error);
@@ -1104,47 +1179,106 @@ const AdminPanel3 = ({ onNavigate }) => {
       // Converter regras e cronograma de texto para array
       const rulesArray = eventForm.rules ? eventForm.rules.split('\n').filter(r => r.trim()) : [];
       const scheduleArray = eventForm.schedule ? eventForm.schedule.split('\n').filter(s => s.trim()) : [];
-      
+
       // Converter placar, ranking e participantes de texto para array
       const scoresArray = eventForm.current_scores ? eventForm.current_scores.split('\n').filter(s => s.trim()) : [];
       const rankingArray = eventForm.ranking ? eventForm.ranking.split('\n').filter(r => r.trim()) : [];
       const participantsArray = eventForm.participants ? eventForm.participants.split('\n').filter(p => p.trim()) : [];
-      
-      // Mapear os dados do formulário para a estrutura do banco
-      const eventData = {
-        title: eventForm.title,
-        slug: eventForm.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-        description: eventForm.description || 'Evento sem descrição',
-        type: eventForm.type || 'Torneio',
-        date: eventForm.date, // Nome correto da coluna: date
-        prize: eventForm.prize || null,
-        inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
-        inscription_price: eventForm.inscription_price || null,
-        max_participants: parseInt(eventForm.max_participants) || null,
-        image_url: eventForm.image_url || '/images/default-event.png',
-        rules: rulesArray,
-        schedule: scheduleArray,
-        reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
-        is_live: eventForm.is_live || false,
-        game_name: eventForm.game_name || null,
-        stream_link: eventForm.stream_link || null,
-        current_scores: scoresArray,
-        ranking: rankingArray,
-        participants: participantsArray,
-        live_comments: eventForm.live_comments || null,
-        active: true // Nome correto da coluna: active
-      };
 
-      const { data, error } = await supabase
-        .from('events')
-        .insert([eventData])
-        .select();
+      // Preparar dados do evento
+      let imageUrl = eventForm.image_url || '/images/default-event.png';
 
-      if (error) throw error;
-      
+      // Se houver imagem local para upload, fazer upload
+      if (eventImageFile) {
+        // Primeiro criar o evento para obter o ID
+        const { data: eventData, error: insertError } = await supabase
+          .from('events')
+          .insert([{
+            title: eventForm.title,
+            slug: eventForm.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            description: eventForm.description || 'Evento sem descrição',
+            type: eventForm.type || 'Torneio',
+            date: eventForm.date || null, // Nome correto da coluna: date - pode ser nulo
+            time: eventForm.time || null, // Adicionando o campo de hora - pode ser nulo
+            prize: eventForm.prize || null,
+            inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
+            inscription_price: eventForm.inscription_price || null,
+            max_participants: parseInt(eventForm.max_participants) || null,
+            image_url: '/images/default-event.png', // Placeholder temporário
+            rules: rulesArray,
+            schedule: scheduleArray,
+            reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
+            is_live: eventForm.is_live || false,
+            game_name: eventForm.game_name || null,
+            stream_link: eventForm.stream_link || null,
+            current_scores: scoresArray,
+            ranking: rankingArray,
+            participants: participantsArray,
+            live_comments: eventForm.live_comments || null,
+            active: true // Nome correto da coluna: active
+          }])
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+
+        // Fazer upload da imagem com o ID do evento
+        const uploadedImageUrl = await uploadEventImageToStorage(eventImageFile, eventData.id);
+        if (uploadedImageUrl) {
+          // Atualizar o evento com a URL da imagem
+          const { error: updateError } = await supabase
+            .from('events')
+            .update({ image_url: uploadedImageUrl })
+            .eq('id', eventData.id);
+
+          if (updateError) throw updateError;
+
+          imageUrl = uploadedImageUrl;
+        }
+      } else {
+        // Se não houver imagem local, usar a URL fornecida ou padrão
+        imageUrl = eventForm.image_url || '/images/default-event.png';
+      }
+
+      // Se o evento já foi criado (sem imagem local), apenas atualizar a lista
+      if (!eventImageFile) {
+        const { data, error } = await supabase
+          .from('events')
+          .insert([{
+            title: eventForm.title,
+            slug: eventForm.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+            description: eventForm.description || 'Evento sem descrição',
+            type: eventForm.type || 'Torneio',
+            date: eventForm.date || null, // Nome correto da coluna: date - pode ser nulo
+            time: eventForm.time || null, // Adicionando o campo de hora - pode ser nulo
+            prize: eventForm.prize || null,
+            inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
+            inscription_price: eventForm.inscription_price || null,
+            max_participants: parseInt(eventForm.max_participants) || null,
+            image_url: imageUrl,
+            rules: rulesArray,
+            schedule: scheduleArray,
+            reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
+            is_live: eventForm.is_live || false,
+            game_name: eventForm.game_name || null,
+            stream_link: eventForm.stream_link || null,
+            current_scores: scoresArray,
+            ranking: rankingArray,
+            participants: participantsArray,
+            live_comments: eventForm.live_comments || null,
+            active: true // Nome correto da coluna: active
+          }])
+          .select();
+
+        if (error) throw error;
+      }
+
       await loadEvents(); // Recarregar lista do banco
       setShowEventForm(false); // Fechar formulário
       resetEventForm();
+      // Limpar imagem de evento
+      setEventImageFile(null);
+      setEventImagePreview('');
       alert('Evento adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar evento:', error);
@@ -1158,25 +1292,40 @@ const AdminPanel3 = ({ onNavigate }) => {
       // Converter regras e cronograma de texto para array
       const rulesArray = eventForm.rules ? eventForm.rules.split('\n').filter(r => r.trim()) : [];
       const scheduleArray = eventForm.schedule ? eventForm.schedule.split('\n').filter(s => s.trim()) : [];
-      
+
       // Converter placar, ranking e participantes de texto para array
       const scoresArray = eventForm.current_scores ? eventForm.current_scores.split('\n').filter(s => s.trim()) : [];
       const rankingArray = eventForm.ranking ? eventForm.ranking.split('\n').filter(r => r.trim()) : [];
       const participantsArray = eventForm.participants ? eventForm.participants.split('\n').filter(p => p.trim()) : [];
-      
+
+      // Preparar dados do evento
+      let imageUrl = eventForm.image_url || '/images/default-event.png';
+
+      // Se houver imagem local para upload, fazer upload
+      if (eventImageFile) {
+        // Fazer upload da imagem com o ID do evento
+        const uploadedImageUrl = await uploadEventImageToStorage(eventImageFile, editingEvent);
+        if (uploadedImageUrl) {
+          imageUrl = uploadedImageUrl;
+        }
+      } else {
+        // Se não houver imagem local, usar a URL fornecida ou padrão
+        imageUrl = eventForm.image_url || '/images/default-event.png';
+      }
+
       // Mapear os dados do formulário para a estrutura do banco
       const eventData = {
         title: eventForm.title,
         description: eventForm.description || 'Evento sem descrição',
         type: eventForm.type || 'Torneio',
-        date: eventForm.date, // Nome correto da coluna: date
-        time: eventForm.time || null, // Adicionando o campo de hora
+        date: eventForm.date || null, // Nome correto da coluna: date - pode ser nulo
+        time: eventForm.time || null, // Adicionando o campo de hora - pode ser nulo
         prize: eventForm.prize || null,
         inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
         inscription_price: eventForm.inscription_price || null,
         inscription_price_cyberpoints: eventForm.inscription_price_cyberpoints || null, // Adicionando o campo de preço em CyberPoints
         max_participants: parseInt(eventForm.max_participants) || null,
-        image_url: eventForm.image_url || '/images/default-event.png',
+        image_url: imageUrl,
         rules: rulesArray,
         schedule: scheduleArray,
         reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
@@ -1201,6 +1350,9 @@ const AdminPanel3 = ({ onNavigate }) => {
       setEditingEvent(null);
       setShowEventForm(false); // Fechar formulário
       resetEventForm();
+      // Limpar imagem de evento
+      setEventImageFile(null);
+      setEventImagePreview('');
       alert('Evento atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar evento:', error);
@@ -1250,6 +1402,9 @@ const AdminPanel3 = ({ onNavigate }) => {
       participants: '',
       live_comments: ''
     });
+    // Limpar estados de imagem
+    setEventImageFile(null);
+    setEventImagePreview('');
   };
 
   // PEDIDOS
@@ -1989,9 +2144,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                       </small>
                       {productForm.image_url && (
                         <div className="image-preview">
-                          <img 
-                            src={productForm.image_url} 
-                            alt="Preview" 
+                          <img
+                            src={productForm.image_url}
+                            alt="Preview"
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                               e.target.style.display = 'none';
                               e.target.nextElementSibling.style.display = 'block';
@@ -2300,9 +2457,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                           <div className="product-images">
                             <div className="image-container main-image">
                               {product.image_url ? (
-                                <img 
-                                  src={product.image_url} 
+                                <img
+                                  src={product.image_url}
                                   alt={product.name}
+                                  loading="lazy"
+                                  decoding="async"
                                   onLoad={(e) => {
                                     e.target.style.display = 'block';
                                     if (e.target.nextElementSibling) {
@@ -2326,9 +2485,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                             
                             <div className="image-container hover-image">
                               {product.hover_image_url ? (
-                                <img 
-                                  src={product.hover_image_url} 
+                                <img
+                                  src={product.hover_image_url}
                                   alt={`${product.name} - Hover`}
+                                  loading="lazy"
+                                  decoding="async"
                                   onLoad={(e) => {
                                     e.target.style.display = 'block';
                                     if (e.target.nextElementSibling) {
@@ -2580,7 +2741,13 @@ const AdminPanel3 = ({ onNavigate }) => {
                       />
                       {bannerForm.image_url && (
                         <div className="image-preview">
-                          <img src={bannerForm.image_url} alt="Preview" onError={(e) => e.target.style.display = 'none'} />
+                          <img
+                            src={bannerForm.image_url}
+                            alt="Preview"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => e.target.style.display = 'none'}
+                          />
                         </div>
                       )}
                     </div>
@@ -2697,7 +2864,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                         <div key={banner.id} className="banner-card">
                           <div className="banner-image">
                             {banner.image_url ? (
-                              <img src={banner.image_url} alt={banner.title} />
+                              <img
+                                src={banner.image_url}
+                                alt={banner.title}
+                                loading="lazy"
+                                decoding="async"
+                              />
                             ) : (
                               <div className="no-image">🖼️</div>
                             )}
@@ -2817,23 +2989,23 @@ const AdminPanel3 = ({ onNavigate }) => {
                     
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Data</label>
+                        <label>Data (opcional)</label>
                         <input
                           type="date"
                           value={eventForm.date}
                           onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
-                          required
                         />
+                        <small style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'}}>Deixe em branco se a data ainda não estiver definida</small>
                       </div>
-                      
+
                       <div className="form-group">
-                        <label>Horário</label>
+                        <label>Horário (opcional)</label>
                         <input
                           type="time"
                           value={eventForm.time}
                           onChange={(e) => setEventForm({...eventForm, time: e.target.value})}
-                          required
                         />
+                        <small style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'}}>Deixe em branco se o horário ainda não estiver definido</small>
                       </div>
                     </div>
                     
@@ -2926,16 +3098,86 @@ const AdminPanel3 = ({ onNavigate }) => {
                     </div>
                     
                     <div className="form-group">
-                      <label>URL da Imagem</label>
+                      <label>Imagem do Evento</label>
+                      <div className="image-upload-area" style={{
+                        border: '2px dashed rgba(255, 215, 0, 0.5)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        textAlign: 'center',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        marginBottom: '15px',
+                        transition: 'border-color 0.3s ease'
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.style.borderColor = '#ffd700';
+                      }}
+                      onDragLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                          handleEventImageUpload(e.dataTransfer.files[0]);
+                        }
+                      }}
+                      >
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleEventImageUpload(e.target.files[0]);
+                            }
+                          }}
+                          style={{ display: 'none' }}
+                          id="event-image-upload"
+                        />
+                        <label htmlFor="event-image-upload" style={{
+                          cursor: 'pointer',
+                          color: '#ffd700',
+                          fontSize: '1rem'
+                        }}>
+                          {eventImagePreview ? (
+                            <div>
+                              <img
+                                src={eventImagePreview}
+                                alt="Prévia da imagem do evento"
+                                style={{
+                                  maxWidth: '100px',
+                                  maxHeight: '100px',
+                                  borderRadius: '8px',
+                                  marginBottom: '10px',
+                                  display: 'block',
+                                  margin: '0 auto 10px'
+                                }}
+                              />
+                              <p>Clique ou arraste para substituir</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p>📁 Clique ou arraste uma imagem aqui</p>
+                              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>PNG, JPG, GIF até 5MB</p>
+                            </div>
+                          )}
+                        </label>
+                      </div>
                       <input
                         type="url"
-                        placeholder="https://exemplo.com/evento.jpg"
+                        placeholder="Ou insira URL da imagem..."
                         value={eventForm.image_url}
                         onChange={(e) => setEventForm({...eventForm, image_url: e.target.value})}
                       />
-                      {eventForm.image_url && (
+                      {!eventImagePreview && eventForm.image_url && (
                         <div className="image-preview">
-                          <img src={eventForm.image_url} alt="Preview" onError={(e) => e.target.style.display = 'none'} />
+                          <img
+                            src={eventForm.image_url}
+                            alt="Preview"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => e.target.style.display = 'none'}
+                          />
                         </div>
                       )}
                     </div>
@@ -3215,7 +3457,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                         <div key={event.id} className="event-card">
                           <div className="event-image">
                             {event.image_url ? (
-                              <img src={event.image_url} alt={event.title} />
+                              <img
+                                src={event.image_url}
+                                alt={event.title}
+                                loading="lazy"
+                                decoding="async"
+                              />
                             ) : (
                               <div className="no-image">
                                 {event.type === 'tournament' && '🏆'}
@@ -3447,7 +3694,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                     <div key={customer.id} className="customer-card">
                       <div className="customer-avatar">
                         {customer.avatar_url ? (
-                          <img src={customer.avatar_url} alt={customer.full_name} />
+                          <img
+                            src={customer.avatar_url}
+                            alt={customer.full_name}
+                            loading="lazy"
+                            decoding="async"
+                          />
                         ) : (
                           <div className="avatar-placeholder">👤</div>
                         )}
@@ -3618,7 +3870,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                       <div className="badge-header">
                         <div className="badge-icon">
                           {badge.image_url ? (
-                            <img src={badge.image_url} alt={badge.name} onError={(e) => {
+                            <img
+                              src={badge.image_url}
+                              alt={badge.name}
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => {
                               e.target.style.display = 'none';
                               e.target.nextSibling.style.display = 'flex';
                             }} />
@@ -3895,6 +4152,8 @@ const AdminPanel3 = ({ onNavigate }) => {
                           <img
                             src={badgeImagePreview}
                             alt="Prévia da imagem"
+                            loading="lazy"
+                            decoding="async"
                             style={{
                               maxWidth: '100px',
                               maxHeight: '100px',
@@ -3982,7 +4241,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                     <div key={customer.id} className="customer-card">
                       <div className="customer-avatar">
                         {customer.avatar_url ? (
-                          <img src={customer.avatar_url} alt={customer.full_name} />
+                          <img
+                            src={customer.avatar_url}
+                            alt={customer.full_name}
+                            loading="lazy"
+                            decoding="async"
+                          />
                         ) : (
                           <div className="avatar-placeholder">👤</div>
                         )}
@@ -4076,12 +4340,16 @@ const AdminPanel3 = ({ onNavigate }) => {
                         src={previewData.image_url}
                         alt={previewData.name}
                         className="product-image-preview default"
+                        loading="lazy"
+                        decoding="async"
                       />
                       {previewData.hover_image_url && (
                         <img
                           src={previewData.hover_image_url}
                           alt={`${previewData.name} - Hover`}
                           className="product-image-preview hover"
+                          loading="lazy"
+                          decoding="async"
                         />
                       )}
                     </div>
@@ -4314,7 +4582,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                 <div className="badge-preview-item">
                   <div className="badge-icon-large">
                     {selectedBadge.image_url ? (
-                      <img src={selectedBadge.image_url} alt={selectedBadge.name} />
+                      <img
+                        src={selectedBadge.image_url}
+                        alt={selectedBadge.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <div className="icon-placeholder-large">{selectedBadge.icon}</div>
                     )}
@@ -4354,7 +4627,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                       >
                         <div className="customer-avatar-small">
                           {customer.avatar_url ? (
-                            <img src={customer.avatar_url} alt={customer.full_name} />
+                            <img
+                            src={customer.avatar_url}
+                            alt={customer.full_name}
+                            loading="lazy"
+                            decoding="async"
+                          />
                           ) : (
                             <div className="avatar-placeholder">👤</div>
                           )}
@@ -4409,7 +4687,13 @@ const AdminPanel3 = ({ onNavigate }) => {
                       <div key={userBadge.id} className="customer-badge-item">
                         <div className="badge-info-small">
                           {userBadge.badges?.image_url ? (
-                            <img src={userBadge.badges.image_url} alt={userBadge.badges.name} className="badge-icon-small" />
+                            <img
+                              src={userBadge.badges.image_url}
+                              alt={userBadge.badges.name}
+                              className="badge-icon-small"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
                             <span className="badge-icon-placeholder">{userBadge.badges?.icon || '🎮'}</span>
                           )}
@@ -4448,7 +4732,13 @@ const AdminPanel3 = ({ onNavigate }) => {
                       <div key={badge.id} className="available-badge-item">
                         <div className="badge-info-small">
                           {badge.image_url ? (
-                            <img src={badge.image_url} alt={badge.name} className="badge-icon-small" />
+                            <img
+                              src={badge.image_url}
+                              alt={badge.name}
+                              className="badge-icon-small"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
                             <span className="badge-icon-placeholder">{badge.icon || '🎮'}</span>
                           )}

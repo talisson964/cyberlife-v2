@@ -173,14 +173,16 @@ export default function AtividadePage() {
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <img 
-            src="/cyberlife-icone2.png" 
-            alt="CyberLife Logo" 
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife Logo"
+            loading="lazy"
+            decoding="async"
             style={{
-              height: isMobile ? '32px' : '40px', 
+              height: isMobile ? '32px' : '40px',
               verticalAlign: 'middle',
               filter: 'drop-shadow(0 0 8px rgba(0, 217, 255, 0.6))',
-            }} 
+            }}
           />
           <span style={{
             fontFamily: 'Rajdhani, sans-serif', 

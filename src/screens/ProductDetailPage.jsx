@@ -381,7 +381,13 @@ export default function ProductDetailPage() {
             Voltar
           </button>
           <div className="logo">
-            <img src="/cyberlife-icone2.png" alt="CyberLife Logo" style={{height: '60px'}} />
+            <img
+              src="/cyberlife-icone2.png"
+              alt="CyberLife Logo"
+              style={{height: '60px'}}
+              loading="lazy"
+              decoding="async"
+            />
             <span>CyberLife</span>
           </div>
           <button className="cart-button-header" onClick={() => navigate('/carrinho')}>
@@ -415,7 +421,12 @@ export default function ProductDetailPage() {
             <div className="main-image" onClick={handleModelViewerClick} style={{
               cursor: product.model_3d ? 'pointer' : 'default'
             }}>
-              <img src={productImages[selectedImage] || product.image} alt={product.name} />
+              <img
+                src={productImages[selectedImage] || product.image}
+                alt={product.name}
+                loading="lazy"
+                decoding="async"
+              />
               {product.model_3d && (
                 <div className="view-3d-hint">🔄 Clique para ver em 3D</div>
               )}
@@ -430,7 +441,12 @@ export default function ProductDetailPage() {
                   onClick={() => handleThumbnailClick(index)}
                   title={`Imagem ${index + 1}`}
                 >
-                  <img src={img} alt={`${product.name} ${index + 1}`} />
+                  <img
+                  src={img}
+                  alt={`${product.name} ${index + 1}`}
+                  loading="lazy"
+                  decoding="async"
+                />
                 </div>
               ))}
             </div>

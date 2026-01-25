@@ -191,7 +191,13 @@ export default function LoginPage({ onLoginSuccess }) {
 
       <div className="login-container">
         <div className="login-header">
-          <img src="/cyberlife-icone2.png" alt="CyberLife" className="login-logo" />
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife"
+            className="login-logo"
+            loading="lazy"
+            decoding="async"
+          />
           <h1 className="login-title">CyberLife</h1>
           <p className="login-subtitle">
             {mode === 'login' && 'Entre na sua conta'}

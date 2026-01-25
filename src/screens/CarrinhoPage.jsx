@@ -204,7 +204,13 @@ export default function CarrinhoPage({ onBack }) {
     <div className="carrinho-page">
       <header className="header">
         <div className="logo" style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-          <img src="/cyberlife-icone2.png" alt="CyberLife Logo" style={{height: '80px', verticalAlign: 'middle'}} />
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife Logo"
+            style={{height: '80px', verticalAlign: 'middle'}}
+            loading="lazy"
+            decoding="async"
+          />
           <span style={{fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '2rem', color: '#00d9ff', letterSpacing: '2px'}}>CyberLife</span>
         </div>
         <nav className="nav">
@@ -272,9 +278,19 @@ export default function CarrinhoPage({ onBack }) {
                         }}
                       />
                     ) : item.images && item.images.length > 0 ? (
-                      <img src={item.images[0]} alt={item.name} />
+                      <img
+                        src={item.images[0]}
+                        alt={item.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : item.image ? (
-                      <img src={item.image} alt={item.name} />
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <div style={{
                         width: '100%',

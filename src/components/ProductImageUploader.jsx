@@ -226,6 +226,8 @@ const ProductImageUploader = ({ images = [], onChange, maxImages = 9 }) => {
               <img
                 src={image.preview || image.url}
                 alt={`Preview ${index + 1}`}
+                loading="lazy"
+                decoding="async"
               />
               <div className="preview-overlay">
                 <span className="image-order">#{image.order}</span>

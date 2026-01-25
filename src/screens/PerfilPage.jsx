@@ -688,12 +688,18 @@ export default function PerfilPage() {
                     boxShadow: '0 0 30px rgba(0, 217, 255, 0.5)',
                   }}>
                     {profile.avatar_url ? (
-                      <img src={profile.avatar_url} alt="Avatar" style={{
-                        width: '100%',
-                        height: '100%',
-                        borderRadius: '50%',
-                        objectFit: 'cover'
-                      }} />
+                      <img
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        loading="lazy"
+                        decoding="async"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '50%',
+                          objectFit: 'cover'
+                        }}
+                      />
                     ) : (
                       profile.nickname?.charAt(0).toUpperCase() || '👤'
                     )}
