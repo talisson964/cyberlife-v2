@@ -806,10 +806,14 @@ export default function StartScreen({ onStart }){
                                 // Create date object to validate if the date actually exists
                                 const dateObj = new Date(yearInt, monthInt - 1, dayInt); // month is 0-indexed in JS
 
-                                // Check if the date components match what was entered (validates real dates like Feb 30)
-                                if (dateObj.getDate() === dayInt &&
-                                    dateObj.getMonth() === monthInt - 1 &&
-                                    dateObj.getFullYear() === yearInt) {
+                                // Check if the date is valid by comparing the original input values with the created date object
+                                // This validates real dates like Feb 30 (which would create a different date object)
+                                // Create a reference date to compare against
+                                const referenceDate = new Date(yearInt, monthInt - 1, dayInt);
+
+                                if (dateObj.getDate() === referenceDate.getDate() &&
+                                    dateObj.getMonth() === referenceDate.getMonth() &&
+                                    dateObj.getFullYear() === referenceDate.getFullYear()) {
 
                                   // Additional validation to ensure the date is not in the future
                                   const today = new Date();
@@ -821,6 +825,9 @@ export default function StartScreen({ onStart }){
                               }
                             }
                           }
+
+                          // Atualizar o estado do formulário com o valor formatado
+                          setFormData({...formData, birthDate: formattedValue});
                         }
                       }}
                       placeholder="DD/MM/AAAA"
