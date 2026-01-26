@@ -34,7 +34,8 @@ export default function StartScreen({ onStart }){
     email: '',
     password: '',
     fullName: '',
-    birthDate: '',
+    birthDate: '',  // Armazena a data no formato DD/MM/AAAA para exibição
+    internalBirthDate: '', // Armazena a data no formato YYYY-MM-DD para envio ao backend
     city: '',
     state: '',
     whatsapp: ''
@@ -348,7 +349,7 @@ export default function StartScreen({ onStart }){
         options: {
           data: {
             full_name: formData.fullName,
-            birth_date: formData.birthDate,
+            birth_date: formData.internalBirthDate || formData.birthDate,
             age: age,
             city: formData.city,
             state: formData.state,
@@ -773,9 +774,7 @@ export default function StartScreen({ onStart }){
                       type="text"
                       inputMode="numeric"  // Força teclado numérico em dispositivos móveis
                       name="birthDate"
-                      value={formData.birthDate && formData.birthDate.length === 10 && /^\d{4}-\d{2}-\d{2}$/.test(formData.birthDate)
-                        ? new Date(formData.birthDate).toLocaleDateString('pt-BR')
-                        : formData.birthDate || ''}
+                      value={formData.birthDate || ''}
                       onChange={(e) => {
                         // Handle manual input - convert DD/MM/YYYY to YYYY-MM-DD format for internal storage
                         const value = e.target.value;
@@ -821,11 +820,21 @@ export default function StartScreen({ onStart }){
                                   const today = new Date();
                                   today.setHours(0, 0, 0, 0);
                                   if (dateObj <= today) {
-                                    setFormData({...formData, birthDate: dateObj.toISOString().split('T')[0]});
+                                    setFormData({
+                                      ...formData,
+                                      birthDate: formattedValue, // Armazena a data formatada para exibição
+                                      internalBirthDate: dateObj.toISOString().split('T')[0] // Armazena a data no formato interno
+                                    });
                                   }
                                 }
                               }
                             }
+                          } else {
+                            // Atualiza apenas o valor formatado para exibição
+                            setFormData({
+                              ...formData,
+                              birthDate: formattedValue
+                            });
                           }
                         }
                       }}
