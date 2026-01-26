@@ -15,6 +15,52 @@ import caraJogando from '../imagens/cara-jogando.png';
 import { supabase } from '../supabaseClient';
 import { stopAudio } from '../utils/audioPlayer';
 
+// Função auxiliar para lazy loading otimizado em mobile
+const useLazyLoading = () => {
+  const [isMobileState] = useState(window.innerWidth <= 768);
+
+  useEffect(() => {
+    if (isMobileState) {
+      const observerOptions = {
+        root: null,
+        rootMargin: '50px',
+        threshold: 0.1
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const element = entry.target;
+            const dataSrc = element.getAttribute('data-src');
+            if (dataSrc) {
+              element.src = dataSrc;
+              element.removeAttribute('data-src');
+              if (element.classList) {
+                element.classList.remove('lazy-load');
+              }
+              observer.unobserve(element);
+            }
+          }
+        });
+      }, observerOptions);
+
+      // Observar todas as imagens com data-src após o componente montar
+      setTimeout(() => {
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        lazyImages.forEach(img => observer.observe(img));
+
+        // Observar modelos 3D também
+        const lazyModels = document.querySelectorAll('model-viewer[data-src]');
+        lazyModels.forEach(model => observer.observe(model));
+      }, 100);
+
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [isMobileState]);
+};
+
 const images = [
   img2,
   img3,
@@ -167,6 +213,9 @@ export default function GamerWorld() {
   // Tutorial state
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+
+  // Executar lazy loading
+  useLazyLoading();
 
   // Função para mostrar notificações com novo design
   const showNotification = (message, type = 'info', duration = 5000) => {
@@ -433,10 +482,14 @@ export default function GamerWorld() {
     };
   }, [menuOpen]);
 
-  // Show tutorial on every visit
+  // Show tutorial randomly with 1/3 chance on every visit
   useEffect(() => {
     setTimeout(() => {
-      setShowTutorial(true);
+      // Generate a random number between 1 and 3
+      const shouldShowTutorial = Math.random() < 1/3;
+      if (shouldShowTutorial) {
+        setShowTutorial(true);
+      }
     }, 1000); // Show tutorial after 1 second to allow page to load
   }, []);
 
@@ -533,7 +586,9 @@ export default function GamerWorld() {
       const nextStep = tutorialStep + 1;
       setTutorialStep(nextStep);
 
+      // Removed auto-scroll functionality during tutorial
       // Scroll to the section for the new step if it has an elementId
+      /*
       setTimeout(() => {
         const nextStepData = tutorialSteps[nextStep];
         if (nextStepData && nextStepData.elementId) {
@@ -549,7 +604,8 @@ export default function GamerWorld() {
           if (sectionMap[nextStepData.elementId]) {
             // Scroll to the corresponding section
             const sectionElement = document.getElementById(sectionMap[nextStepData.elementId]);
-            if (sectionElement) {
+            // Only scroll to 'galeria' section if not on mobile (since we hid it)
+            if (sectionElement && !(isMobile && nextStepData.elementId === 'galeria-link')) {
               sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           } else {
@@ -561,6 +617,7 @@ export default function GamerWorld() {
           }
         }
       }, 100);
+      */
     } else {
       setShowTutorial(false);
       setTutorialStep(0);
@@ -568,6 +625,8 @@ export default function GamerWorld() {
       if (menuOpen) {
         setMenuOpen(false);
       }
+      // Removed auto-scroll functionality when tutorial ends
+      /*
       // Scroll to top of hero section when tutorial ends
       setTimeout(() => {
         const heroSection = document.getElementById('hero');
@@ -578,6 +637,7 @@ export default function GamerWorld() {
           window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
         }
       }, 10);
+      */
     }
   };
 
@@ -597,7 +657,9 @@ export default function GamerWorld() {
       const prevStep = tutorialStep - 1;
       setTutorialStep(prevStep);
 
+      // Removed auto-scroll functionality during tutorial
       // Scroll to the section for the previous step if it has an elementId
+      /*
       setTimeout(() => {
         const prevStepData = tutorialSteps[prevStep];
         if (prevStepData && prevStepData.elementId) {
@@ -613,7 +675,8 @@ export default function GamerWorld() {
           if (sectionMap[prevStepData.elementId]) {
             // Scroll to the corresponding section
             const sectionElement = document.getElementById(sectionMap[prevStepData.elementId]);
-            if (sectionElement) {
+            // Only scroll to 'galeria' section if not on mobile (since we hid it)
+            if (sectionElement && !(isMobile && prevStepData.elementId === 'galeria-link')) {
               sectionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
           } else {
@@ -625,6 +688,7 @@ export default function GamerWorld() {
           }
         }
       }, 100);
+      */
     }
   };
 
@@ -635,6 +699,8 @@ export default function GamerWorld() {
     if (menuOpen) {
       setMenuOpen(false);
     }
+    // Removed auto-scroll functionality when tutorial is skipped
+    /*
     // Scroll to top of hero section when tutorial is skipped
     setTimeout(() => {
       const heroSection = document.getElementById('hero');
@@ -645,6 +711,7 @@ export default function GamerWorld() {
         window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       }
     }, 10);
+    */
   };
 
   // Detectar mudanças no tamanho da tela
@@ -936,13 +1003,14 @@ export default function GamerWorld() {
         margin: 0,
         boxShadow: '0 20px 60px rgba(0, 217, 255, 0.4)',
       }}>
-        {/* Carrossel ocupando toda a seção */}
+        {/* Carrossel ocupando toda a seção - com lazy loading otimizado para mobile */}
         {images.map((img, index) => (
           <img
             key={index}
-            src={img}
+            src={index === current ? img : (isMobile ? null : img)} // Apenas carrega imagem atual no mobile para economizar banda
+            data-src={img}
             alt="Gamer World Banner"
-            loading="lazy"
+            loading={index === current ? "eager" : "lazy"} // Carrega imediatamente a imagem visível
             decoding="async"
             style={{
               width: '100%',
@@ -952,9 +1020,16 @@ export default function GamerWorld() {
               position: 'absolute',
               top: 0,
               left: 0,
-              opacity: index === current ? 1 : 0,
+              opacity: index === current ? (isMobile ? 1 : 1) : 0, // Garante visibilidade da imagem atual
               transition: 'opacity 1.5s ease-in-out',
               zIndex: index === current ? 1 : 0,
+            }}
+            onLoad={(e) => {
+              // Quando a imagem carrega, define o src definitivo
+              if (e.target.dataset.src) {
+                e.target.src = e.target.dataset.src;
+                e.target.removeAttribute('data-src');
+              }
             }}
           />
         ))}
@@ -1530,36 +1605,34 @@ export default function GamerWorld() {
           left: 0,
           top: '50%',
           transform: 'translateY(-50%)',
-          width: isMobile ? '200px' : '400px',
-          height: isMobile ? '250px' : '500px',
+          width: isMobile ? '100px' : '400px',
+          height: isMobile ? '125px' : '500px',
           backgroundImage: `url(${imgChunLi})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'left center',
-          opacity: isMobile ? 0.15 : 0.3,
+          opacity: isMobile ? 0.1 : 0.3,
           filter: 'drop-shadow(0 0 30px rgba(0, 217, 255, 0.4))',
           animation: 'floatSlow 6s ease-in-out infinite',
           zIndex: 1,
-          display: isMobile ? 'none' : 'block',
         }} />
-        
+
         {/* Background Subzero - Direita */}
         <div style={{
           position: 'absolute',
           right: 0,
           top: '50%',
           transform: 'translateY(-50%)',
-          width: isMobile ? '200px' : '400px',
-          height: isMobile ? '250px' : '500px',
+          width: isMobile ? '100px' : '400px',
+          height: isMobile ? '125px' : '500px',
           backgroundImage: `url(${imgSubzero})`,
           backgroundSize: 'contain',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'right center',
-          opacity: isMobile ? 0.15 : 0.3,
+          opacity: isMobile ? 0.1 : 0.3,
           filter: 'drop-shadow(0 0 30px rgba(255, 0, 234, 0.4))',
           animation: 'floatSlow 6s ease-in-out infinite 3s',
           zIndex: 1,
-          display: isMobile ? 'none' : 'block',
         }} />
         
         {/* Overlay com gradiente */}
@@ -1858,7 +1931,7 @@ export default function GamerWorld() {
               position: 'relative',
               maxWidth: isMobile ? '100%' : '1100px',
               margin: '0 auto',
-              height: isMobile ? '350px' : '500px',
+              height: isMobile ? '450px' : '500px',  /* Aumentei a altura para mobile */
               borderRadius: isMobile ? '12px' : '20px',
               overflow: 'hidden',
               border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
@@ -1898,13 +1971,14 @@ export default function GamerWorld() {
                 }} />
               ))}
               
-              {/* Imagens do carrossel */}
+              {/* Imagens do carrossel - otimizado para mobile */}
               {displayEventImages.map((img, index) => (
                 <img
                   key={index}
-                  src={img}
+                  src={index === currentEvent ? img : (isMobile ? null : img)} // Apenas carrega imagem atual no mobile
+                  data-src={img}
                   alt={`Evento ${index + 1}`}
-                  loading="lazy"
+                  loading={index === currentEvent ? "eager" : "lazy"} // Carrega a imagem visível imediatamente
                   decoding="async"
                   style={{
                     width: '100%',
@@ -1918,6 +1992,13 @@ export default function GamerWorld() {
                     transition: 'opacity 1s ease-in-out, transform 1s ease-in-out',
                     zIndex: index === currentEvent ? 1 : 0,
                     borderRadius: '20px',
+                  }}
+                  onLoad={(e) => {
+                    // Quando a imagem carrega, define o src definitivo
+                    if (e.target.dataset.src) {
+                      e.target.src = e.target.dataset.src;
+                      e.target.removeAttribute('data-src');
+                    }
                   }}
                 />
               ))}
@@ -1938,10 +2019,10 @@ export default function GamerWorld() {
               {displayEvents.map((event, index) => (
                 <div key={index} style={{
                   position: 'absolute',
-                  left: '70px',
+                  left: isMobile ? '20px' : '70px',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  maxWidth: isMobile ? '95%' : '500px',
+                  maxWidth: isMobile ? '85%' : '500px',
                   opacity: index === currentEvent ? 1 : 0,
                   transition: 'opacity 0.8s ease-in-out',
                   zIndex: index === currentEvent ? 20 : 0,
@@ -1950,6 +2031,8 @@ export default function GamerWorld() {
                   paddingRight: isMobile ? '10px' : '20px',
                   paddingLeft: isMobile ? '10px' : '0',
                   boxSizing: 'border-box',
+                  maxHeight: isMobile ? '85%' : 'none',  /* Limitar altura em dispositivos móveis */
+                  overflowY: isMobile ? 'auto' : 'visible',  /* Permitir rolagem em dispositivos móveis */
                 }}>
                   {/* Tag superior */}
                   <div style={{
@@ -2511,68 +2594,68 @@ export default function GamerWorld() {
             0%, 100% { transform: translate(0, 0) scale(1); }
             50% { transform: translate(30px, 30px) scale(1.1); }
           }
-
+          
           @keyframes floatParticleEvents {
-            0%, 100% {
+            0%, 100% { 
               transform: translateY(0) translateX(0) scale(1);
               opacity: 0.3;
             }
-            25% {
+            25% { 
               transform: translateY(-20px) translateX(10px) scale(1.2);
               opacity: 0.6;
             }
-            50% {
+            50% { 
               transform: translateY(-10px) translateX(-15px) scale(1);
               opacity: 0.4;
             }
-            75% {
+            75% { 
               transform: translateY(-30px) translateX(5px) scale(1.1);
               opacity: 0.5;
             }
           }
-
+          
           @keyframes scanLineVertical {
             0% { top: 0; opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
             100% { top: 100%; opacity: 0; }
           }
-
+          
           @keyframes rotateLight {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
-
+          
           @keyframes particlePulse {
-            0%, 100% {
+            0%, 100% { 
               opacity: 0.2;
               transform: scale(1);
             }
-            50% {
+            50% { 
               opacity: 0.6;
               transform: scale(1.5);
             }
           }
-
+          
           @keyframes iconBounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
           }
-
+          
           @keyframes borderPulseCarousel {
-            0%, 100% {
+            0%, 100% { 
               box-shadow: 0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3);
             }
-            50% {
+            50% { 
               box-shadow: 0 0 50px rgba(0, 217, 255, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.3);
             }
           }
-
+          
           @keyframes borderShine {
             0% { background-position: 200% 200%; }
             100% { background-position: -200% -200%; }
           }
-
+          
           @keyframes carouselParticle {
             0%, 100% {
               transform: translateY(0) translateX(0) rotate(0deg);
@@ -2591,7 +2674,7 @@ export default function GamerWorld() {
               opacity: 0.6;
             }
           }
-
+          
           @keyframes carouselZoomIn {
             0% {
               transform: scale(1.2);
@@ -2602,7 +2685,7 @@ export default function GamerWorld() {
               opacity: 1;
             }
           }
-
+          
           @keyframes buttonFloat {
             0%, 100% {
               transform: translateY(-50%) translateX(0);
@@ -2611,7 +2694,7 @@ export default function GamerWorld() {
               transform: translateY(-50%) translateX(-5px);
             }
           }
-
+          
           @keyframes indicatorPulse {
             0%, 100% {
               box-shadow: 0 0 15px #ff00ea;
@@ -2622,7 +2705,7 @@ export default function GamerWorld() {
               transform: scale(1.05);
             }
           }
-
+          
           @keyframes slideInLeft {
             0% {
               transform: translateY(-50%) translateX(-50px);
@@ -2633,7 +2716,7 @@ export default function GamerWorld() {
               opacity: 1;
             }
           }
-
+          
           @keyframes shimmerSlide {
             0% {
               left: -100%;
@@ -2657,7 +2740,8 @@ export default function GamerWorld() {
         `}</style>
       </section>
 
-      {/* Seção Explore Jogos */}
+      {/* Seção Explore Jogos - Oculta em dispositivos móveis */}
+      {isMobile ? null : (
       <section id="galeria" style={{
         padding: '120px 48px',
         background: `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`,
@@ -3251,15 +3335,74 @@ export default function GamerWorld() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
-        padding: '10px 48px',
-        background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
-        borderTop: '1px solid rgba(0, 217, 255, 0.2)',
-        marginTop: '-5%',
+        padding: isMobile ? '60px 20px' : '10px 48px',
+        background: isMobile
+          ? `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`
+          : 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center right',
+        backgroundAttachment: isMobile ? 'fixed' : 'scroll',
+        position: 'relative',
+        overflow: 'hidden',
+        clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+        marginTop: isMobile ? '0' : '-5%',
+        marginBottom: isMobile ? '0' : '-5%',
       }}>
-        <div style={{maxWidth: '1200px', margin: '0 auto'}}>
+        {isMobile && (
+          <>
+            {/* Bordas diagonais brilhantes - apenas mobile */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, transparent 0%, rgba(138, 43, 226, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
+              transform: 'skewY(-2deg)',
+              boxShadow: '0 0 20px rgba(138, 43, 226, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
+              animation: 'borderSlide 3s linear infinite',
+              zIndex: 2,
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255, 0, 234, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
+              transform: 'skewY(-2deg)',
+              boxShadow: '0 0 20px rgba(255, 0, 234, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
+              animation: 'borderSlide 3s linear infinite reverse',
+              zIndex: 2,
+            }} />
+
+            {/* Elementos flutuantes decorativos - apenas mobile */}
+            {[...Array(6)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                width: `${150 + Math.random() * 200}px`,
+                height: `${150 + Math.random() * 200}px`,
+                background: i % 3 === 0
+                  ? 'radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%)'
+                  : i % 3 === 1
+                  ? 'radial-gradient(ellipse, rgba(0, 217, 255, 0.12) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(255, 0, 234, 0.1) 0%, transparent 70%)',
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                animation: `randomFloat${(i % 3) + 1} ${15 + Math.random() * 10}s ease-in-out infinite, morphShape ${20 + Math.random() * 15}s ease-in-out infinite`,
+                borderRadius: '50%',
+                filter: 'blur(40px)',
+                opacity: 0.6,
+                zIndex: 0,
+              }} />
+            ))}
+          </>
+        )}
+        <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1}}>
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: 700,
@@ -3511,7 +3654,8 @@ export default function GamerWorld() {
                   {product.model_3d ? (
                     <>
                       <model-viewer
-                        src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                        src={isMobile ? null : (product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d)}
+                        data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
                         alt={`Modelo 3D de ${product.name}`}
                         shadow-intensity="1"
                         disable-pan
@@ -3528,14 +3672,18 @@ export default function GamerWorld() {
                           e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
                         }}
                         onMouseEnter={(e) => {
-                          e.target.setAttribute('auto-rotate', '');
-                          e.target.setAttribute('rotation-per-second', '60deg');
-                          e.target.setAttribute('camera-controls', '');
+                          if (!isMobile) { // Não habilitar recursos 3D em mobile para economizar recursos
+                            e.target.setAttribute('auto-rotate', '');
+                            e.target.setAttribute('rotation-per-second', '60deg');
+                            e.target.setAttribute('camera-controls', '');
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.target.removeAttribute('auto-rotate');
-                          e.target.removeAttribute('camera-controls');
-                          e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                          if (!isMobile) {
+                            e.target.removeAttribute('auto-rotate');
+                            e.target.removeAttribute('camera-controls');
+                            e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                          }
                         }}
                       />
                       <div style={{
@@ -3557,7 +3705,8 @@ export default function GamerWorld() {
                     </>
                   ) : product.images && product.images.length > 0 ? (
                     <img
-                      src={product.images[0]}
+                      src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
+                      data-src={product.images[0]}
                       alt={product.name}
                       loading="lazy"
                       decoding="async"
@@ -3566,6 +3715,16 @@ export default function GamerWorld() {
                         height: '100%',
                         objectFit: 'cover',
                         transition: 'transform 0.3s ease',
+                      }}
+                      onLoad={(e) => {
+                        // Carrega a imagem somente quando visível em mobile
+                        if (isMobile) {
+                          const rect = e.target.getBoundingClientRect();
+                          if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                            e.target.src = e.target.dataset.src;
+                            e.target.removeAttribute('data-src');
+                          }
+                        }
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -3738,33 +3897,43 @@ export default function GamerWorld() {
             overflowY: isMobile ? 'auto' : 'visible',
             // Position the tutorial modal near the element being highlighted
             ...(currentTutorialStep.elementId && (() => {
-              const element = document.getElementById(currentTutorialStep.elementId);
-              if (element) {
-                const rect = element.getBoundingClientRect();
-                // Calculate position to ensure it fits on screen
-                const modalWidth = isMobile ? window.innerWidth * 0.9 : 500; // Adjust for mobile
-                const adjustedLeft = Math.max(
-                  10, // Minimum left margin
-                  Math.min(
-                    rect.left + rect.width / 2 - (modalWidth / 2), // Centered position
-                    window.innerWidth - modalWidth - 10 // Maximum right margin
-                  )
-                );
+              try {
+                const element = document.getElementById(currentTutorialStep.elementId);
+                if (element && !isMobile) { // Only use element positioning on desktop
+                  const rect = element.getBoundingClientRect();
+                  // Calculate position to ensure it fits on screen
+                  const modalWidth = 500; // Desktop width
+                  const adjustedLeft = Math.max(
+                    10, // Minimum left margin
+                    Math.min(
+                      rect.left + rect.width / 2 - (modalWidth / 2), // Centered position
+                      window.innerWidth - modalWidth - 10 // Maximum right margin
+                    )
+                  );
 
-                // Calculate top position to ensure it's visible on screen
-                const topPosition = Math.min(
-                  rect.bottom + 20 + window.scrollY, // Default position below element
-                  window.innerHeight - 200 + window.scrollY // Ensure it doesn't go off screen
-                );
+                  // Calculate top position to ensure it's visible on screen
+                  const topPosition = Math.min(
+                    rect.bottom + 20 + window.scrollY, // Default position below element
+                    window.innerHeight - 200 + window.scrollY // Ensure it doesn't go off screen
+                  );
 
-                return {
-                  position: 'fixed',
-                  top: topPosition + 'px',
-                  left: adjustedLeft + 'px',
-                  transform: isMobile ? 'none' : 'translateX(-50%)',
-                };
+                  return {
+                    position: 'fixed',
+                    top: topPosition + 'px',
+                    left: adjustedLeft + 'px',
+                    transform: 'translateX(-50%)',
+                  };
+                }
+              } catch (error) {
+                console.warn('Error positioning tutorial modal:', error);
               }
-              return {};
+              // For mobile or when element is not found, use center positioning
+              return isMobile ? {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+              } : {};
             })())
           }}>
             <div style={{
@@ -3862,24 +4031,28 @@ export default function GamerWorld() {
 
           {/* Highlight overlay for the current element */}
           {currentTutorialStep.elementId && (() => {
-            const element = document.getElementById(currentTutorialStep.elementId);
-            if (element) {
-              const rect = element.getBoundingClientRect();
-              return (
-                <div style={{
-                  position: 'fixed',
-                  top: rect.top + window.scrollY + 'px',
-                  left: rect.left + window.scrollX + 'px',
-                  width: rect.width + 'px',
-                  height: rect.height + 'px',
-                  border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
-                  borderRadius: '8px',
-                  boxShadow: '0 0 15px #00d9ff, 0 0 25px rgba(0, 217, 255, 0.8)',
-                  zIndex: 9999,
-                  pointerEvents: 'none',
-                  animation: 'pulse-glow 1.5s infinite',
-                }}></div>
-              );
+            try {
+              const element = document.getElementById(currentTutorialStep.elementId);
+              if (element) {
+                const rect = element.getBoundingClientRect();
+                return (
+                  <div style={{
+                    position: 'fixed',
+                    top: rect.top + window.scrollY + 'px',
+                    left: rect.left + window.scrollX + 'px',
+                    width: rect.width + 'px',
+                    height: rect.height + 'px',
+                    border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
+                    borderRadius: '8px',
+                    boxShadow: '0 0 15px #00d9ff, 0 0 25px rgba(0, 217, 255, 0.8)',
+                    zIndex: 9999,
+                    pointerEvents: 'none',
+                    animation: 'pulse-glow 1.5s infinite',
+                  }}></div>
+                );
+              }
+            } catch (error) {
+              console.warn('Error highlighting tutorial element:', error);
             }
             return null;
           })()}
@@ -4006,6 +4179,39 @@ styleSheet.innerText = `
     to {
       opacity: 0;
     }
+  }
+
+  @keyframes randomFloat1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -40px) scale(1.2); }
+    50% { transform: translate(-20px, 30px) scale(0.9); }
+    75% { transform: translate(40px, 20px) scale(1.1); }
+  }
+
+  @keyframes randomFloat2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-50px, 20px) scale(1.3); }
+    66% { transform: translate(30px, -30px) scale(0.8); }
+  }
+
+  @keyframes randomFloat3 {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(20px, -50px) rotate(45deg); }
+    40% { transform: translate(-40px, 10px) rotate(-30deg); }
+    60% { transform: translate(10px, 40px) rotate(60deg); }
+    80% { transform: translate(-30px, -20px) rotate(-45deg); }
+  }
+
+  @keyframes morphShape {
+    0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+    25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+    50% { border-radius: 50% 30% 50% 60% / 30% 50% 70% 40%; }
+    75% { border-radius: 40% 70% 60% 30% / 70% 40% 50% 60%; }
+  }
+
+  @keyframes borderSlide {
+    0% { transform: translateX(-100%) skewY(-2deg); }
+    100% { transform: translateX(100%) skewY(-2deg); }
   }
 `;
 

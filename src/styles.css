@@ -3237,3 +3237,141 @@ body{
     max-height: 100vh;
   }
 }
+
+/* Password Input Mobile Fix */
+@media (max-width: 640px) {
+  .password-input {
+    width: 100%;
+  }
+
+  .password-input input {
+    padding-right: 35px; /* Reduced padding for mobile */
+    font-size: 0.9rem; /* Slightly smaller font to fit better */
+    box-sizing: border-box;
+  }
+
+  .toggle-password {
+    right: 6px; /* Adjust position for mobile */
+    padding: 2px; /* Smaller padding on mobile */
+  }
+}
+
+/* Date Input Wrapper Styles */
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.date-input-calendar {
+  display: none; /* Esconder o campo de data padrão */
+}
+
+.date-input-text {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(0, 217, 255, 0.05);
+  border: 2px solid rgba(0, 217, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-family: Rajdhani, sans-serif;
+  font-size: 1rem;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+/* Mobile-specific styles for date input */
+@media (max-width: 768px) {
+  .date-input-wrapper {
+    display: block; /* Mudar para bloco em vez de flex para melhor responsividade */
+  }
+
+  .date-input-text {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  .date-input-calendar {
+    display: none; /* Certificar que o campo de data permanece escondido em mobile */
+  }
+}
+
+/* Estilos específicos para o cabeçalho da página de perfil */
+.perfil-page .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 12px 36px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%);
+  border-bottom: 2px solid #00d9ff;
+  backdrop-filter: blur(10px);
+}
+
+/* Estilos responsivos para o cabeçalho da página de perfil */
+@media (max-width: 768px) {
+  .perfil-page .header {
+    padding: 10px 12px;
+    min-height: 52px;
+  }
+
+  .perfil-page .logo {
+    gap: 8px;
+  }
+
+  .perfil-page .logo img {
+    height: 28px !important;
+  }
+
+  .perfil-page .logo span {
+    font-size: 1rem !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .perfil-page .nav {
+    gap: 10px;
+  }
+
+  /* Ajustar o botão do menu hambúrguer para mobile */
+  .perfil-page .nav button[id="menu-toggle"] {
+    padding: 6px;
+  }
+
+  .perfil-page .nav button[id="menu-toggle"] div {
+    width: 24px !important;
+    height: 3px !important;
+  }
+
+  /* Posicionar o dropdown do menu corretamente em mobile */
+  .perfil-page nav[style*="position: absolute"] {
+    top: 52px !important;
+    right: 10px !important;
+  }
+}
+
+/* Ajustes para telas muito pequenas */
+@media (max-width: 480px) {
+  .perfil-page .header {
+    padding: 8px 10px;
+  }
+
+  .perfil-page .logo img {
+    height: 24px !important;
+  }
+
+  .perfil-page .logo span {
+    font-size: 0.9rem !important;
+  }
+
+  .perfil-page .nav {
+    gap: 8px;
+  }
+
+  .perfil-page .nav button[id="menu-toggle"] {
+    padding: 5px;
+  }
+
+  .perfil-page .nav button[id="menu-toggle"] div {
+    width: 20px !important;
+    height: 2.5px !important;
+  }
+}
