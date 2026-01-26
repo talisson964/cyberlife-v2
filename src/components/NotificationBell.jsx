@@ -6,6 +6,7 @@ const NotificationBell = ({ userId, showNotification }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -14,6 +15,16 @@ const NotificationBell = ({ userId, showNotification }) => {
       subscribeToNotifications();
     }
   }, [userId]);
+
+  // Effect to handle window resize for mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fechar painel ao clicar fora
   useEffect(() => {
@@ -198,28 +209,33 @@ const NotificationBell = ({ userId, showNotification }) => {
           position: 'absolute',
           top: '60px',
           right: '0',
-          width: '400px',
+          width: isMobile ? 'calc(100vw - 20px)' : '400px', // Full width minus margins on mobile
+          maxWidth: '400px', // Maximum width remains the same on desktop
           maxHeight: '500px',
           background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(0, 5, 16, 0.98) 100%)',
           border: '2px solid rgba(0, 217, 255, 0.3)',
-          borderRadius: '16px',
+          borderRadius: isMobile ? '8px' : '16px', // Smaller radius on mobile
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 217, 255, 0.3)',
           overflow: 'hidden',
           zIndex: 1000,
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          left: isMobile ? '10px' : 'auto', // Position from left on mobile to prevent cutoff
+          margin: isMobile ? '0 10px' : '0' // Add horizontal margins on mobile
         }}>
           {/* Header */}
           <div style={{
-            padding: '20px',
+            padding: isMobile ? '15px' : '20px',
             borderBottom: '1px solid rgba(0, 217, 255, 0.2)',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? '10px' : '0'
           }}>
             <h3 style={{
               margin: 0,
               color: '#00d9ff',
-              fontSize: '18px',
+              fontSize: isMobile ? '16px' : '18px',
               fontWeight: 'bold',
               textShadow: '0 0 10px rgba(0, 217, 255, 0.5)'
             }}>
@@ -232,9 +248,9 @@ const NotificationBell = ({ userId, showNotification }) => {
                   background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
                   border: '1px solid rgba(0, 217, 255, 0.4)',
                   color: '#00d9ff',
-                  padding: '6px 12px',
+                  padding: isMobile ? '6px 10px' : '6px 12px',
                   borderRadius: '6px',
-                  fontSize: '12px',
+                  fontSize: isMobile ? '11px' : '12px',
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
@@ -256,12 +272,12 @@ const NotificationBell = ({ userId, showNotification }) => {
           <div style={{
             maxHeight: '420px',
             overflowY: 'auto',
-            padding: '10px',
+            padding: isMobile ? '8px' : '10px',
             background: 'rgba(0, 0, 0, 0.2)'
           }}>
             {loading ? (
               <div style={{
-                padding: '40px',
+                padding: isMobile ? '30px' : '40px',
                 textAlign: 'center',
                 color: '#888',
                 display: 'flex',
@@ -269,15 +285,15 @@ const NotificationBell = ({ userId, showNotification }) => {
                 alignItems: 'center'
               }}>
                 <div style={{
-                  fontSize: '24px',
-                  marginBottom: '10px',
+                  fontSize: isMobile ? '20px' : '24px',
+                  marginBottom: isMobile ? '8px' : '10px',
                   animation: 'pulse 1.5s ease-in-out infinite'
                 }}>⏳</div>
-                <div>Carregando notificações...</div>
+                <div style={{ fontSize: isMobile ? '14px' : 'auto' }}>Carregando notificações...</div>
               </div>
             ) : notifications.length === 0 ? (
               <div style={{
-                padding: '40px',
+                padding: isMobile ? '30px' : '40px',
                 textAlign: 'center',
                 color: '#888',
                 display: 'flex',
@@ -285,11 +301,11 @@ const NotificationBell = ({ userId, showNotification }) => {
                 alignItems: 'center'
               }}>
                 <div style={{
-                  fontSize: '48px',
-                  marginBottom: '10px',
+                  fontSize: isMobile ? '36px' : '48px',
+                  marginBottom: isMobile ? '8px' : '10px',
                   filter: 'grayscale(100%) opacity(0.7)'
                 }}>🔔</div>
-                <div>Nenhuma notificação</div>
+                <div style={{ fontSize: isMobile ? '14px' : 'auto' }}>Nenhuma notificação</div>
               </div>
             ) : (
               notifications.map(notification => (
@@ -297,7 +313,7 @@ const NotificationBell = ({ userId, showNotification }) => {
                   key={notification.id}
                   onClick={() => !notification.is_read && markAsRead(notification.id)}
                   style={{
-                    padding: '15px',
+                    padding: isMobile ? '12px' : '15px',
                     marginBottom: '8px',
                     background: notification.is_read
                       ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0%, rgba(200, 200, 200, 0.02) 100%)'
@@ -326,8 +342,8 @@ const NotificationBell = ({ userId, showNotification }) => {
                   {!notification.is_read && (
                     <div style={{
                       position: 'absolute',
-                      top: '15px',
-                      right: '15px',
+                      top: isMobile ? '12px' : '15px',
+                      right: isMobile ? '12px' : '15px',
                       width: '8px',
                       height: '8px',
                       background: 'linear-gradient(135deg, #00d9ff, #ff00ea)',
@@ -336,21 +352,27 @@ const NotificationBell = ({ userId, showNotification }) => {
                     }} />
                   )}
 
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '28px' }}>{notification.icon}</span>
+                  <div style={{
+                    display: 'flex',
+                    gap: isMobile ? '8px' : '12px',
+                    alignItems: 'flex-start'
+                  }}>
+                    <span style={{
+                      fontSize: isMobile ? '24px' : '28px'
+                    }}>{notification.icon}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{
                         color: '#fff',
                         fontWeight: 'bold',
                         marginBottom: '4px',
-                        fontSize: '14px',
+                        fontSize: isMobile ? '13px' : '14px',
                         textShadow: '0 0 5px rgba(255, 255, 255, 0.3)'
                       }}>
                         {notification.title}
                       </div>
                       <div style={{
                         color: '#ddd',
-                        fontSize: '13px',
+                        fontSize: isMobile ? '12px' : '13px',
                         marginBottom: '6px',
                         lineHeight: '1.4'
                       }}>
@@ -358,7 +380,7 @@ const NotificationBell = ({ userId, showNotification }) => {
                       </div>
                       <div style={{
                         color: '#888',
-                        fontSize: '11px'
+                        fontSize: isMobile ? '10px' : '11px'
                       }}>
                         {formatTime(notification.created_at)}
                       </div>

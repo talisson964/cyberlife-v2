@@ -55,8 +55,7 @@ export default function PerfilPage() {
     const style = document.createElement('style');
     style.innerHTML = `
       .custom-scrollbar::-webkit-scrollbar {
-        width: ${isMobile ? '6px' : '8px'};
-        height: ${isMobile ? '6px' : '8px'};
+        width: 8px;
       }
 
       .custom-scrollbar::-webkit-scrollbar-track {
@@ -65,28 +64,12 @@ export default function PerfilPage() {
       }
 
       .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #00d9ff;
+        background: #ffd700;
         border-radius: 4px;
       }
 
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #00ff88;
-      }
-
-      /* Estilo para dispositivos móveis */
-      @media (max-width: 768px) {
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #00d9ff;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #00ff88;
-        }
+        background: #ffaa00;
       }
 
       .avatar-gallery-scrollbar::-webkit-scrollbar {
@@ -106,11 +89,6 @@ export default function PerfilPage() {
       .avatar-gallery-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #00ff88;
       }
-
-      /* Estilos para rolagem em dispositivos móveis */
-      .touch-scroll {
-        -webkit-overflow-scrolling: touch;
-      }
     `;
     document.head.appendChild(style);
 
@@ -118,7 +96,7 @@ export default function PerfilPage() {
     return () => {
       document.head.removeChild(style);
     };
-  }, [isMobile]);
+  }, []);
 
   const showLoginPrompt = () => {
     setShowLoginPopup(true);
@@ -429,11 +407,11 @@ export default function PerfilPage() {
       scrollbarWidth: 'thin',
       scrollbarColor: '#ffd700 #2a2a2a'
     }}>
-      <header className="header" style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: isMobile ? '10px 12px' : '12px 36px',
+      <header className="header" style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        padding: isMobile ? '10px 16px' : '12px 36px', 
         margin: 0,
         background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
         borderBottom: '2px solid #00d9ff',
@@ -445,46 +423,39 @@ export default function PerfilPage() {
         boxSizing: 'border-box',
       }}>
         <div className="logo" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? '8px' : '10px',
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '10px',
           transition: 'transform 0.3s ease',
           cursor: 'pointer',
         }}
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        onClick={() => window.location.href = '/'} // Navegar para a página inicial
         >
-          <img
-            src="/cyberlife-icone2.png"
-            alt="CyberLife Logo"
+          <img 
+            src="/cyberlife-icone2.png" 
+            alt="CyberLife Logo" 
             style={{
-              height: isMobile ? '28px' : '40px',
+              height: isMobile ? '32px' : '40px', 
               verticalAlign: 'middle',
               filter: 'drop-shadow(0 0 8px rgba(0, 217, 255, 0.6))',
-            }}
+            }} 
           />
           <span style={{
-            fontFamily: 'Rajdhani, sans-serif',
-            fontWeight: 700,
-            fontSize: isMobile ? '1rem' : '1.4rem',
-            color: '#00d9ff',
-            letterSpacing: isMobile ? '0.5px' : '2px',
+            fontFamily: 'Rajdhani, sans-serif', 
+            fontWeight: 700, 
+            fontSize: isMobile ? '1.1rem' : '1.4rem', 
+            color: '#00d9ff', 
+            letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
           }}>CyberLife</span>
         </div>
-        <nav className="nav" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? '10px' : '15px',
-          position: 'relative' // Para posicionamento correto do dropdown
-        }}>
+        <nav className="nav" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           {/* Ícone de Notificações */}
           {user && <NotificationBell userId={user.id} />}
           
           {/* Botão Menu Hambúrguer */}
           <button
-            id="menu-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
               background: 'transparent',
@@ -493,7 +464,7 @@ export default function PerfilPage() {
               display: 'flex',
               flexDirection: 'column',
               gap: '5px',
-              padding: isMobile ? '6px' : '8px',
+              padding: '8px',
               transition: 'all 0.3s ease',
             }}
             onMouseEnter={(e) => {
@@ -504,16 +475,16 @@ export default function PerfilPage() {
             }}
           >
             <div style={{
-              width: isMobile ? '24px' : '30px',
+              width: '30px',
               height: '3px',
               background: menuOpen ? '#ff00ea' : '#00d9ff',
               borderRadius: '2px',
               transition: 'all 0.3s ease',
-              transform: menuOpen ? 'rotate(45deg) translateY(6px)' : 'rotate(0)',
+              transform: menuOpen ? 'rotate(45deg) translateY(8px)' : 'rotate(0)',
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
             <div style={{
-              width: isMobile ? '24px' : '30px',
+              width: '30px',
               height: '3px',
               background: menuOpen ? '#ff00ea' : '#00d9ff',
               borderRadius: '2px',
@@ -522,47 +493,45 @@ export default function PerfilPage() {
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
             <div style={{
-              width: isMobile ? '24px' : '30px',
+              width: '30px',
               height: '3px',
               background: menuOpen ? '#ff00ea' : '#00d9ff',
               borderRadius: '2px',
               transition: 'all 0.3s ease',
-              transform: menuOpen ? 'rotate(-45deg) translateY(-6px)' : 'rotate(0)',
+              transform: menuOpen ? 'rotate(-45deg) translateY(-8px)' : 'rotate(0)',
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
           </button>
           
-          {!isMobile && ( // Ocultar botão "Início" em dispositivos móveis para economizar espaço
-            <Link to="/menu">
-              <button style={{
-                background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
-                border: '2px solid #00d9ff',
-                color: '#00d9ff',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontWeight: 'bold',
-                letterSpacing: '2px',
-                padding: '8px 20px',
-                borderRadius: '8px',
-                transition: 'all 0.3s ease',
-                boxShadow: '0 0 15px rgba(0, 217, 255, 0.3)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
-                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              >
-                Início
-              </button>
-            </Link>
-          )}
+          <Link to="/menu">
+            <button style={{
+              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
+              border: '2px solid #00d9ff',
+              color: '#00d9ff',
+              fontSize: isMobile ? '0.85rem' : '1rem',
+              cursor: 'pointer',
+              fontFamily: 'Rajdhani, sans-serif',
+              fontWeight: 'bold',
+              letterSpacing: isMobile ? '1px' : '2px',
+              padding: isMobile ? '6px 14px' : '8px 20px',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 0 15px rgba(0, 217, 255, 0.3)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
+              e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
+              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              Início
+            </button>
+          </Link>
         </nav>
       </header>
       
@@ -583,8 +552,7 @@ export default function PerfilPage() {
         opacity: menuOpen ? 1 : 0,
         pointerEvents: menuOpen ? 'auto' : 'none',
         overflow: 'hidden',
-        minWidth: isMobile ? '200px' : '220px',
-        width: isMobile ? 'calc(100vw - 20px)' : 'auto', // Ajustar largura em mobile
+        minWidth: '220px',
       }}>
         <div style={{
           padding: '15px',
@@ -835,7 +803,7 @@ export default function PerfilPage() {
                 {/* Seção de Insígnias */}
                 <div style={{
                   marginBottom: '30px',
-                  padding: isMobile ? '15px' : '20px',
+                  padding: '20px',
                   background: 'rgba(255, 217, 0, 0.05)',
                   border: 'none', /* Remover bordas */
                   borderRadius: '0', /* Remover cantos arredondados */
@@ -845,11 +813,11 @@ export default function PerfilPage() {
                     color: '#ffd900',
                     fontFamily: 'Rajdhani, sans-serif',
                     fontWeight: '700',
-                    fontSize: isMobile ? '1.1rem' : '1.2rem',
+                    fontSize: '1.2rem',
                     marginBottom: '15px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: isMobile ? '8px' : '10px'
+                    gap: '10px'
                   }}>
                     🏆 Minhas Insígnias
                   </h4>
@@ -858,9 +826,7 @@ export default function PerfilPage() {
                   <div style={{
                     marginBottom: '15px',
                     display: 'flex',
-                    flexDirection: isMobile ? 'column' : 'row',
-                    alignItems: 'center',
-                    gap: isMobile ? '10px' : '0'
+                    alignItems: 'center'
                   }}>
                     <input
                       type="text"
@@ -869,14 +835,13 @@ export default function PerfilPage() {
                       onChange={handleSearch}
                       style={{
                         flex: 1,
-                        padding: isMobile ? '12px' : '10px 15px',
+                        padding: '10px 15px',
                         borderRadius: '8px',
                         border: '1px solid rgba(255, 217, 0, 0.3)',
                         background: 'rgba(0, 0, 0, 0.3)',
                         color: '#fff',
                         fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: isMobile ? '1rem' : '0.9rem',
-                        width: '100%'
+                        fontSize: '0.9rem'
                       }}
                     />
                     {searchTerm && (
@@ -886,14 +851,13 @@ export default function PerfilPage() {
                           setFilteredBadges(badges);
                         }}
                         style={{
-                          marginLeft: isMobile ? '0' : '10px',
-                          padding: isMobile ? '12px 15px' : '10px 15px',
+                          marginLeft: '10px',
+                          padding: '10px 15px',
                           borderRadius: '8px',
                           border: 'none',
                           background: 'rgba(255, 68, 68, 0.3)',
                           color: '#fff',
-                          cursor: 'pointer',
-                          width: isMobile ? '100%' : 'auto'
+                          cursor: 'pointer'
                         }}
                       >
                         Limpar
@@ -905,57 +869,28 @@ export default function PerfilPage() {
                     <div>
                       <div
                         style={{
-                          maxHeight: isMobile ? '40vh' : '200px', /* Aumentar altura em mobile para 40% da altura da tela */
-                          minHeight: isMobile ? '200px' : '200px', /* Garantir altura mínima em mobile */
+                          maxHeight: '200px', /* Altura reduzida para mostrar apenas uma fileira */
                           overflowY: 'auto', /* Adiciona scrollbar vertical quando necessário */
                           padding: '5px',
                           borderRadius: '8px',
                           /* Estilos personalizados para a scrollbar */
-                          scrollbarWidth: 'thin', /* Manter scrollbar visível em todos os dispositivos */
-                          scrollbarColor: '#00d9ff #2a2a2a', /* Cores da scrollbar consistentes */
-                          /* Estilo alternativo para Webkit (Chrome, Safari, Edge) */
-                          WebkitOverflowScrolling: 'touch', // Para rolagem suave em dispositivos touch
-                          /* Estilo para Webkit scrollbar */
-                          ...(isMobile ? {
-                            /* Estilos específicos para mobile */
-                            MsHighContrastAdjust: 'none',
-                            scrollbarFaceColor: '#00d9ff',
-                            scrollbarHighlightColor: '#00d9ff',
-                            scrollbarShadowColor: '#2a2a2a',
-                            scrollbarTrackColor: '#2a2a2a',
-                            /* Estilos para Webkit */
-                            '&::-webkit-scrollbar': {
-                              width: '8px',
-                              height: '8px'
-                            },
-                            '&::-webkit-scrollbar-track': {
-                              background: '#2a2a2a',
-                              borderRadius: '4px'
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                              background: '#00d9ff',
-                              borderRadius: '4px'
-                            },
-                            '&::-webkit-scrollbar-thumb:hover': {
-                              background: '#00ff88'
-                            }
-                          } : {})
+                          scrollbarWidth: 'thin',
+                          scrollbarColor: '#ffd700 #2a2a2a'
                         }}
                         className="custom-scrollbar"
                       >
                         <div style={{
                           display: 'flex',
                           flexWrap: 'wrap',
-                          justifyContent: 'center', /* Centralizar os itens */
-                          gap: isMobile ? '15px' : '40px' /* Menor gap em mobile */
+                          gap: '40px'
                         }}>
                           {filteredBadges.map((badge, index) => (
                           <div
                             key={index}
                             style={{
                               position: 'relative',
-                              width: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
-                              height: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
+                              width: '160px',
+                              height: '160px',
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
@@ -965,8 +900,7 @@ export default function PerfilPage() {
                               borderRadius: '0',
                               cursor: 'pointer',
                               transition: 'all 0.3s ease',
-                              overflow: 'visible',
-                              flex: '0 0 auto' /* Evitar que os itens cresçam */
+                              overflow: 'visible'
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'scale(1.05)';
@@ -999,8 +933,8 @@ export default function PerfilPage() {
                             }}
                           >
                           <div style={{
-                            width: isMobile ? '70px' : '120px',
-                            height: isMobile ? '70px' : '120px',
+                            width: '120px',
+                            height: '120px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1025,7 +959,7 @@ export default function PerfilPage() {
                               />
                             ) : (
                               <div style={{
-                                fontSize: isMobile ? '2.5rem' : '4rem',
+                                fontSize: '4rem',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1041,13 +975,13 @@ export default function PerfilPage() {
                               justifyContent: 'center',
                               width: '100%',
                               height: '100%',
-                              fontSize: isMobile ? '2rem' : '3.5rem'
+                              fontSize: '3.5rem'
                             }}>
                               {badge.icon || '🎮'}
                             </div>
                           </div>
                           <div style={{
-                            fontSize: isMobile ? '0.6rem' : '0.7rem', // Ajustar tamanho da fonte para mobile
+                            fontSize: '0.7rem', // Aumentei o tamanho da fonte para melhor legibilidade
                             textAlign: 'center',
                             color: (() => {
                               switch(badge.rarity) {
@@ -1285,26 +1219,13 @@ export default function PerfilPage() {
                   fontSize: '0.9rem',
                   marginBottom: '8px',
                   fontWeight: 600,
-                }}>Data de Nascimento</label>
+                }}>Idade</label>
                 <input
-                  type="date"
-                  value={editForm.age ? new Date(Date.now() - (editForm.age * 365.25 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0] : ''}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const birthDate = new Date(e.target.value);
-                      const today = new Date();
-                      let age = today.getFullYear() - birthDate.getFullYear();
-                      const monthDiff = today.getMonth() - birthDate.getMonth();
-
-                      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                        age--;
-                      }
-
-                      setEditForm({...editForm, age: age.toString()});
-                    } else {
-                      setEditForm({...editForm, age: ''});
-                    }
-                  }}
+                  type="number"
+                  min="0"
+                  max="150"
+                  value={editForm.age}
+                  onChange={(e) => setEditForm({...editForm, age: e.target.value})}
                   style={{
                     width: '100%',
                     padding: '12px 15px',
@@ -1988,10 +1909,7 @@ export default function PerfilPage() {
         >
           <div
             style={{
-              position: 'relative',
-              padding: isMobile ? '10px' : '0', // Adiciona padding em mobile para evitar que fique muito perto das bordas
-              width: isMobile ? '100%' : 'auto', // Em mobile, usar toda a largura disponível
-              maxWidth: isMobile ? '100vw' : 'none' // Em mobile, impedir que ultrapasse a largura da tela
+              position: 'relative'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -2000,13 +1918,11 @@ export default function PerfilPage() {
                 src={enlargedBadge.image_url}
                 alt={enlargedBadge.name}
                 style={{
-                  maxWidth: isMobile ? '90vw' : '300px', /* Em mobile, usar 90% da largura da viewport */
-                  maxHeight: isMobile ? '60vh' : '300px', /* Em mobile, usar 60% da altura da viewport para dar espaço ao botão de fechar */
+                  maxWidth: '300px', /* 3x o tamanho original de 100px */
+                  maxHeight: '300px',
                   objectFit: 'contain', /* Preserva o aspect ratio original */
                   borderRadius: '0', /* Remover bordas */
-                  boxShadow: 'none', /* Remover sombra */
-                  display: 'block', // Garantir que a imagem seja exibida corretamente
-                  margin: '0 auto' // Centralizar a imagem
+                  boxShadow: 'none' /* Remover sombra */
                 }}
                 onMouseEnter={(e) => {
                   // Criar tooltip com descrição e data de aquisição
@@ -2037,16 +1953,16 @@ export default function PerfilPage() {
                   })();
                   tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
                   tooltip.style.position = 'absolute';
-                  tooltip.style.bottom = isMobile ? '5px' : '10px'; // Posição do tooltip mais próxima em mobile
+                  tooltip.style.bottom = '10px';
                   tooltip.style.left = '50%';
                   tooltip.style.transform = 'translateX(-50%)';
                   tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
                   tooltip.style.color = '#fff';
-                  tooltip.style.padding = isMobile ? '8px 12px' : '10px 15px'; // Menor padding em mobile
+                  tooltip.style.padding = '10px 15px';
                   tooltip.style.borderRadius = '8px';
-                  tooltip.style.fontSize = isMobile ? '12px' : '14px'; // Fonte menor em mobile
+                  tooltip.style.fontSize = '14px';
                   tooltip.style.zIndex = '10001';
-                  tooltip.style.maxWidth = isMobile ? '90vw' : '300px'; // Largura máxima em mobile
+                  tooltip.style.maxWidth = '300px';
                   tooltip.style.textAlign = 'center';
                   tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
 
@@ -2062,13 +1978,13 @@ export default function PerfilPage() {
               />
             ) : (
               <div style={{
-                fontSize: isMobile ? '5rem' : '6rem', /* Tamanho menor em mobile */
+                fontSize: '6rem', /* 3x o tamanho original de 2rem */
                 color: '#ffd900',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: isMobile ? '250px' : '300px', // Tamanho menor em mobile
-                height: isMobile ? '250px' : '300px',
+                width: '300px',
+                height: '300px',
                 background: 'rgba(0, 0, 0, 0.5)',
                 borderRadius: '0', /* Remover bordas */
                 boxShadow: 'none' /* Remover sombra */
@@ -2102,16 +2018,16 @@ export default function PerfilPage() {
                 })();
                 tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
                 tooltip.style.position = 'absolute';
-                tooltip.style.bottom = isMobile ? '5px' : '10px'; // Posição do tooltip mais próxima em mobile
+                tooltip.style.bottom = '10px';
                 tooltip.style.left = '50%';
                 tooltip.style.transform = 'translateX(-50%)';
                 tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
                 tooltip.style.color = '#fff';
-                tooltip.style.padding = isMobile ? '8px 12px' : '10px 15px'; // Menor padding em mobile
+                tooltip.style.padding = '10px 15px';
                 tooltip.style.borderRadius = '8px';
-                tooltip.style.fontSize = isMobile ? '12px' : '14px'; // Fonte menor em mobile
+                tooltip.style.fontSize = '14px';
                 tooltip.style.zIndex = '10001';
-                tooltip.style.maxWidth = isMobile ? '90vw' : '300px'; // Largura máxima em mobile
+                tooltip.style.maxWidth = '300px';
                 tooltip.style.textAlign = 'center';
                 tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
 
@@ -2130,18 +2046,18 @@ export default function PerfilPage() {
             )}
             <div style={{
               position: 'absolute',
-              top: isMobile ? '5px' : '10px', // Posição mais próxima da borda em mobile
-              right: isMobile ? '5px' : '10px',
+              top: '10px',
+              right: '10px',
               background: 'rgba(0, 0, 0, 0.7)',
               color: '#fff',
               borderRadius: '50%',
-              width: isMobile ? '25px' : '30px', // Tamanho menor em mobile
-              height: isMobile ? '25px' : '30px',
+              width: '30px',
+              height: '30px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: isMobile ? '1rem' : '1.2rem' // Fonte menor em mobile
+              fontSize: '1.2rem'
             }}
             onClick={() => setEnlargedBadge(null)}
             >
