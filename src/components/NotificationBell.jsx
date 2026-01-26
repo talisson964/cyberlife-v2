@@ -194,11 +194,13 @@ const NotificationBell = ({ userId, showNotification }) => {
 
       {/* Painel de notificações */}
       {isOpen && (
-        <div style={{
+        <div className="notification-panel" style={{
           position: 'absolute',
           top: '60px',
           right: '0',
-          width: '400px',
+          left: 'auto',
+          width: 'min(400px, calc(100vw - 20px))',
+          maxWidth: 'calc(100vw - 20px)',
           maxHeight: '500px',
           background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(0, 5, 16, 0.98) 100%)',
           border: '2px solid rgba(0, 217, 255, 0.3)',
@@ -206,7 +208,8 @@ const NotificationBell = ({ userId, showNotification }) => {
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 217, 255, 0.3)',
           overflow: 'hidden',
           zIndex: 1000,
-          backdropFilter: 'blur(10px)'
+          backdropFilter: 'blur(10px)',
+          minWidth: '280px'
         }}>
           {/* Header */}
           <div style={{
@@ -253,7 +256,7 @@ const NotificationBell = ({ userId, showNotification }) => {
           </div>
 
           {/* Lista de notificações */}
-          <div style={{
+          <div className="notification-panel-content" style={{
             maxHeight: '420px',
             overflowY: 'auto',
             padding: '10px',
@@ -375,6 +378,15 @@ const NotificationBell = ({ userId, showNotification }) => {
         @keyframes pulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
+        }
+
+        @media (max-width: 768px) {
+          .notification-panel {
+            right: 10px !important;
+            left: 10px !important;
+            width: calc(100vw - 20px) !important;
+            max-width: calc(100vw - 20px) !important;
+          }
         }
       `}</style>
     </div>
