@@ -773,7 +773,9 @@ export default function StartScreen({ onStart }){
                       type="text"
                       inputMode="numeric"  // Força teclado numérico em dispositivos móveis
                       name="birthDate"
-                      value={formData.birthDate ? new Date(formData.birthDate).toLocaleDateString('pt-BR') : ''}
+                      value={formData.birthDate && formData.birthDate.length === 10 && /^\d{4}-\d{2}-\d{2}$/.test(formData.birthDate)
+                        ? new Date(formData.birthDate).toLocaleDateString('pt-BR')
+                        : formData.birthDate || ''}
                       onChange={(e) => {
                         // Handle manual input - convert DD/MM/YYYY to YYYY-MM-DD format for internal storage
                         const value = e.target.value;
@@ -825,9 +827,6 @@ export default function StartScreen({ onStart }){
                               }
                             }
                           }
-
-                          // Atualizar o estado do formulário com o valor formatado
-                          setFormData({...formData, birthDate: formattedValue});
                         }
                       }}
                       placeholder="DD/MM/AAAA"
