@@ -119,6 +119,29 @@ export default function LoginGamer({ onLoginSuccess }) {
     setLoading(true);
     setMessage({ type: '', text: '' });
 
+    // Validate required fields
+    if (!formData.fullName || !formData.email || !formData.password || !formData.age || !formData.whatsapp || !formData.city || !formData.state) {
+      setMessage({ type: 'error', text: 'Por favor, preencha todos os campos obrigatórios.' });
+      setLoading(false);
+      return;
+    }
+
+    // Validate age - must be at least 13 years old
+    const birthDate = new Date(formData.age);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 13) {
+      setMessage({ type: 'error', text: 'Você deve ter pelo menos 13 anos para se cadastrar.' });
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -127,7 +150,7 @@ export default function LoginGamer({ onLoginSuccess }) {
           data: {
             full_name: formData.fullName,
             email: formData.email,
-            age: formData.age ? new Date().getFullYear() - new Date(formData.age).getFullYear() : null,
+            age: age,
             city: formData.city,
             state: formData.state,
             whatsapp: formData.whatsapp
@@ -138,59 +161,15 @@ export default function LoginGamer({ onLoginSuccess }) {
       if (error) throw error;
 
       if (data.user) {
-        // Criar perfil na tabela profiles
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: data.user.id,
-            full_name: formData.fullName,
-            email: formData.email,
-            age: formData.age ? new Date().getFullYear() - new Date(formData.age).getFullYear() : null,
-            city: formData.city,
-            state: formData.state,
-            whatsapp: formData.whatsapp,
-            cyber_points: 0 // Iniciar com 0 pontos
-          }]);
+        // NÃO criar perfil nem conceder insígnias imediatamente - isso será feito pelo trigger no banco de dados após confirmação de email
+        // O trigger on_auth_user_confirmed cuidará disso quando o usuário confirmar o email
 
-        if (profileError) {
-          console.error('Erro ao criar perfil:', profileError);
-          // Não lançar erro aqui, pois o usuário já foi criado
-        }
-
-        // Conceder automaticamente a insígnia de boas-vindas
-        try {
-          // Primeiro, encontrar o ID da insígnia "Bem Vindo à CyberLife"
-          const { data: badgeData, error: badgeError } = await supabase
-            .from('badges')
-            .select('id')
-            .eq('name', 'Bem Vindo à CyberLife')
-            .single();
-
-          if (badgeError) {
-            console.error('Erro ao buscar insígnia de boas-vindas:', badgeError);
-          } else if (badgeData) {
-            // Conceder a insígnia ao novo usuário
-            const { error: awardError } = await supabase
-              .from('user_badges')
-              .insert([{
-                user_id: data.user.id,
-                badge_id: badgeData.id
-              }]);
-
-            if (awardError) {
-              console.error('Erro ao conceder insígnia de boas-vindas:', awardError);
-            } else {
-              console.log('Insígnia de boas-vindas concedida com sucesso!');
-            }
-          }
-        } catch (error) {
-          console.error('Erro ao conceder insígnia de boas-vindas:', error);
-        }
-
+        // Email de confirmação foi enviado (ou pelo menos o usuário foi criado para receber)
         setMessage({
           type: 'success',
           text: 'Conta criada com sucesso! Um email de confirmação foi enviado para seu email. Confirme seu email para poder fazer login.'
         });
+
         setMode('login');
         setFormData({ ...formData, password: '' });
       }
@@ -559,7 +538,7 @@ export default function LoginGamer({ onLoginSuccess }) {
               textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
             }}>
               {mode === 'login' && '🔐 Entrar na Conta'}
-              {mode === 'register' && '會員註冊 Criar Conta'}
+              {mode === 'register' && '🔐 Criar Conta'}
               {mode === 'forgot' && '🔄 Recuperar Senha'}
             </h2>
 
@@ -875,6 +854,7 @@ export default function LoginGamer({ onLoginSuccess }) {
                       name="age"
                       value={formData.age}
                       onChange={handleChange}
+                      required
                       style={{
                         width: '100%',
                         padding: isMobile ? '14px 15px' : '12px 15px',
@@ -903,6 +883,7 @@ export default function LoginGamer({ onLoginSuccess }) {
                       value={formData.whatsapp}
                       onChange={handleChange}
                       placeholder="(XX) XXXXX-XXXX"
+                      required
                       style={{
                         width: '100%',
                         padding: isMobile ? '14px 15px' : '12px 15px',
@@ -932,6 +913,7 @@ export default function LoginGamer({ onLoginSuccess }) {
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
+                      required
                       style={{
                         width: '100%',
                         padding: isMobile ? '14px 15px' : '12px 15px',
@@ -961,6 +943,7 @@ export default function LoginGamer({ onLoginSuccess }) {
                       onChange={handleChange}
                       maxLength="2"
                       placeholder="SP"
+                      required
                       style={{
                         width: '100%',
                         padding: isMobile ? '14px 15px' : '12px 15px',
@@ -1003,7 +986,7 @@ export default function LoginGamer({ onLoginSuccess }) {
                     e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 255, 136, 0.4)';
                   }}
                 >
-                  {loading ? 'Criando conta...' : '會員註冊 Criar Conta'}
+                  {loading ? 'Criando conta...' : 'Criar Conta'}
                 </button>
 
                 <div style={{ textAlign: 'center' }}>

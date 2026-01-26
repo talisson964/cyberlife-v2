@@ -154,7 +154,46 @@ export default function StartScreen({ onStart }){
   }, [mode, registeredEmail])
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const { name, value } = e.target;
+
+    // Tratamento especial para o campo de data de nascimento
+    if (name === 'birthDate' || name === 'birthDateCalendar') {
+      if (name === 'birthDateCalendar') {
+        // Quando o usuário seleciona uma data no calendário
+        if (value) {
+          const selectedDate = new Date(value);
+          const today = new Date();
+          let age = today.getFullYear() - selectedDate.getFullYear();
+          const monthDiff = today.getMonth() - selectedDate.getMonth();
+
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) {
+            age--;
+          }
+
+          if (age < 13) {
+            setMessage({ type: 'error', text: 'Você deve ter pelo menos 13 anos para se cadastrar.' });
+            return; // Não atualiza o estado se a idade for menor que 13
+          } else {
+            setMessage({ type: '', text: '' }); // Limpa mensagem de erro
+          }
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          birthDate: value ? new Date(value).toLocaleDateString('pt-BR') : '', // Formato DD/MM/AAAA para exibição
+          internalBirthDate: value // Formato YYYY-MM-DD para armazenamento interno
+        }));
+      } else {
+        // Quando o usuário digita manualmente a data
+        setFormData(prev => ({
+          ...prev,
+          birthDate: value, // Atualiza o campo de exibição
+          // O internalBirthDate será atualizado separadamente no onChange do campo de texto
+        }));
+      }
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   }
 
   const calculateAge = (birthDate) => {
@@ -327,13 +366,15 @@ export default function StartScreen({ onStart }){
     setMessage({ type: '', text: '' })
 
     // Validações
-    if (!formData.fullName || !formData.birthDate || !formData.city || !formData.state || !formData.whatsapp) {
+    if (!formData.fullName || !formData.internalBirthDate || !formData.city || !formData.state || !formData.whatsapp) {
       setMessage({ type: 'error', text: 'Preencha todos os campos' })
       setLoading(false)
       return
     }
 
-    const age = calculateAge(formData.birthDate)
+    // Usar internalBirthDate se estiver disponível, caso contrário usar birthDate
+    const dateToUse = formData.internalBirthDate || formData.birthDate;
+    const age = calculateAge(dateToUse);
     if (age < 13) {
       setMessage({ type: 'error', text: 'Você deve ter pelo menos 13 anos' })
       setLoading(false)
@@ -349,7 +390,7 @@ export default function StartScreen({ onStart }){
         options: {
           data: {
             full_name: formData.fullName,
-            birth_date: formData.internalBirthDate || formData.birthDate,
+            birth_date: formData.internalBirthDate,
             age: age,
             city: formData.city,
             state: formData.state,
@@ -366,21 +407,21 @@ export default function StartScreen({ onStart }){
 
       // Salvar email registrado e mudar para tela de confirmação
       setRegisteredEmail(formData.email)
-      setMessage({ 
-        type: 'success', 
-        text: 'Conta criada com sucesso!' 
+      setMessage({
+        type: 'success',
+        text: 'Conta criada com sucesso!'
       })
-      
+
       setTimeout(() => {
         setMode('awaiting-confirmation')
-        setFormData({ ...formData, password: '', fullName: '', birthDate: '', city: '', state: '', whatsapp: '' })
+        setFormData({ ...formData, password: '', fullName: '', birthDate: '', internalBirthDate: '', city: '', state: '', whatsapp: '' })
       }, 1500)
     } catch (error) {
       console.error('Registration error:', error)
-      
+
       // Mensagens de erro mais amigáveis
       let errorMessage = 'Erro ao criar conta'
-      
+
       if (error.message?.includes('already registered')) {
         errorMessage = 'Este email já está cadastrado'
       } else if (error.message?.includes('Invalid email')) {
@@ -390,7 +431,7 @@ export default function StartScreen({ onStart }){
       } else if (error.message) {
         errorMessage = error.message
       }
-      
+
       setMessage({ type: 'error', text: errorMessage })
     } finally {
       setLoading(false)
@@ -450,7 +491,7 @@ export default function StartScreen({ onStart }){
               // Mensagem animada tipo máquina de escrever
               const frases = [
                 'Welcome to CyberLife',
-                'Bem Vindo á CyberLife'
+                'Bem Vindo à CyberLife'
               ]
               let frase = frases[Math.floor(Math.random() * frases.length)]
               if (!frase.trim().endsWith('!')) frase = frase.trim() + '!'
@@ -763,9 +804,10 @@ export default function StartScreen({ onStart }){
                     <input
                       type="date"
                       name="birthDateCalendar"
-                      value={formData.birthDate}
+                      value={formData.internalBirthDate}
                       onChange={handleChange}
                       max={new Date().toISOString().split('T')[0]}
+                      min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]} // Limite mínimo de 120 anos atrás
                       required
                       className="date-input-calendar"
                       style={{ display: 'none' }} // Esconder o campo de data padrão em favor do campo de texto
@@ -820,21 +862,37 @@ export default function StartScreen({ onStart }){
                                   const today = new Date();
                                   today.setHours(0, 0, 0, 0);
                                   if (dateObj <= today) {
-                                    setFormData({
-                                      ...formData,
+                                    // Verifica se o usuário tem pelo menos 13 anos
+                                    const todayForAge = new Date();
+                                    let age = todayForAge.getFullYear() - dateObj.getFullYear();
+                                    const monthDiff = todayForAge.getMonth() - dateObj.getMonth();
+
+                                    if (monthDiff < 0 || (monthDiff === 0 && todayForAge.getDate() < dateObj.getDate())) {
+                                      age--;
+                                    }
+
+                                    if (age < 13) {
+                                      setMessage({ type: 'error', text: 'Você deve ter pelo menos 13 anos para se cadastrar.' });
+                                      return; // Não atualiza o estado se a idade for menor que 13
+                                    } else {
+                                      setMessage({ type: '', text: '' }); // Limpa mensagem de erro
+                                    }
+
+                                    setFormData(prev => ({
+                                      ...prev,
                                       birthDate: formattedValue, // Armazena a data formatada para exibição
                                       internalBirthDate: dateObj.toISOString().split('T')[0] // Armazena a data no formato interno
-                                    });
+                                    }));
                                   }
                                 }
                               }
                             }
                           } else {
                             // Atualiza apenas o valor formatado para exibição
-                            setFormData({
-                              ...formData,
+                            setFormData(prev => ({
+                              ...prev,
                               birthDate: formattedValue
-                            });
+                            }));
                           }
                         }
                       }}

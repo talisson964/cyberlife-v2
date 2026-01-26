@@ -429,11 +429,11 @@ export default function PerfilPage() {
       scrollbarWidth: 'thin',
       scrollbarColor: '#ffd700 #2a2a2a'
     }}>
-      <header className="header" style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        padding: isMobile ? '10px 16px' : '12px 36px', 
+      <header className="header" style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: isMobile ? '10px 12px' : '12px 36px',
         margin: 0,
         background: 'linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%)',
         borderBottom: '2px solid #00d9ff',
@@ -445,39 +445,46 @@ export default function PerfilPage() {
         boxSizing: 'border-box',
       }}>
         <div className="logo" style={{
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '8px' : '10px',
           transition: 'transform 0.3s ease',
           cursor: 'pointer',
         }}
         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        onClick={() => window.location.href = '/'} // Navegar para a página inicial
         >
-          <img 
-            src="/cyberlife-icone2.png" 
-            alt="CyberLife Logo" 
+          <img
+            src="/cyberlife-icone2.png"
+            alt="CyberLife Logo"
             style={{
-              height: isMobile ? '32px' : '40px', 
+              height: isMobile ? '28px' : '40px',
               verticalAlign: 'middle',
               filter: 'drop-shadow(0 0 8px rgba(0, 217, 255, 0.6))',
-            }} 
+            }}
           />
           <span style={{
-            fontFamily: 'Rajdhani, sans-serif', 
-            fontWeight: 700, 
-            fontSize: isMobile ? '1.1rem' : '1.4rem', 
-            color: '#00d9ff', 
-            letterSpacing: isMobile ? '1px' : '2px',
+            fontFamily: 'Rajdhani, sans-serif',
+            fontWeight: 700,
+            fontSize: isMobile ? '1rem' : '1.4rem',
+            color: '#00d9ff',
+            letterSpacing: isMobile ? '0.5px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
           }}>CyberLife</span>
         </div>
-        <nav className="nav" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <nav className="nav" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '10px' : '15px',
+          position: 'relative' // Para posicionamento correto do dropdown
+        }}>
           {/* Ícone de Notificações */}
           {user && <NotificationBell userId={user.id} />}
           
           {/* Botão Menu Hambúrguer */}
           <button
+            id="menu-toggle"
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
               background: 'transparent',
@@ -486,7 +493,7 @@ export default function PerfilPage() {
               display: 'flex',
               flexDirection: 'column',
               gap: '5px',
-              padding: '8px',
+              padding: isMobile ? '6px' : '8px',
               transition: 'all 0.3s ease',
             }}
             onMouseEnter={(e) => {
@@ -497,16 +504,16 @@ export default function PerfilPage() {
             }}
           >
             <div style={{
-              width: '30px',
+              width: isMobile ? '24px' : '30px',
               height: '3px',
               background: menuOpen ? '#ff00ea' : '#00d9ff',
               borderRadius: '2px',
               transition: 'all 0.3s ease',
-              transform: menuOpen ? 'rotate(45deg) translateY(8px)' : 'rotate(0)',
+              transform: menuOpen ? 'rotate(45deg) translateY(6px)' : 'rotate(0)',
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
             <div style={{
-              width: '30px',
+              width: isMobile ? '24px' : '30px',
               height: '3px',
               background: menuOpen ? '#ff00ea' : '#00d9ff',
               borderRadius: '2px',
@@ -515,45 +522,47 @@ export default function PerfilPage() {
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
             <div style={{
-              width: '30px',
+              width: isMobile ? '24px' : '30px',
               height: '3px',
               background: menuOpen ? '#ff00ea' : '#00d9ff',
               borderRadius: '2px',
               transition: 'all 0.3s ease',
-              transform: menuOpen ? 'rotate(-45deg) translateY(-8px)' : 'rotate(0)',
+              transform: menuOpen ? 'rotate(-45deg) translateY(-6px)' : 'rotate(0)',
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
           </button>
           
-          <Link to="/menu">
-            <button style={{
-              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
-              border: '2px solid #00d9ff',
-              color: '#00d9ff',
-              fontSize: isMobile ? '0.85rem' : '1rem',
-              cursor: 'pointer',
-              fontFamily: 'Rajdhani, sans-serif',
-              fontWeight: 'bold',
-              letterSpacing: isMobile ? '1px' : '2px',
-              padding: isMobile ? '6px 14px' : '8px 20px',
-              borderRadius: '8px',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 0 15px rgba(0, 217, 255, 0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
-              e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
-              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-            >
-              Início
-            </button>
-          </Link>
+          {!isMobile && ( // Ocultar botão "Início" em dispositivos móveis para economizar espaço
+            <Link to="/menu">
+              <button style={{
+                background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
+                border: '2px solid #00d9ff',
+                color: '#00d9ff',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                fontFamily: 'Rajdhani, sans-serif',
+                fontWeight: 'bold',
+                letterSpacing: '2px',
+                padding: '8px 20px',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 0 15px rgba(0, 217, 255, 0.3)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
+                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              >
+                Início
+              </button>
+            </Link>
+          )}
         </nav>
       </header>
       
@@ -574,7 +583,8 @@ export default function PerfilPage() {
         opacity: menuOpen ? 1 : 0,
         pointerEvents: menuOpen ? 'auto' : 'none',
         overflow: 'hidden',
-        minWidth: '220px',
+        minWidth: isMobile ? '200px' : '220px',
+        width: isMobile ? 'calc(100vw - 20px)' : 'auto', // Ajustar largura em mobile
       }}>
         <div style={{
           padding: '15px',

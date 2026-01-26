@@ -115,29 +115,14 @@ export default function LoginPage({ onLoginSuccess }) {
 
       if (error) throw error
 
-      // 2. Criar perfil do usuário
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: data.user.id,
-            email: formData.email,
-            full_name: formData.fullName,
-            age: parseInt(formData.age),
-            city: formData.city,
-            state: formData.state,
-            whatsapp: formData.whatsapp,
-            created_at: new Date().toISOString()
-          }
-        ])
+      // NÃO criar perfil imediatamente - isso será feito pelo trigger no banco de dados após confirmação de email
+      // O trigger on_auth_user_confirmed cuidará disso quando o usuário confirmar o email
 
-      if (profileError) throw profileError
-
-      setMessage({ 
-        type: 'success', 
-        text: 'Conta criada! Verifique seu email para confirmar o cadastro.' 
+      setMessage({
+        type: 'success',
+        text: 'Conta criada! Verifique seu email para confirmar o cadastro.'
       })
-      
+
       setTimeout(() => {
         setMode('login')
         setFormData({ ...formData, password: '', fullName: '', age: '', city: '', state: '', whatsapp: '' })

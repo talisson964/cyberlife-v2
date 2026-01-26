@@ -3295,3 +3295,83 @@ body{
     display: none; /* Certificar que o campo de data permanece escondido em mobile */
   }
 }
+
+/* Estilos específicos para o cabeçalho da página de perfil */
+.perfil-page .header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 12px 36px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 100%);
+  border-bottom: 2px solid #00d9ff;
+  backdrop-filter: blur(10px);
+}
+
+/* Estilos responsivos para o cabeçalho da página de perfil */
+@media (max-width: 768px) {
+  .perfil-page .header {
+    padding: 10px 12px;
+    min-height: 52px;
+  }
+
+  .perfil-page .logo {
+    gap: 8px;
+  }
+
+  .perfil-page .logo img {
+    height: 28px !important;
+  }
+
+  .perfil-page .logo span {
+    font-size: 1rem !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  .perfil-page .nav {
+    gap: 10px;
+  }
+
+  /* Ajustar o botão do menu hambúrguer para mobile */
+  .perfil-page .nav button[id="menu-toggle"] {
+    padding: 6px;
+  }
+
+  .perfil-page .nav button[id="menu-toggle"] div {
+    width: 24px !important;
+    height: 3px !important;
+  }
+
+  /* Posicionar o dropdown do menu corretamente em mobile */
+  .perfil-page nav[style*="position: absolute"] {
+    top: 52px !important;
+    right: 10px !important;
+  }
+}
+
+/* Ajustes para telas muito pequenas */
+@media (max-width: 480px) {
+  .perfil-page .header {
+    padding: 8px 10px;
+  }
+
+  .perfil-page .logo img {
+    height: 24px !important;
+  }
+
+  .perfil-page .logo span {
+    font-size: 0.9rem !important;
+  }
+
+  .perfil-page .nav {
+    gap: 8px;
+  }
+
+  .perfil-page .nav button[id="menu-toggle"] {
+    padding: 5px;
+  }
+
+  .perfil-page .nav button[id="menu-toggle"] div {
+    width: 20px !important;
+    height: 2.5px !important;
+  }
+}
