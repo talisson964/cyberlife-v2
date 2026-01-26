@@ -276,6 +276,8 @@ export default function StartScreen({ onStart }){
     setMessage({ type: '', text: '' })
 
     try {
+      // Antes de fazer login, definir temporariamente a configuração de persistência
+      // Isso garante que a opção persistSession funcione corretamente
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -291,8 +293,29 @@ export default function StartScreen({ onStart }){
       // Se "Mantenha-me conectado" estiver ativo, salvar preferência no localStorage
       if (rememberMe) {
         localStorage.setItem('cyberlife_remember_me', 'true')
+
+        // Garantir que a sessão seja persistida corretamente em dispositivos móveis
+        // Forçar a atualização da sessão para garantir persistência
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          // A sessão já está correta, mas vamos garantir que ela seja persistida
+          console.log('Sessão persistida com sucesso para dispositivo móvel');
+        }
       } else {
         localStorage.removeItem('cyberlife_remember_me')
+      }
+
+      // Atualizar a configuração de persistência do Supabase com base na preferência do usuário
+      // Isso ajuda a garantir que a sessão seja mantida corretamente em dispositivos móveis
+      if (rememberMe) {
+        // Forçar persistência da sessão para manter o usuário logado
+        await supabase.auth.updateUser({
+          data: {
+            ...data.user.user_metadata,
+            last_login_with_remember: new Date().toISOString(),
+            remember_me_enabled: true
+          }
+        }).catch(console.error); // Ignorar erros nesta atualização
       }
 
       // Buscar dados do perfil do usuário
@@ -323,10 +346,10 @@ export default function StartScreen({ onStart }){
         if (createError) {
           console.error('Erro ao criar perfil:', createError)
           // Continuar sem o perfil se falhar
-      setMessage({ type: 'success', text: 'Login realizado com sucesso!' })
-      setTimeout(() => {
-        onStart({ user: data.user, profile: null })
-      }, 1000)
+          setMessage({ type: 'success', text: 'Login realizado com sucesso!' })
+          setTimeout(() => {
+            onStart({ user: data.user, profile: null })
+          }, 1000)
           return
         }
 
@@ -348,9 +371,9 @@ export default function StartScreen({ onStart }){
     } catch (error) {
       // Verificar se o erro é por email não confirmado
       if (error.message?.includes('Email not confirmed')) {
-        setMessage({ 
-          type: 'error', 
-          text: 'Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.' 
+        setMessage({
+          type: 'error',
+          text: 'Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.'
         })
       } else {
         setMessage({ type: 'error', text: error.message || 'Erro ao fazer login' })

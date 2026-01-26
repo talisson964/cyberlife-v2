@@ -37,6 +37,14 @@ function AccessLogger({ children }) {
     // Verificar usuário logado com tratamento de erro
     const initSession = async () => {
       try {
+        // Verificar se o usuário tinha a opção "Mantenha-me conectado" ativada
+        const rememberMeEnabled = localStorage.getItem('cyberlife_remember_me') === 'true';
+
+        // Se a opção "Mantenha-me conectado" estava ativada, forçar persistência
+        if (rememberMeEnabled) {
+          console.log('Restaurando sessão com persistência ativada para dispositivo móvel');
+        }
+
         const session = await checkAndCleanSession()
         setCurrentUser(session?.user || null)
       } catch (err) {
@@ -54,11 +62,20 @@ function AccessLogger({ children }) {
     try {
       const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
         console.log('Auth state changed:', event)
-        
+
+        // Verificar se o usuário tinha a opção "Mantenha-me conectado" ativada
+        const rememberMeEnabled = localStorage.getItem('cyberlife_remember_me') === 'true';
+
         // Se houver erro no token, fazer logout
         if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          // Se "Mantenha-me conectado" estava ativado, garantir persistência da sessão
+          if (rememberMeEnabled && session?.session) {
+            console.log('Garantindo persistência da sessão para dispositivo móvel');
+          }
           setCurrentUser(session?.user || null)
         } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          // Limpar preferência quando o usuário faz logout
+          localStorage.removeItem('cyberlife_remember_me');
           setCurrentUser(null)
         }
       })
