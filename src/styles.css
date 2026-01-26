@@ -3263,26 +3263,26 @@ body{
 }
 
 .date-input-calendar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
+  display: none; /* Esconder o campo de data padrão */
 }
 
 .date-input-text {
   width: 100%;
+  padding: 12px 15px;
+  background: rgba(0, 217, 255, 0.05);
+  border: 2px solid rgba(0, 217, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  font-family: Rajdhani, sans-serif;
+  font-size: 1rem;
+  box-sizing: border-box;
   z-index: 1;
 }
 
 /* Mobile-specific styles for date input */
 @media (max-width: 768px) {
   .date-input-wrapper {
-    flex-direction: column;
-    gap: 8px;
+    display: block; /* Mudar para bloco em vez de flex para melhor responsividade */
   }
 
   .date-input-text {
@@ -3292,9 +3292,6 @@ body{
   }
 
   .date-input-calendar {
-    position: static;
-    opacity: 1;
-    height: auto;
-    display: none; /* Hide calendar picker on mobile since we're focusing on manual input */
+    display: none; /* Certificar que o campo de data permanece escondido em mobile */
   }
 }

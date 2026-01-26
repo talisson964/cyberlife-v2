@@ -761,12 +761,13 @@ export default function StartScreen({ onStart }){
                   <div className="date-input-wrapper">
                     <input
                       type="date"
-                      name="birthDate"
+                      name="birthDateCalendar"
                       value={formData.birthDate}
                       onChange={handleChange}
                       max={new Date().toISOString().split('T')[0]}
                       required
                       className="date-input-calendar"
+                      style={{ display: 'none' }} // Esconder o campo de data padrão em favor do campo de texto
                     />
                     <input
                       type="text"
