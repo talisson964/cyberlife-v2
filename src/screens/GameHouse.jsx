@@ -2511,68 +2511,68 @@ export default function GamerWorld() {
             0%, 100% { transform: translate(0, 0) scale(1); }
             50% { transform: translate(30px, 30px) scale(1.1); }
           }
-          
+
           @keyframes floatParticleEvents {
-            0%, 100% { 
+            0%, 100% {
               transform: translateY(0) translateX(0) scale(1);
               opacity: 0.3;
             }
-            25% { 
+            25% {
               transform: translateY(-20px) translateX(10px) scale(1.2);
               opacity: 0.6;
             }
-            50% { 
+            50% {
               transform: translateY(-10px) translateX(-15px) scale(1);
               opacity: 0.4;
             }
-            75% { 
+            75% {
               transform: translateY(-30px) translateX(5px) scale(1.1);
               opacity: 0.5;
             }
           }
-          
+
           @keyframes scanLineVertical {
             0% { top: 0; opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
             100% { top: 100%; opacity: 0; }
           }
-          
+
           @keyframes rotateLight {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
-          
+
           @keyframes particlePulse {
-            0%, 100% { 
+            0%, 100% {
               opacity: 0.2;
               transform: scale(1);
             }
-            50% { 
+            50% {
               opacity: 0.6;
               transform: scale(1.5);
             }
           }
-          
+
           @keyframes iconBounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
           }
-          
+
           @keyframes borderPulseCarousel {
-            0%, 100% { 
+            0%, 100% {
               box-shadow: 0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3);
             }
-            50% { 
+            50% {
               box-shadow: 0 0 50px rgba(0, 217, 255, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.3);
             }
           }
-          
+
           @keyframes borderShine {
             0% { background-position: 200% 200%; }
             100% { background-position: -200% -200%; }
           }
-          
+
           @keyframes carouselParticle {
             0%, 100% {
               transform: translateY(0) translateX(0) rotate(0deg);
@@ -2591,7 +2591,7 @@ export default function GamerWorld() {
               opacity: 0.6;
             }
           }
-          
+
           @keyframes carouselZoomIn {
             0% {
               transform: scale(1.2);
@@ -2602,7 +2602,7 @@ export default function GamerWorld() {
               opacity: 1;
             }
           }
-          
+
           @keyframes buttonFloat {
             0%, 100% {
               transform: translateY(-50%) translateX(0);
@@ -2611,7 +2611,7 @@ export default function GamerWorld() {
               transform: translateY(-50%) translateX(-5px);
             }
           }
-          
+
           @keyframes indicatorPulse {
             0%, 100% {
               box-shadow: 0 0 15px #ff00ea;
@@ -2622,7 +2622,7 @@ export default function GamerWorld() {
               transform: scale(1.05);
             }
           }
-          
+
           @keyframes slideInLeft {
             0% {
               transform: translateY(-50%) translateX(-50px);
@@ -2633,7 +2633,7 @@ export default function GamerWorld() {
               opacity: 1;
             }
           }
-          
+
           @keyframes shimmerSlide {
             0% {
               left: -100%;
