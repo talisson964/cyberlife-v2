@@ -55,7 +55,8 @@ export default function PerfilPage() {
     const style = document.createElement('style');
     style.innerHTML = `
       .custom-scrollbar::-webkit-scrollbar {
-        width: 8px;
+        width: ${isMobile ? '6px' : '8px'};
+        height: ${isMobile ? '6px' : '8px'};
       }
 
       .custom-scrollbar::-webkit-scrollbar-track {
@@ -64,12 +65,28 @@ export default function PerfilPage() {
       }
 
       .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #ffd700;
+        background: #00d9ff;
         border-radius: 4px;
       }
 
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #ffaa00;
+        background: #00ff88;
+      }
+
+      /* Estilo para dispositivos móveis */
+      @media (max-width: 768px) {
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #00d9ff;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #00ff88;
+        }
       }
 
       .avatar-gallery-scrollbar::-webkit-scrollbar {
@@ -94,11 +111,6 @@ export default function PerfilPage() {
       .touch-scroll {
         -webkit-overflow-scrolling: touch;
       }
-
-      /* Melhorar experiência de rolagem em mobile */
-      .custom-scrollbar {
-        -webkit-overflow-scrolling: touch;
-      }
     `;
     document.head.appendChild(style);
 
@@ -106,7 +118,7 @@ export default function PerfilPage() {
     return () => {
       document.head.removeChild(style);
     };
-  }, []);
+  }, [isMobile]);
 
   const showLoginPrompt = () => {
     setShowLoginPopup(true);
@@ -883,24 +895,48 @@ export default function PerfilPage() {
                     <div>
                       <div
                         style={{
-                          maxHeight: isMobile ? '300px' : '200px', /* Aumentar altura em mobile */
+                          maxHeight: isMobile ? '40vh' : '200px', /* Aumentar altura em mobile para 40% da altura da tela */
+                          minHeight: isMobile ? '200px' : '200px', /* Garantir altura mínima em mobile */
                           overflowY: 'auto', /* Adiciona scrollbar vertical quando necessário */
                           padding: '5px',
                           borderRadius: '8px',
                           /* Estilos personalizados para a scrollbar */
-                          scrollbarWidth: isMobile ? 'none' : 'thin', /* Ocultar scrollbar em mobile */
-                          scrollbarColor: isMobile ? 'transparent transparent' : '#ffd700 #2a2a2a', /* Cores da scrollbar */
+                          scrollbarWidth: 'thin', /* Manter scrollbar visível em todos os dispositivos */
+                          scrollbarColor: '#00d9ff #2a2a2a', /* Cores da scrollbar consistentes */
                           /* Estilo alternativo para Webkit (Chrome, Safari, Edge) */
-                          ...(isMobile ? {} : {
+                          WebkitOverflowScrolling: 'touch', // Para rolagem suave em dispositivos touch
+                          /* Estilo para Webkit scrollbar */
+                          ...(isMobile ? {
+                            /* Estilos específicos para mobile */
+                            MsHighContrastAdjust: 'none',
+                            scrollbarFaceColor: '#00d9ff',
+                            scrollbarHighlightColor: '#00d9ff',
+                            scrollbarShadowColor: '#2a2a2a',
+                            scrollbarTrackColor: '#2a2a2a',
                             /* Estilos para Webkit */
-                            WebkitOverflowScrolling: 'touch', // Para rolagem suave em dispositivos touch
-                          })
+                            '&::-webkit-scrollbar': {
+                              width: '8px',
+                              height: '8px'
+                            },
+                            '&::-webkit-scrollbar-track': {
+                              background: '#2a2a2a',
+                              borderRadius: '4px'
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: '#00d9ff',
+                              borderRadius: '4px'
+                            },
+                            '&::-webkit-scrollbar-thumb:hover': {
+                              background: '#00ff88'
+                            }
+                          } : {})
                         }}
                         className="custom-scrollbar"
                       >
                         <div style={{
                           display: 'flex',
                           flexWrap: 'wrap',
+                          justifyContent: 'center', /* Centralizar os itens */
                           gap: isMobile ? '15px' : '40px' /* Menor gap em mobile */
                         }}>
                           {filteredBadges.map((badge, index) => (
@@ -908,8 +944,8 @@ export default function PerfilPage() {
                             key={index}
                             style={{
                               position: 'relative',
-                              width: isMobile ? '100px' : '160px', /* Menor tamanho em mobile */
-                              height: isMobile ? '100px' : '160px',
+                              width: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
+                              height: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
                               display: 'flex',
                               flexDirection: 'column',
                               alignItems: 'center',
@@ -919,7 +955,8 @@ export default function PerfilPage() {
                               borderRadius: '0',
                               cursor: 'pointer',
                               transition: 'all 0.3s ease',
-                              overflow: 'visible'
+                              overflow: 'visible',
+                              flex: '0 0 auto' /* Evitar que os itens cresçam */
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.transform = 'scale(1.05)';
@@ -1942,7 +1979,9 @@ export default function PerfilPage() {
           <div
             style={{
               position: 'relative',
-              padding: isMobile ? '10px' : '0' // Adiciona padding em mobile para evitar que fique muito perto das bordas
+              padding: isMobile ? '10px' : '0', // Adiciona padding em mobile para evitar que fique muito perto das bordas
+              width: isMobile ? '100%' : 'auto', // Em mobile, usar toda a largura disponível
+              maxWidth: isMobile ? '100vw' : 'none' // Em mobile, impedir que ultrapasse a largura da tela
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1952,10 +1991,12 @@ export default function PerfilPage() {
                 alt={enlargedBadge.name}
                 style={{
                   maxWidth: isMobile ? '90vw' : '300px', /* Em mobile, usar 90% da largura da viewport */
-                  maxHeight: isMobile ? '70vh' : '300px', /* Em mobile, usar 70% da altura da viewport */
+                  maxHeight: isMobile ? '60vh' : '300px', /* Em mobile, usar 60% da altura da viewport para dar espaço ao botão de fechar */
                   objectFit: 'contain', /* Preserva o aspect ratio original */
                   borderRadius: '0', /* Remover bordas */
-                  boxShadow: 'none' /* Remover sombra */
+                  boxShadow: 'none', /* Remover sombra */
+                  display: 'block', // Garantir que a imagem seja exibida corretamente
+                  margin: '0 auto' // Centralizar a imagem
                 }}
                 onMouseEnter={(e) => {
                   // Criar tooltip com descrição e data de aquisição

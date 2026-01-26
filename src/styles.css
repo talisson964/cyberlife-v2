@@ -3277,3 +3277,24 @@ body{
   width: 100%;
   z-index: 1;
 }
+
+/* Mobile-specific styles for date input */
+@media (max-width: 768px) {
+  .date-input-wrapper {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .date-input-text {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  .date-input-calendar {
+    position: static;
+    opacity: 1;
+    height: auto;
+    display: none; /* Hide calendar picker on mobile since we're focusing on manual input */
+  }
+}

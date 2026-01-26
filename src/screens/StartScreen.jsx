@@ -770,6 +770,7 @@ export default function StartScreen({ onStart }){
                     />
                     <input
                       type="text"
+                      inputMode="numeric"  // Força teclado numérico em dispositivos móveis
                       name="birthDate"
                       value={formData.birthDate ? new Date(formData.birthDate).toLocaleDateString('pt-BR') : ''}
                       onChange={(e) => {
@@ -794,16 +795,21 @@ export default function StartScreen({ onStart }){
                           if (formattedValue.length === 10) {
                             const [day, month, year] = formattedValue.split('/');
                             if (day.length === 2 && month.length === 2 && year.length === 4) {
-                              // Validate the date by creating it and checking if it's valid
-                              // Using a different approach to validate the date
-                              const dateObj = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`);
-                              if (!isNaN(dateObj.getTime())) {
-                                // Check if the date components match the input (to catch invalid dates like 30th Feb)
-                                const utcYear = dateObj.getUTCFullYear();
-                                const utcMonth = dateObj.getUTCMonth() + 1; // Month is 0-indexed
-                                const utcDay = dateObj.getUTCDate();
+                              // More robust validation of the date
+                              const dayInt = parseInt(day, 10);
+                              const monthInt = parseInt(month, 10);
+                              const yearInt = parseInt(year, 10);
 
-                                if (parseInt(day) === utcDay && parseInt(month) === utcMonth && parseInt(year) === utcYear) {
+                              // Basic range checks
+                              if (dayInt >= 1 && dayInt <= 31 && monthInt >= 1 && monthInt <= 12 && yearInt >= 1900 && yearInt <= new Date().getFullYear()) {
+                                // Create date object to validate if the date actually exists
+                                const dateObj = new Date(yearInt, monthInt - 1, dayInt); // month is 0-indexed in JS
+
+                                // Check if the date components match what was entered (validates real dates like Feb 30)
+                                if (dateObj.getDate() === dayInt &&
+                                    dateObj.getMonth() === monthInt - 1 &&
+                                    dateObj.getFullYear() === yearInt) {
+
                                   // Additional validation to ensure the date is not in the future
                                   const today = new Date();
                                   today.setHours(0, 0, 0, 0);
