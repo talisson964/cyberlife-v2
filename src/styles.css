@@ -3242,17 +3242,31 @@ body{
 @media (max-width: 640px) {
   .password-input {
     width: 100%;
+    position: relative;
   }
 
   .password-input input {
-    padding-right: 35px; /* Reduced padding for mobile */
+    flex: 1;
+    padding-right: 40px; /* Adequate padding to accommodate the toggle button */
     font-size: 0.9rem; /* Slightly smaller font to fit better */
     box-sizing: border-box;
+    width: 100%;
   }
 
   .toggle-password {
-    right: 6px; /* Adjust position for mobile */
-    padding: 2px; /* Smaller padding on mobile */
+    position: absolute;
+    right: 10px; /* Proper position inside the input field */
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #00d9ff;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    z-index: 1;
   }
 }
 
