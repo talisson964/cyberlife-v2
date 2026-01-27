@@ -995,11 +995,11 @@ export default function GamerWorld() {
       </nav>
       
       <section id="hero" className="gamer-world-hero" style={{
-        position: 'relative', 
-        height: 'calc(100vh - 68px)', 
+        position: 'relative',
+        height: isMobile ? 'auto' : 'calc(100vh - 68px)', // Em dispositivos móveis, permite altura automática
         width: '100vw',
-        overflow: 'hidden',
-        padding: '0', 
+        overflow: isMobile ? 'visible' : 'hidden',
+        padding: '0',
         margin: 0,
         boxShadow: '0 20px 60px rgba(0, 217, 255, 0.4)',
       }}>
@@ -1798,7 +1798,7 @@ export default function GamerWorld() {
         background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
         borderTop: '1px solid rgba(0, 217, 255, 0.2)',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: isMobile ? 'visible' : 'hidden',
       }}>
         {/* Background animado com gradientes */}
         <div style={{
@@ -1933,7 +1933,7 @@ export default function GamerWorld() {
               margin: '0 auto',
               height: isMobile ? '450px' : '500px',  /* Aumentei a altura para mobile */
               borderRadius: isMobile ? '12px' : '20px',
-              overflow: 'hidden',
+              overflow: isMobile ? 'visible' : 'hidden',
               border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
               boxShadow: '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
               animation: 'borderPulseCarousel 3s ease-in-out infinite',
@@ -2743,16 +2743,16 @@ export default function GamerWorld() {
       {/* Seção Explore Jogos - Oculta em dispositivos móveis */}
       {isMobile ? null : (
       <section id="galeria" style={{
-        padding: '120px 48px',
+        padding: isMobile ? '60px 20px' : '120px 48px',
         background: `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center right',
         backgroundAttachment: 'fixed',
         position: 'relative',
-        overflow: 'hidden',
-        clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
-        marginTop: '-3%',
-        marginBottom: '-3%',
+        overflow: isMobile ? 'visible' : 'hidden',
+        clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+        marginTop: isMobile ? '0' : '-3%',
+        marginBottom: isMobile ? '0' : '-3%',
       }}>
         {/* Bordas diagonais brilhantes */}
         <div style={{
@@ -3347,7 +3347,7 @@ export default function GamerWorld() {
         backgroundPosition: 'center right',
         backgroundAttachment: isMobile ? 'fixed' : 'scroll',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: isMobile ? 'visible' : 'hidden',
         clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
         marginTop: isMobile ? '0' : '-5%',
         marginBottom: isMobile ? '0' : '-5%',
