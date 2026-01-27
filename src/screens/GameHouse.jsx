@@ -1596,7 +1596,7 @@ export default function GamerWorld() {
         background: 'linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%)',
         borderTop: 'none',
         position: 'relative',
-        overflow: 'hidden',
+        overflow: isMobile ? 'visible' : 'hidden',
         boxShadow: '0 -40px 80px rgba(0, 217, 255, 0.3), 0 -20px 40px rgba(255, 0, 234, 0.2)',
       }}>
         {/* Background Chun-Li - Esquerda */}
@@ -1693,7 +1693,7 @@ export default function GamerWorld() {
             borderRadius: isMobile ? '15px' : '20px',
             padding: isMobile ? '30px 20px' : '50px 60px',
             position: 'relative',
-            overflow: 'hidden',
+            overflow: isMobile ? 'visible' : 'hidden',
             boxShadow: '0 20px 60px rgba(0, 217, 255, 0.2), inset 0 0 30px rgba(0, 217, 255, 0.1)',
             boxSizing: 'border-box',
             margin: isMobile ? '0 10px' : '0',
