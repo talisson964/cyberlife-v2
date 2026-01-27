@@ -1800,20 +1800,22 @@ export default function GamerWorld() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Background animado com gradientes */}
+        {/* Background animado com gradientes - reduzido para mobile */}
         <div style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
-          background: 'radial-gradient(circle at 20% 50%, rgba(255, 0, 234, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(0, 217, 255, 0.1) 0%, transparent 50%)',
-          animation: 'gradientMove 15s ease-in-out infinite',
+          background: isMobile
+            ? 'radial-gradient(circle at 20% 50%, rgba(255, 0, 234, 0.05) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(0, 217, 255, 0.05) 0%, transparent 50%)'
+            : 'radial-gradient(circle at 20% 50%, rgba(255, 0, 234, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(0, 217, 255, 0.1) 0%, transparent 50%)',
+          animation: isMobile ? 'none' : 'gradientMove 15s ease-in-out infinite',
           zIndex: 0,
         }} />
-        
-        {/* Partículas flutuantes de fundo */}
-        {[...Array(20)].map((_, i) => (
+
+        {/* Partículas flutuantes de fundo - reduzido para mobile */}
+        {!isMobile && [...Array(20)].map((_, i) => (
           <div key={i} style={{
             position: 'absolute',
             width: `${Math.random() * 4 + 2}px`,
@@ -1829,35 +1831,39 @@ export default function GamerWorld() {
             zIndex: 0,
           }} />
         ))}
-        
-        {/* Grid pattern de fundo */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `
-            linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px',
-          opacity: 0.4,
-          zIndex: 0,
-        }} />
-        
-        {/* Linhas escaneando */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '2px',
-          background: 'linear-gradient(90deg, transparent, #00d9ff, transparent)',
-          animation: 'scanLineVertical 8s ease-in-out infinite',
-          boxShadow: '0 0 20px #00d9ff',
-          zIndex: 0,
-        }} />
+
+        {/* Grid pattern de fundo - removido para mobile */}
+        {!isMobile && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `
+              linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+            opacity: 0.4,
+            zIndex: 0,
+          }} />
+        )}
+
+        {/* Linhas escaneando - removido para mobile */}
+        {!isMobile && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent, #00d9ff, transparent)',
+            animation: 'scanLineVertical 8s ease-in-out infinite',
+            boxShadow: '0 0 20px #00d9ff',
+            zIndex: 0,
+          }} />
+        )}
         
         <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: isMobile ? '0 5px' : '0'}}>
           {/* Tag line superior */}
@@ -1935,10 +1941,13 @@ export default function GamerWorld() {
               borderRadius: isMobile ? '12px' : '20px',
               overflow: 'hidden',
               border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
-              boxShadow: '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
-              animation: 'borderPulseCarousel 3s ease-in-out infinite',
+              boxShadow: isMobile
+                ? '0 0 15px rgba(0, 217, 255, 0.2)'
+                : '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
+              animation: isMobile ? 'none' : 'borderPulseCarousel 3s ease-in-out infinite',
             }}>
-              {/* Brilho animado nas bordas */}
+              {/* Brilho animado nas bordas - removido para mobile */}
+              {!isMobile && (
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -1952,9 +1961,10 @@ export default function GamerWorld() {
                 zIndex: 4,
                 pointerEvents: 'none',
               }} />
-              
-              {/* Partículas decorativas */}
-              {[...Array(8)].map((_, i) => (
+              )}
+
+              {/* Partículas decorativas - removido para mobile */}
+              {!isMobile && [...Array(8)].map((_, i) => (
                 <div key={i} style={{
                   position: 'absolute',
                   width: '4px',
@@ -2026,7 +2036,7 @@ export default function GamerWorld() {
                   opacity: index === currentEvent ? 1 : 0,
                   transition: 'opacity 0.8s ease-in-out',
                   zIndex: index === currentEvent ? 20 : 0,
-                  animation: index === currentEvent ? 'slideInLeft 0.8s ease-out' : 'none',
+                  animation: isMobile ? 'none' : (index === currentEvent ? 'slideInLeft 0.8s ease-out' : 'none'),
                   pointerEvents: index === currentEvent ? 'auto' : 'none',
                   paddingRight: isMobile ? '10px' : '20px',
                   paddingLeft: isMobile ? '10px' : '0',
@@ -2287,22 +2297,26 @@ export default function GamerWorld() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       zIndex: 5,
-                      backdropFilter: 'blur(10px)',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                      backdropFilter: isMobile ? 'none' : 'blur(10px)',
+                      transition: isMobile ? 'background 0.3s ease' : 'all 0.3s ease',
+                      boxShadow: isMobile ? '0 2px 5px rgba(0, 0, 0, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
-                      e.currentTarget.style.transform = 'translateY(-50%) translateX(-5px)';
+                      if (!isMobile) {
+                        e.currentTarget.style.transform = 'translateY(-50%) translateX(-5px)';
+                      }
                       e.currentTarget.style.borderColor = '#00d9ff';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
-                      e.currentTarget.style.transform = 'translateY(-50%)';
+                      if (!isMobile) {
+                        e.currentTarget.style.transform = 'translateY(-50%)';
+                      }
                       e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
                     }}
                   >&lt;</button>
-                  
+
                   <button
                     onClick={() => setCurrentEvent((prev) => (prev + 1) % displayEventImages.length)}
                     style={{
@@ -2323,18 +2337,22 @@ export default function GamerWorld() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   zIndex: 5,
-                  backdropFilter: 'blur(10px)',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
+                  backdropFilter: isMobile ? 'none' : 'blur(10px)',
+                  transition: isMobile ? 'background 0.3s ease' : 'all 0.3s ease',
+                  boxShadow: isMobile ? '0 2px 5px rgba(0, 0, 0, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
-                  e.currentTarget.style.transform = 'translateY(-50%) translateX(5px)';
+                  if (!isMobile) {
+                    e.currentTarget.style.transform = 'translateY(-50%) translateX(5px)';
+                  }
                   e.currentTarget.style.borderColor = '#00d9ff';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
-                  e.currentTarget.style.transform = 'translateY(-50%)';
+                  if (!isMobile) {
+                    e.currentTarget.style.transform = 'translateY(-50%)';
+                  }
                   e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
                 }}
               >&gt;</button>
@@ -2351,7 +2369,7 @@ export default function GamerWorld() {
                   display: 'flex',
                   gap: '12px',
                   zIndex: 5,
-                  animation: 'fadeIn 1s ease-out 0.8s both',
+                  animation: isMobile ? 'none' : 'fadeIn 1s ease-out 0.8s both',
                 }}>
                   {displayEventImages.map((_, index) => (
                     <button
@@ -2364,20 +2382,26 @@ export default function GamerWorld() {
                         background: index === currentEvent ? '#ff00ea' : 'rgba(255, 255, 255, 0.3)',
                         border: index === currentEvent ? '2px solid #ff00ea' : '2px solid rgba(255, 255, 255, 0.5)',
                         cursor: 'pointer',
-                        transition: 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                        boxShadow: index === currentEvent ? '0 0 15px #ff00ea' : 'none',
-                        animation: index === currentEvent ? 'indicatorPulse 1s ease-in-out infinite' : 'none',
+                        transition: isMobile
+                          ? 'background 0.3s ease'
+                          : 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                        boxShadow: index === currentEvent ? (isMobile ? '0 0 8px #ff00ea' : '0 0 15px #ff00ea') : 'none',
+                        animation: isMobile ? 'none' : (index === currentEvent ? 'indicatorPulse 1s ease-in-out infinite' : 'none'),
                       }}
                       onMouseEnter={(e) => {
                         if (index !== currentEvent) {
                           e.currentTarget.style.background = 'rgba(255, 255, 255, 0.6)';
-                          e.currentTarget.style.transform = 'scale(1.3)';
+                          if (!isMobile) {
+                            e.currentTarget.style.transform = 'scale(1.3)';
+                          }
                         }
                       }}
                     onMouseLeave={(e) => {
                       if (index !== currentEvent) {
                         e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                        e.currentTarget.style.transform = 'scale(1)';
+                        if (!isMobile) {
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }
                       }
                     }}
                   />
@@ -2393,28 +2417,28 @@ export default function GamerWorld() {
             gap: isMobile ? '25px' : '40px',
             padding: isMobile ? '0 5px' : '0',
           }}>
-            {[
-              { 
+            {!isMobile && [  // Mostrar estes cards apenas em desktop
+              {
                 icon: '🦉',
-                title: 'Corujões', 
+                title: 'Corujões',
                 description: 'Faça reuniões com amigos e jogue a noite toda!',
                 details: 'Sextas e Sábados • 22h às 6h',
                 color: '#ff00ea',
                 gradient: 'linear-gradient(135deg, rgba(255, 0, 234, 0.15) 0%, rgba(255, 0, 234, 0.05) 100%)',
                 slug: 'corujoes',
               },
-              { 
+              {
                 icon: '🏆',
-                title: 'Torneios', 
+                title: 'Torneios',
                 description: 'Jogue, compita e ganhe prêmios incríveis!',
                 details: 'Quinzenalmente • Premiação de até R$ 5.000',
                 color: '#00d9ff',
                 gradient: 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 100%)',
                 slug: 'torneios',
               },
-              { 
+              {
                 icon: '⚡',
-                title: 'Rush Play', 
+                title: 'Rush Play',
                 description: 'A jogatina só acaba quando o jogo terminar!',
                 details: 'Domingos • 14h - Game até zerar',
                 color: '#ffea00',
@@ -2458,7 +2482,7 @@ export default function GamerWorld() {
                   animation: 'rotateLight 8s linear infinite',
                   pointerEvents: 'none',
                 }} />
-                
+
                 {/* Elemento decorativo de canto superior */}
                 <div style={{
                   position: 'absolute',
@@ -2469,7 +2493,7 @@ export default function GamerWorld() {
                   background: `radial-gradient(circle at top right, ${event.color}40 0%, transparent 70%)`,
                   pointerEvents: 'none',
                 }} />
-                
+
                 {/* Elemento decorativo de canto inferior */}
                 <div style={{
                   position: 'absolute',
@@ -2480,7 +2504,7 @@ export default function GamerWorld() {
                   background: `radial-gradient(circle at bottom left, ${event.color}25 0%, transparent 70%)`,
                   pointerEvents: 'none',
                 }} />
-                
+
                 {/* Partículas internas */}
                 {[...Array(5)].map((_, i) => (
                   <div key={i} style={{
@@ -2497,7 +2521,7 @@ export default function GamerWorld() {
                     boxShadow: `0 0 8px ${event.color}`,
                   }} />
                 ))}
-                
+
                 <div style={{
                   fontSize: isMobile ? '2.5rem' : '3rem',
                   marginBottom: isMobile ? '10px' : '12px',
@@ -2507,7 +2531,7 @@ export default function GamerWorld() {
                   position: 'relative',
                   zIndex: 2,
                 }}>{event.icon}</div>
-                
+
                 <h3 style={{
                   fontFamily: 'Rajdhani, sans-serif',
                   fontWeight: 700,
@@ -2522,7 +2546,7 @@ export default function GamerWorld() {
                   zIndex: 2,
                   wordWrap: 'break-word',
                 }}>{event.title}</h3>
-                
+
                 <p style={{
                   fontFamily: 'Rajdhani, sans-serif',
                   fontSize: isMobile ? '0.9rem' : '1rem',
@@ -2536,7 +2560,7 @@ export default function GamerWorld() {
                   wordWrap: 'break-word',
                   overflowWrap: 'break-word',
                 }}>{event.description}</p>
-                
+
                 {/* Botão de ação */}
                 <div style={{
                   textAlign: 'center',
@@ -2571,7 +2595,7 @@ export default function GamerWorld() {
                     </button>
                   </Link>
                 </div>
-                
+
                 {/* Linha decorativa inferior */}
                 <div style={{
                   width: '80px',
