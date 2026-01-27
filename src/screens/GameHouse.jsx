@@ -996,9 +996,9 @@ export default function GamerWorld() {
       
       <section id="hero" className="gamer-world-hero" style={{
         position: 'relative',
-        height: isMobile ? 'auto' : 'calc(100vh - 68px)', // Em dispositivos móveis, permite altura automática
+        height: 'calc(100vh - 68px)',
         width: '100vw',
-        overflow: isMobile ? 'visible' : 'hidden',
+        overflow: 'hidden',
         padding: '0',
         margin: 0,
         boxShadow: '0 20px 60px rgba(0, 217, 255, 0.4)',
@@ -1596,7 +1596,7 @@ export default function GamerWorld() {
         background: 'linear-gradient(180deg, #000 0%, #0a0a0a 50%, #000 100%)',
         borderTop: 'none',
         position: 'relative',
-        overflow: isMobile ? 'visible' : 'hidden',
+        overflow: 'hidden',
         boxShadow: '0 -40px 80px rgba(0, 217, 255, 0.3), 0 -20px 40px rgba(255, 0, 234, 0.2)',
       }}>
         {/* Background Chun-Li - Esquerda */}
@@ -1646,7 +1646,7 @@ export default function GamerWorld() {
           zIndex: 2,
         }} />
         
-        <div style={{maxWidth: '1000px', margin: '0 auto', position: 'relative', zIndex: 3}}>
+        <div style={{maxWidth: isMobile ? '100%' : '1000px', margin: '0 auto', position: 'relative', zIndex: 3, padding: isMobile ? '0 10px' : '0'}}>
           {/* Tag superior */}
           <div style={{
             textAlign: 'center',
@@ -1664,7 +1664,7 @@ export default function GamerWorld() {
               // ABOUT US
             </span>
           </div>
-          
+
           {/* Título */}
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
@@ -1684,7 +1684,7 @@ export default function GamerWorld() {
             wordWrap: 'break-word',
             padding: isMobile ? '0 10px' : '0',
           }}>Cyber<span style={{color: '#ff00ea', textShadow: '0 0 30px rgba(255, 0, 234, 0.8)'}}>House</span></h2>
-          
+
           {/* Card de conteúdo */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
@@ -1693,7 +1693,7 @@ export default function GamerWorld() {
             borderRadius: isMobile ? '15px' : '20px',
             padding: isMobile ? '30px 20px' : '50px 60px',
             position: 'relative',
-            overflow: isMobile ? 'visible' : 'hidden',
+            overflow: 'hidden',
             boxShadow: '0 20px 60px rgba(0, 217, 255, 0.2), inset 0 0 30px rgba(0, 217, 255, 0.1)',
             boxSizing: 'border-box',
             margin: isMobile ? '0 10px' : '0',
@@ -1754,7 +1754,7 @@ export default function GamerWorld() {
               {[
                 { icon: '🎮', title: 'Jogos', color: '#00d9ff' },
                 { icon: '⚡', title: 'Performance', color: '#ff00ea' },
-                { icon: '🏆', title: 'Torneios', color: '#00d9ff' },
+                ...(isMobile ? [] : [{ icon: '🏆', title: 'Torneios', color: '#00d9ff' }]) // Mostrar Torneios apenas em desktop
               ].map((item, idx) => (
                 <div key={idx} style={{
                   textAlign: 'center',
@@ -1795,12 +1795,15 @@ export default function GamerWorld() {
       {/* Seção Eventos */}
       <section id="eventos" style={{
         padding: isMobile ? '50px 15px' : '100px 48px',
-        background: 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
+        background: isMobile
+          ? 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)'
+          : 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
         borderTop: '1px solid rgba(0, 217, 255, 0.2)',
         position: 'relative',
-        overflow: isMobile ? 'visible' : 'hidden',
+        overflow: 'hidden',
       }}>
-        {/* Background animado com gradientes */}
+        {/* Background animado com gradientes - simplificado para mobile */}
+        {!isMobile && (
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1811,26 +1814,47 @@ export default function GamerWorld() {
           animation: 'gradientMove 15s ease-in-out infinite',
           zIndex: 0,
         }} />
-        
-        {/* Partículas flutuantes de fundo */}
-        {[...Array(20)].map((_, i) => (
-          <div key={i} style={{
-            position: 'absolute',
-            width: `${Math.random() * 4 + 2}px`,
-            height: `${Math.random() * 4 + 2}px`,
-            background: i % 3 === 0 ? '#ff00ea' : i % 3 === 1 ? '#00d9ff' : '#ffea00',
-            borderRadius: '50%',
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            opacity: 0.3,
-            animation: `floatParticleEvents ${8 + Math.random() * 8}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 5}s`,
-            boxShadow: `0 0 10px ${i % 3 === 0 ? '#ff00ea' : i % 3 === 1 ? '#00d9ff' : '#ffea00'}`,
-            zIndex: 0,
-          }} />
-        ))}
-        
-        {/* Grid pattern de fundo */}
+        )}
+
+        {/* Partículas flutuantes de fundo - reduzido para mobile */}
+        {isMobile ? (
+          [...Array(5)].map((_, i) => (  // Apenas 5 partículas em mobile
+            <div key={i} style={{
+              position: 'absolute',
+              width: `${Math.random() * 3 + 1}px`,
+              height: `${Math.random() * 3 + 1}px`,
+              background: i % 2 === 0 ? '#ff00ea' : '#00d9ff',
+              borderRadius: '50%',
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              opacity: 0.4,
+              animation: `floatParticleEvents ${6 + Math.random() * 4}s ease-in-out infinite`,
+              animationDelay: `${Math.random() * 3}s`,
+              boxShadow: `0 0 6px ${i % 2 === 0 ? '#ff00ea' : '#00d9ff'}`,
+              zIndex: 0,
+            }} />
+          ))
+        ) : (
+          [...Array(20)].map((_, i) => (
+            <div key={i} style={{
+              position: 'absolute',
+              width: `${Math.random() * 4 + 2}px`,
+              height: `${Math.random() * 4 + 2}px`,
+              background: i % 3 === 0 ? '#ff00ea' : i % 3 === 1 ? '#00d9ff' : '#ffea00',
+              borderRadius: '50%',
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              opacity: 0.3,
+              animation: `floatParticleEvents ${8 + Math.random() * 8}s ease-in-out infinite`,
+              animationDelay: `${Math.random() * 5}s`,
+              boxShadow: `0 0 10px ${i % 3 === 0 ? '#ff00ea' : i % 3 === 1 ? '#00d9ff' : '#ffea00'}`,
+              zIndex: 0,
+            }} />
+          ))
+        )}
+
+        {/* Grid pattern de fundo - removido em mobile */}
+        {!isMobile && (
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1845,8 +1869,10 @@ export default function GamerWorld() {
           opacity: 0.4,
           zIndex: 0,
         }} />
-        
-        {/* Linhas escaneando */}
+        )}
+
+        {/* Linhas escaneando - removido em mobile */}
+        {!isMobile && (
         <div style={{
           position: 'absolute',
           top: 0,
@@ -1858,6 +1884,7 @@ export default function GamerWorld() {
           boxShadow: '0 0 20px #00d9ff',
           zIndex: 0,
         }} />
+        )}
         
         <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: isMobile ? '0 5px' : '0'}}>
           {/* Tag line superior */}
@@ -1931,14 +1958,17 @@ export default function GamerWorld() {
               position: 'relative',
               maxWidth: isMobile ? '100%' : '1100px',
               margin: '0 auto',
-              height: isMobile ? '450px' : '500px',  /* Aumentei a altura para mobile */
+              height: isMobile ? '300px' : '500px',  /* Reduzi a altura para mobile */
               borderRadius: isMobile ? '12px' : '20px',
-              overflow: isMobile ? 'visible' : 'hidden',
+              overflow: 'hidden',
               border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
-              boxShadow: '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
-              animation: 'borderPulseCarousel 3s ease-in-out infinite',
+              boxShadow: isMobile
+                ? '0 0 15px rgba(0, 217, 255, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.2)'
+                : '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
+              animation: isMobile ? 'none' : 'borderPulseCarousel 3s ease-in-out infinite',
             }}>
-              {/* Brilho animado nas bordas */}
+              {/* Brilho animado nas bordas - removido em mobile */}
+              {!isMobile && (
               <div style={{
                 position: 'absolute',
                 top: 0,
@@ -1952,9 +1982,10 @@ export default function GamerWorld() {
                 zIndex: 4,
                 pointerEvents: 'none',
               }} />
-              
-              {/* Partículas decorativas */}
-              {[...Array(8)].map((_, i) => (
+              )}
+
+              {/* Partículas decorativas - removido em mobile */}
+              {!isMobile && ([...Array(8)].map((_, i) => (
                 <div key={i} style={{
                   position: 'absolute',
                   width: '4px',
@@ -1969,7 +2000,7 @@ export default function GamerWorld() {
                   boxShadow: `0 0 10px ${i % 2 === 0 ? '#00d9ff' : '#ff00ea'}`,
                   zIndex: 3,
                 }} />
-              ))}
+              )))}
               
               {/* Imagens do carrossel - otimizado para mobile */}
               {displayEventImages.map((img, index) => (
@@ -2046,10 +2077,10 @@ export default function GamerWorld() {
                   }}>// Próximo Evento</div>
                   
                   {/* Tipo de evento */}
-                  {event.type && (
+                  {event.type && !isMobile && (  // Ocultar tipos de evento em mobile
                     <div style={{
                       display: 'inline-block',
-                      background: event.type === 'Torneio' 
+                      background: event.type === 'Torneio'
                         ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
                         : event.type === 'Corujão'
                         ? 'linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2))'
@@ -2403,24 +2434,24 @@ export default function GamerWorld() {
                 gradient: 'linear-gradient(135deg, rgba(255, 0, 234, 0.15) 0%, rgba(255, 0, 234, 0.05) 100%)',
                 slug: 'corujoes',
               },
-              { 
+              ...(isMobile ? [] : [{
                 icon: '🏆',
-                title: 'Torneios', 
+                title: 'Torneios',
                 description: 'Jogue, compita e ganhe prêmios incríveis!',
                 details: 'Quinzenalmente • Premiação de até R$ 5.000',
                 color: '#00d9ff',
                 gradient: 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 100%)',
                 slug: 'torneios',
-              },
-              { 
+              }]),
+              ...(isMobile ? [] : [{
                 icon: '⚡',
-                title: 'Rush Play', 
+                title: 'Rush Play',
                 description: 'A jogatina só acaba quando o jogo terminar!',
                 details: 'Domingos • 14h - Game até zerar',
                 color: '#ffea00',
                 gradient: 'linear-gradient(135deg, rgba(255, 234, 0, 0.15) 0%, rgba(255, 234, 0, 0.05) 100%)',
                 slug: 'rush-play',
-              },
+              }]),
             ].map((event, idx) => (
               <div key={idx} style={{
                 background: event.gradient,
@@ -2743,16 +2774,16 @@ export default function GamerWorld() {
       {/* Seção Explore Jogos - Oculta em dispositivos móveis */}
       {isMobile ? null : (
       <section id="galeria" style={{
-        padding: isMobile ? '60px 20px' : '120px 48px',
+        padding: '120px 48px',
         background: `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center right',
         backgroundAttachment: 'fixed',
         position: 'relative',
-        overflow: isMobile ? 'visible' : 'hidden',
-        clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
-        marginTop: isMobile ? '0' : '-3%',
-        marginBottom: isMobile ? '0' : '-3%',
+        overflow: 'hidden',
+        clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+        marginTop: '-3%',
+        marginBottom: '-3%',
       }}>
         {/* Bordas diagonais brilhantes */}
         <div style={{
@@ -3347,10 +3378,10 @@ export default function GamerWorld() {
         backgroundPosition: 'center right',
         backgroundAttachment: isMobile ? 'fixed' : 'scroll',
         position: 'relative',
-        overflow: isMobile ? 'visible' : 'hidden',
-        clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
-        marginTop: isMobile ? '0' : '-5%',
-        marginBottom: isMobile ? '0' : '-5%',
+        overflow: 'hidden',
+        clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+        marginTop: '-5%',
+        marginBottom: '-5%',
       }}>
         {isMobile && (
           <>
