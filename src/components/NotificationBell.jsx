@@ -201,7 +201,7 @@ const NotificationBell = ({ userId, showNotification }) => {
           left: 'auto',
           width: 'min(400px, calc(100vw - 20px))',
           maxWidth: 'calc(100vw - 20px)',
-          maxHeight: '500px',
+          maxHeight: 'min(500px, calc(100vh - 80px))',
           background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(0, 5, 16, 0.98) 100%)',
           border: '2px solid rgba(0, 217, 255, 0.3)',
           borderRadius: '16px',
@@ -257,10 +257,12 @@ const NotificationBell = ({ userId, showNotification }) => {
 
           {/* Lista de notificações */}
           <div className="notification-panel-content" style={{
-            maxHeight: '420px',
+            maxHeight: 'calc(100vh - 160px)',
+            minHeight: '0',
             overflowY: 'auto',
             padding: '10px',
-            background: 'rgba(0, 0, 0, 0.2)'
+            background: 'rgba(0, 0, 0, 0.2)',
+            flex: 1
           }}>
             {loading ? (
               <div style={{
@@ -382,10 +384,14 @@ const NotificationBell = ({ userId, showNotification }) => {
 
         @media (max-width: 768px) {
           .notification-panel {
+            position: fixed !important;
+            top: 60px !important;
             right: 10px !important;
             left: 10px !important;
             width: calc(100vw - 20px) !important;
             max-width: calc(100vw - 20px) !important;
+            max-height: calc(100vh - 80px) !important;
+            z-index: 9999 !important;
           }
         }
       `}</style>
