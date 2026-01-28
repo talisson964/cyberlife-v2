@@ -1722,8 +1722,8 @@ export default function GamerWorld() {
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
             }}>
-              A <span style={{color: '#00d9ff', fontWeight: 700, textShadow: '0 0 10px rgba(0, 217, 255, 0.6)'}}>CyberHouse</span> é o paraíso dos gamers! 
-              Oferecemos os melhores jogos, hardware de última geração e uma comunidade apaixonada por games.
+              A <span style={{color: '#00d9ff', fontWeight: 700, textShadow: '0 0 10px rgba(0, 217, 255, 0.6)'}}>CyberHouse</span> é o paraíso dos gamers!
+              Oferecemos os melhores jogos, hardware de Diversas Gerações e uma comunidade apaixonada por games.
             </p>
             
             <p style={{
@@ -1751,7 +1751,7 @@ export default function GamerWorld() {
               gap: isMobile ? '20px' : '30px',
               marginTop: isMobile ? '30px' : '50px',
             }}>
-              {[
+              {!isMobile && [
                 { icon: '🎮', title: 'Jogos', color: '#00d9ff' },
                 { icon: '⚡', title: 'Performance', color: '#ff00ea' },
                 { icon: '🏆', title: 'Torneios', color: '#00d9ff' },
