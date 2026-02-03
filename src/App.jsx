@@ -99,6 +99,30 @@ function AccessLogger({ children }) {
 
 function StartWrapper() {
   const navigate = useNavigate()
+
+  // Detectar se é um dispositivo móvel
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  // Função para mostrar o carregamento e depois ir para o menu
+  const startWithLoading = () => {
+    // Simular o carregamento como no StartScreen
+    setTimeout(() => {
+      navigate('/menu')
+    }, 4000) // 4 segundos como no StartScreen
+  }
+
+  // Se for mobile, iniciar o carregamento automaticamente
+  React.useEffect(() => {
+    if (isMobile) {
+      startWithLoading()
+    }
+  }, [isMobile, navigate])
+
+  // Se for mobile, renderizar o StartScreen com o carregamento automático, senão renderizar normalmente
+  if (isMobile) {
+    return <StartScreen onStart={() => navigate('/menu')} autoStart={true} />
+  }
+
   return <StartScreen onStart={() => navigate('/menu')} />
 }
 

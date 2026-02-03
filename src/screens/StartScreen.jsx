@@ -14,7 +14,7 @@ emailjs.init('SxPIIDojWJxViW_q_')
 
 const images = [img1,img2, img3, img4]
 
-export default function StartScreen({ onStart }){
+export default function StartScreen({ onStart, autoStart = false }){
   const [index, setIndex] = useState(0)
   const [fade, setFade] = useState(true)
   const [showLogin, setShowLogin] = useState(false)
@@ -50,6 +50,49 @@ export default function StartScreen({ onStart }){
       return img;
     });
   }, []);
+
+  // Iniciar automaticamente o carregamento se autoStart for verdadeiro
+  useEffect(() => {
+    if (autoStart && !showLoading && !showWelcome && !showLogin) {
+      // Simular o clique no botão START
+      const startProcess = () => {
+        playRandomAudio()
+        setShowLoading(true)
+        setTimeout(() => {
+          setShowLoading(false)
+          // Mensagem animada tipo máquina de escrever
+          const frases = [
+            'Welcome to CyberLife',
+            'Bem Vindo à CyberLife'
+          ]
+          let frase = frases[Math.floor(Math.random() * frases.length)]
+          if (!frase.trim().endsWith('!')) frase = frase.trim() + '!'
+          setWelcomeText(frase)
+          setTypedText('')
+          setShowWelcome(true)
+          let i = 0
+          let current = ''
+          const typeInterval = setInterval(() => {
+            current += frase[i]
+            setTypedText(current)
+            i++
+            if (i >= frase.length) {
+              clearInterval(typeInterval)
+              setTimeout(() => {
+                setShowWelcome(false)
+                // Em vez de mostrar o login, chamar a função onStart
+                onStart()
+              }, 2500)
+            }
+          }, Math.max(50, Math.floor(1500 / frase.length)))
+        }, 4000)
+      }
+
+      // Iniciar o processo após um pequeno delay para garantir que o componente esteja montado
+      const timer = setTimeout(startProcess, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [autoStart, showLoading, showWelcome, showLogin, onStart])
 
   // Background image carousel - com transições mais suaves
   useEffect(() => {

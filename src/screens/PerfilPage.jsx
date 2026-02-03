@@ -596,10 +596,10 @@ export default function PerfilPage() {
             { name: 'Início', path: '/gamer-world#hero' },
             { name: 'CyberHouse', path: '/gamer-world#cyberhouse' },
             { name: 'Eventos', path: '/gamer-world#eventos' },
-            { name: 'Explore Jogos', path: '/gamer-world#galeria' },
+            ...(isMobile ? [] : [{ name: 'Explore Jogos', path: '/gamer-world#galeria' }]),
             { name: 'Loja Gamer', path: '/gamer-world#loja' },
             { name: 'Perfil', path: '/perfil' },
-          ].map((item, idx) => (
+          ].filter(item => !(isMobile && item.name === 'Explore Jogos')).map((item, idx) => (
             <Link
               key={idx}
               to={item.path}

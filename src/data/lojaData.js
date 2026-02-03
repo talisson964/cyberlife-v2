@@ -1,4 +1,4 @@
-// Dados centralizados da Loja Única
+// Dados centralizados da Loja Geek
 // Os produtos são compartilhados entre todas as páginas
 // Cada página destaca uma categoria diferente
 

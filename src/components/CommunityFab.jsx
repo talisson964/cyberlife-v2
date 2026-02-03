@@ -47,7 +47,7 @@ const icons = [
   {
     name: 'discord',
     color: '#5865F2',
-    url: 'https://discord.gg/DDVCkA3SW7',
+    url: 'https://discord.com/',
     Icon: DiscordIcon,
   },
 ];

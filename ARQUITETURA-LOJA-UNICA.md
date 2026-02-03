@@ -1,8 +1,8 @@
-# 🛒 Arquitetura da Loja Única - CyberLife
+# 🛒 Arquitetura da Loja Geek - CyberLife
 
 ## 📋 Visão Geral
 
-A CyberLife implementa uma **Loja Única** centralizada com produtos em 3 categorias principais, onde cada página web destaca uma categoria diferente mantendo acesso aos produtos de todas as categorias.
+A CyberLife implementa uma **Loja Geek** centralizada com produtos em 3 categorias principais, onde cada página web destaca uma categoria diferente mantendo acesso aos produtos de todas as categorias.
 
 ## 🏗️ Estrutura de Dados
 
@@ -47,7 +47,7 @@ Contém todos os dados compartilhados entre todas as lojas:
 ### 2️⃣ **GamerWorld.jsx** - Gamer World (Página de Games)
 - **Categoria em Destaque:** GAMER
 - **Identificador Visual:** Badge "★ Destaque" com borda cyan (#00d9ff)
-- **Seção de Loja:** "Loja Única - Destaque em Gamer"
+- **Seção de Loja:** "Loja Geek - Destaque em Gamer"
 - **Produtos Exibidos:** Primeiros 4 produtos GAMER (amostra)
 - **Botão:** "COMPRAR AGORA" vinculado aos produtos
 

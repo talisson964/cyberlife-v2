@@ -457,10 +457,10 @@ export default function LoginGamer({ onLoginSuccess }) {
             { name: 'Início', id: 'hero', isScroll: true, path: '/' },
             { name: 'CyberHouse', id: 'cyberhouse', isScroll: true, path: '/gamer-world#cyberhouse' },
             { name: 'Eventos', id: 'eventos', isScroll: true, path: '/gamer-world#eventos' },
-            { name: 'Explore Jogos', id: 'galeria', isScroll: true, path: '/gamer-world#galeria' },
+            ...(isMobile ? [] : [{ name: 'Explore Jogos', id: 'galeria', isScroll: true, path: '/gamer-world#galeria' }]),
             { name: 'Loja Gamer', id: 'loja', isScroll: true, path: '/gamer-world#loja' },
             { name: 'Perfil', id: 'perfil', isScroll: false, path: '/perfil' },
-          ].map((item, idx) => (
+          ].filter(item => !(isMobile && item.name === 'Explore Jogos')).map((item, idx) => (
             <Link
               key={idx}
               to={item.path}

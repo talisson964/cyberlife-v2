@@ -16,7 +16,7 @@ export default function SmartHomeStore({ onBack }) {
   // Categorias de SmartHome
   const categories = ['Todos', 'Iluminação', 'Energia', 'Segurança', 'Central', 'Sensores', 'Controle']
 
-  // Obter todos os produtos (loja única)
+  // Obter todos os produtos (loja geek)
   const allAvailableProducts = allProducts
 
   // Filtrar produtos
@@ -144,7 +144,7 @@ export default function SmartHomeStore({ onBack }) {
             opacity: 0.8,
             color: '#fff'
           }}>
-            Loja Única • Destaque em <span style={{ color: '#00d9ff', fontWeight: 700 }}>SmartHome</span>
+            Loja Geek • Destaque em <span style={{ color: '#00d9ff', fontWeight: 700 }}>SmartHome</span>
             <br />
             <small>Explore também: Geek & Gamer</small>
           </p>

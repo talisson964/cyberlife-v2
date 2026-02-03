@@ -555,21 +555,6 @@ export default function EventoPage() {
             opacity: 1;
           }
         }
-
-        /* Estilos específicos para dispositivos móveis */
-        @media (max-width: 768px) {
-          .evento-rules-list,
-          .evento-schedule-list {
-            max-height: 200px;
-            overflow-y: auto;
-          }
-
-          .evento-card-content {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-          }
-        }
       `}</style>
       <div className="evento-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
       {/* Header igual ao da Gamer World */}
@@ -769,10 +754,9 @@ export default function EventoPage() {
 
       {/* Conteúdo Principal do Evento */}
       <section style={{
-        padding: isMobile ? '30px 15px' : '60px 48px',
+        padding: isMobile ? '40px 20px' : '60px 48px',
         background: 'linear-gradient(180deg, #000 0%, #0a0a0a 100%)',
         minHeight: 'calc(100vh - 68px)',
-        overflowX: 'hidden', /* Evitar rolagem horizontal desnecessária */
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Título do Evento */}
@@ -1040,31 +1024,19 @@ export default function EventoPage() {
             </>
           )}
 
-          {/* Container isolado para o Grid de Informações */}
+          {/* Grid de Informações */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-            gap: isMobile ? '20px' : '30px',
-            marginBottom: isMobile ? '40px' : '50px',
-            width: '100%', /* Garantir largura total */
-            clear: 'both', /* Limpar flutuação de elementos anteriores */
-            position: 'relative', /* Garantir contexto de posicionamento */
-            zIndex: 1, /* REDUZIR O Z-INDEX PARA GARANTIR QUE ESTE CONTAINER FIQUE ATRÁS DOS CARDS SEGUINTES */
-            overflow: 'visible', /* Garantir que nada fique escondido */
-            isolation: 'isolate', /* Isolar completamente este container */
+            gap: '30px',
+            marginBottom: '50px',
           }}>
             {/* Card de Info Principal */}
             <div style={{
               background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
               border: '2px solid rgba(0, 217, 255, 0.4)',
               borderRadius: '16px',
-              padding: isMobile ? '20px' : '35px',
-              overflow: 'hidden', /* Evitar que elementos saiam do card */
-              position: 'relative', /* Garantir posicionamento correto */
-              clear: 'both', /* Garantir que este card não interfira com os seguintes */
-              isolation: 'isolate', /* Isolar completamente este card */
-              transform: 'translateZ(0)', /* Forçar aceleração de hardware para evitar sobreposição */
-              willChange: 'transform', /* Otimizar para mudanças */
+              padding: isMobile ? '25px' : '35px',
             }}>
               <h3 style={{
                 fontFamily: 'Rajdhani, sans-serif',
@@ -1297,13 +1269,7 @@ export default function EventoPage() {
               background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
               border: '2px solid rgba(0, 217, 255, 0.4)',
               borderRadius: '16px',
-              padding: isMobile ? '20px' : '35px',
-              overflow: 'hidden', /* Evitar que elementos saiam do card */
-              position: 'relative', /* Garantir posicionamento correto */
-              clear: 'both', /* Garantir que este card não interfira com os seguintes */
-              isolation: 'isolate', /* Isolar completamente este card */
-              transform: 'translateZ(0)', /* Forçar aceleração de hardware para evitar sobreposição */
-              willChange: 'transform', /* Otimizar para mudanças */
+              padding: isMobile ? '25px' : '35px',
             }}>
               <h3 style={{
                 fontFamily: 'Rajdhani, sans-serif',
@@ -1329,8 +1295,6 @@ export default function EventoPage() {
                   overflow: 'hidden',
                   border: '2px solid rgba(0, 217, 255, 0.3)',
                   boxShadow: '0 0 20px rgba(0, 217, 255, 0.3)',
-                  position: 'relative', /* Garantir contexto de posicionamento */
-                  zIndex: 1, /* Garantir que a imagem fique na camada correta */
                 }}>
                   <img
                     src={evento.image_url}
@@ -1339,7 +1303,6 @@ export default function EventoPage() {
                       width: '100%',
                       height: 'auto',
                       display: 'block',
-                      position: 'relative', /* Garantir que a imagem também tenha posicionamento relativo */
                     }}
                     onError={(e) => e.target.style.display = 'none'}
                   />
@@ -1348,188 +1311,107 @@ export default function EventoPage() {
             </div>
           </div>
 
-          {/* Divisor isolado para evitar sobreposição em mobile */}
-          <div style={{
-            height: '0px', /* Altura zero para não ocupar espaço visível */
-            clear: 'both',
-            display: 'block',
-            width: '100%',
-            border: 'none', /* Remover borda visível */
-            padding: isMobile ? '30px 0' : '40px 0', /* AUMENTAR ESPAÇAMENTO */
-            visibility: 'hidden', /* Torna o elemento invisível mas mantém o espaço */
-            minHeight: '30px', /* FORÇAR ALTURA MÍNIMA */
-            content: '', /* Garantir que o elemento exista */
-            overflow: 'hidden', /* Garantir que nada transborde */
-            isolation: 'isolate', /* Isolar completamente este elemento */
-            position: 'relative', /* Garantir contexto de posicionamento */
-            zIndex: 20, /* AUMENTAR AINDA MAIS O Z-INDEX PARA GARANTIR SEPARAÇÃO TOTAL */
-          }} />
-
-          {/* WRAPPER ISOLADO PARA O CARD DE CRONOGRAMA */}
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            zIndex: 25,
-            isolation: 'isolate',
-            contain: 'layout style paint',
-            transform: 'translateZ(0)',
-            willChange: 'transform',
-          }}>
-          {/* Card de Cronograma - Separado após o card "Sobre o Evento" */}
-          {evento.schedule && evento.schedule.length > 0 && (
+          {/* Grid de Regras e Cronograma */}
+          {((evento.rules && evento.rules.length > 0) || (evento.schedule && evento.schedule.length > 0)) && (
             <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-              border: '2px solid rgba(0, 217, 255, 0.4)',
-              borderRadius: '16px',
-              padding: isMobile ? '20px' : '35px',
-              marginTop: isMobile ? '40px' : '30px', /* Aumentar margem em mobile para mais espaçamento */
-              overflow: 'hidden', /* Evitar que elementos saiam do card */
-              position: 'relative', /* Garantir posicionamento correto */
-              minHeight: isMobile ? '150px' : 'auto', /* Altura mínima para evitar sobreposição */
-              maxHeight: isMobile ? '250px' : 'none', /* Reduzir altura máxima em mobile para evitar sobreposição */
-              display: 'block', /* Forçar display block para melhor controle de layout */
-              clear: 'both', /* Forçar quebra de linha para evitar sobreposição */
-              float: 'none', /* Garantir que não flutue */
-              width: '100%', /* Forçar largura total */
-              boxSizing: 'border-box', /* Incluir padding na largura total */
-              flex: '0 0 auto', /* Garantir que o card não encolha nem cresça */
-              alignSelf: 'stretch', /* Garantir que o card ocupe a largura total */
-              isolation: 'isolate', /* Isolar completamente este card */
-              contain: 'layout style paint', /* Contenção total para evitar interferência */
-              transform: 'translateZ(0)', /* Forçar aceleração de hardware para evitar sobreposição */
-              willChange: 'transform', /* Otimizar para mudanças */
-              zIndex: 25, /* FORÇAR ESTE CARD A FICAR ACIMA DO CARD ANTERIOR */
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gap: '30px',
+              marginTop: '30px',
             }}>
-              <h3 style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: '#00d9ff',
-                marginBottom: '20px',
-              }}>⏰ Cronograma</h3>
-
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                overflowY: 'auto', /* Adiciona rolagem vertical se necessário */
-                flex: 1, /* Permite que a lista ocupe o espaço disponível */
-              }}>
-                {evento.schedule.map((item, idx) => (
-                  <li key={idx} style={{
+              {/* Regras */}
+              {evento.rules && evento.rules.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.4)',
+                  borderRadius: '16px',
+                  padding: isMobile ? '25px' : '35px',
+                }}>
+                  <h3 style={{
                     fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    padding: '10px 15px',
-                    background: 'rgba(0, 217, 255, 0.05)',
-                    border: '1px solid rgba(0, 217, 255, 0.2)',
-                    borderRadius: '8px',
-                    wordWrap: 'break-word', /* Quebra palavras longas */
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 3, /* Limita a 3 linhas */
-                    WebkitBoxOrient: 'vertical',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: '#00d9ff',
+                    marginBottom: '20px',
+                  }}>📋 Regras</h3>
+
+                  <ul style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
                   }}>
-                    • {item}
-                  </li>
-                ))}
-              </ul>
+                    {evento.rules.map((rule, idx) => (
+                      <li key={idx} style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        padding: '10px 15px',
+                        background: 'rgba(0, 217, 255, 0.05)',
+                        border: '1px solid rgba(0, 217, 255, 0.2)',
+                        borderRadius: '8px',
+                      }}>
+                        • {rule}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Cronograma */}
+              {evento.schedule && evento.schedule.length > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  border: '2px solid rgba(0, 217, 255, 0.4)',
+                  borderRadius: '16px',
+                  padding: isMobile ? '25px' : '35px',
+                }}>
+                  <h3 style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: '#00d9ff',
+                    marginBottom: '20px',
+                  }}>⏰ Cronograma</h3>
+
+                  <ul style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}>
+                    {evento.schedule.map((item, idx) => (
+                      <li key={idx} style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        padding: '10px 15px',
+                        background: 'rgba(0, 217, 255, 0.05)',
+                        border: '1px solid rgba(0, 217, 255, 0.2)',
+                        borderRadius: '8px',
+                      }}>
+                        • {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
-          </div> {/* Fechamento do wrapper isolado do cronograma */}
-
-          {/* WRAPPER ISOLADO PARA O CARD DE REGRAS */}
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            zIndex: 30,
-            isolation: 'isolate',
-            contain: 'layout style paint',
-            transform: 'translateZ(0)',
-            willChange: 'transform',
-            marginTop: isMobile ? '80px' : '60px', /* AUMENTAR AINDA MAIS O ESPAÇAMENTO EM MOBILE */
-          }}>
-          {/* Card de Regras - MOVIDO PARA O FINAL, após todos os outros cards */}
-          {evento.rules && evento.rules.length > 0 && (
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-              border: '2px solid rgba(0, 217, 255, 0.4)',
-              borderRadius: '16px',
-              padding: isMobile ? '20px' : '35px',
-              marginTop: isMobile ? '80px' : '40px', /* AUMENTAR AINDA MAIS A MARGEM EM MOBILE PARA MAIS ESPAÇAMENTO */
-              overflow: 'hidden', /* Evitar que elementos saiam do card */
-              position: 'relative', /* Garantir posicionamento correto */
-              minHeight: isMobile ? '150px' : 'auto', /* Altura mínima para evitar sobreposição */
-              maxHeight: isMobile ? '250px' : 'none', /* Reduzir altura máxima em mobile para evitar sobreposição */
-              display: 'block', /* Forçar display block para melhor controle de layout */
-              clear: 'both', /* Forçar quebra de linha para evitar sobreposição */
-              float: 'none', /* Garantir que não flutue */
-              width: '100%', /* Forçar largura total */
-              boxSizing: 'border-box', /* Incluir padding na largura total */
-              flex: '0 0 auto', /* Garantir que o card não encolha nem cresça */
-              alignSelf: 'stretch', /* Garantir que o card ocupe a largura total */
-              isolation: 'isolate', /* Isolar completamente este card */
-              contain: 'layout style paint', /* Contenção total para evitar interferência */
-              transform: 'translateZ(0)', /* Forçar aceleração de hardware para evitar sobreposição */
-              willChange: 'transform', /* Otimizar para mudanças */
-              zIndex: 30, /* FORÇAR ESTE CARD A FICAR ACIMA DE TODOS OS OUTROS CARDS */
-            }}>
-              <h3 style={{
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: '#00d9ff',
-                marginBottom: '20px',
-              }}>📋 Regras</h3>
-
-              <ul style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                overflowY: 'auto', /* Adiciona rolagem vertical se necessário */
-                flex: 1, /* Permite que a lista ocupe o espaço disponível */
-              }}>
-                {evento.rules.map((rule, idx) => (
-                  <li key={idx} style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    color: 'rgba(255, 255, 255, 0.8)',
-                    padding: '10px 15px',
-                    background: 'rgba(0, 217, 255, 0.05)',
-                    border: '1px solid rgba(0, 217, 255, 0.2)',
-                    borderRadius: '8px',
-                    wordWrap: 'break-word', /* Quebra palavras longas */
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 3, /* Limita a 3 linhas */
-                    WebkitBoxOrient: 'vertical',
-                  }}>
-                    • {rule}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          </div> {/* Fechamento do wrapper isolado das regras */}
 
           {/* Seção de Apostas em Jogadores Vencedores */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
             border: '2px solid rgba(138, 43, 226, 0.4)',
             borderRadius: '20px',
-            padding: isMobile ? '25px 15px' : '40px',
-            margin: isMobile ? '40px auto' : '50px auto',
+            padding: isMobile ? '30px 20px' : '40px',
+            margin: '50px auto',
             maxWidth: '1000px',
             boxShadow: '0 0 30px rgba(138, 43, 226, 0.3)',
-            overflow: 'hidden', /* Evitar overflow */
           }}>
             <h2 style={{
               fontFamily: 'Rajdhani, sans-serif',
@@ -1557,10 +1439,8 @@ export default function EventoPage() {
             <div style={{
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-              gap: isMobile ? '15px' : '20px',
+              gap: '20px',
               marginBottom: '30px',
-              overflowX: 'auto', /* Permitir rolagem horizontal se necessário em dispositivos pequenos */
-              padding: isMobile ? '5px 0' : '0', /* Pequeno padding para rolagem */
             }}>
               {eventParticipants.length > 0 ? (
                 eventParticipants.map((option) => (
@@ -1576,10 +1456,6 @@ export default function EventoPage() {
                       transition: 'all 0.3s ease',
                       position: 'relative',
                       overflow: 'hidden',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      minHeight: isMobile ? '320px' : '300px', /* Altura mínima para evitar problemas de layout */
                     }}
                     onClick={() => setSelectedBet(option.id)}
                   >
@@ -1684,9 +1560,8 @@ export default function EventoPage() {
               background: 'rgba(0, 0, 0, 0.3)',
               border: '1px solid rgba(0, 217, 255, 0.2)',
               borderRadius: '12px',
-              padding: isMobile ? '15px' : '25px',
+              padding: '25px',
               marginTop: '20px',
-              overflow: 'hidden', /* Evitar overflow */
             }}>
               <div style={{
                 display: 'flex',

@@ -1,8 +1,8 @@
-# 📊 Diagrama da Arquitetura - Loja Única CyberLife
+# 📊 Diagrama da Arquitetura - Loja Geek CyberLife
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                     🛒 LOJA ÚNICA CENTRALIZADA                          │
+│                     🛒 LOJA GEEK CENTRALIZADA                           │
 │                                                                         │
 │  ┌──────────────────────────────────────────────────────────────────┐  │
 │  │                    src/data/lojaData.js                         │  │
@@ -231,7 +231,7 @@ GEEK (8 produtos)        GAMER (8 produtos)       SMARTHOME (8 produtos)
 
 ```
 1. Usuario acessa LojaGeek
-   └─ Vê 24 produtos da loja única
+   └─ Vê 24 produtos da loja geek
    └─ Destaque visual em produtos GEEK
 
 2. Usuario busca por "Mouse"
