@@ -97,7 +97,7 @@ function AccessLogger({ children }) {
   useAccessLog(currentUser, location.pathname)
 
   return children
-  
+
 }
 
 // Componente de proteção para redirecionar mobile para o gamer-world
@@ -111,7 +111,21 @@ function MobileRedirect({ children }) {
     }
   }, [isMobile, navigate])
 
-  if (isMobile) return null
+  if (isMobile) {
+    return (
+      <div style={{
+        height: '100vh',
+        width: '100vw',
+        background: '#000',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: '#00d9ff'
+      }}>
+        Carregando CyberLife...
+      </div>
+    )
+  }
   return children
 }
 
@@ -121,26 +135,7 @@ function StartWrapper() {
   // Detectar se é um dispositivo móvel
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-  // Função para mostrar o carregamento e depois ir para gamer-world no mobile ou menu no desktop
-  const startWithLoading = () => {
-    // Simular o carregamento como no StartScreen
-    setTimeout(() => {
-      if (isMobile) {
-        navigate('/gamer-world')
-      } else {
-        navigate('/menu')
-      }
-    }, 4000) // 4 segundos como no StartScreen
-  }
-
-  // Se for mobile, iniciar o carregamento automaticamente
-  React.useEffect(() => {
-    if (isMobile) {
-      startWithLoading()
-    }
-  }, [isMobile, navigate])
-
-  // Se for mobile, renderizar o StartScreen com o carregamento automático, senão renderizar normalmente
+  // Se for mobile, o StartScreen com autoStart cuidará da navegação
   if (isMobile) {
     return <StartScreen onStart={() => navigate('/gamer-world')} autoStart={true} />
   }
@@ -214,9 +209,7 @@ export default function App() {
         {location !== '/' && <CommunityFab />}
         <Routes>
           <Route path="/" element={
-            <LazySection>
-              <StartWrapper />
-            </LazySection>
+            <StartWrapper />
           } />
           <Route path="/menu" element={
             <LazySection>
@@ -253,9 +246,7 @@ export default function App() {
             </MobileRedirect>
           } />
           <Route path="/gamer-world" element={
-            <LazySection>
-              <GameHouseWrapper />
-            </LazySection>
+            <GameHouseWrapper />
           } />
           <Route path="/perfil" element={
             <MobileRedirect>
