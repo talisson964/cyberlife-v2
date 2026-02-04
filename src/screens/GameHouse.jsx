@@ -3738,141 +3738,74 @@ export default function GamerWorld() {
             <br/>
             <small style={{fontSize: '0.85rem'}}>Explore também: Gamer & SmartHome</small>
           </p>
-          
-          {/* Barra de Pesquisa e Carrinho */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: isMobile ? '10px' : '15px',
-            maxWidth: isMobile ? '100%' : '700px',
-            margin: isMobile ? '0 auto 25px' : '0 auto 40px',
-            padding: isMobile ? '0 10px' : '0',
-            boxSizing: 'border-box',
-          }}>
+
+          {/* Imagem principal para dispositivos móveis */}
+          {isMobile && (
             <div style={{
-              flex: 1,
-              position: 'relative',
+              width: '100%',
+              maxWidth: '500px',
+              margin: '20px auto',
+              position: 'relative'
             }}>
-              <input
-                type="text"
-                placeholder={isMobile ? 'Buscar...' : 'Buscar produtos...'}
-                value={searchProduct}
-                onChange={(e) => setSearchProduct(e.target.value)}
+              <img
+                src="/imagens/loja-mobile.png"
+                alt="CyberLife Store Mobile"
                 style={{
                   width: '100%',
-                  padding: isMobile ? '12px 45px 12px 15px' : '15px 50px 15px 20px',
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: isMobile ? '1rem' : '1.1rem',
-                  color: '#fff',
-                  background: 'rgba(0, 217, 255, 0.05)',
-                  border: '2px solid rgba(0, 217, 255, 0.3)',
-                  borderRadius: '12px',
-                  outline: 'none',
-                  transition: 'all 0.3s ease',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#00d9ff';
-                  e.target.style.boxShadow = '0 0 20px rgba(0, 217, 255, 0.4)';
-                  e.target.style.background = 'rgba(0, 217, 255, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(0, 217, 255, 0.3)';
-                  e.target.style.boxShadow = 'none';
-                  e.target.style.background = 'rgba(0, 217, 255, 0.05)';
+                  height: 'auto',
+                  display: 'block',
+                  animation: 'float 3s ease-in-out infinite',
                 }}
               />
-              <div style={{
-                position: 'absolute',
-                right: '15px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '1.5rem',
-                color: '#00d9ff',
-                pointerEvents: 'none',
-              }}>🔍</div>
             </div>
-            
-            {/* Botão do Carrinho */}
-            <button
-              onClick={() => navigate('/carrinho')}
-              style={{
-                padding: isMobile ? '12px 16px' : '15px 24px',
-                background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
-                border: '2px solid rgba(255, 0, 234, 0.4)',
-                borderRadius: '12px',
-                color: '#fff',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontWeight: 'bold',
-                fontSize: isMobile ? '0.9rem' : '1rem',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                boxSizing: 'border-box',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ff 0%, #ff00ea 100%)';
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 10px 30px rgba(255, 0, 234, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)';
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              🛒 {isMobile ? '' : 'Carrinho'}
-            </button>
-          </div>
+          )}
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 350px))',
-            gap: isMobile ? '20px' : '30px',
-            padding: isMobile ? '0 10px' : '0',
-            justifyContent: 'center',
-          }}>
-            {storeProducts
-              .filter(p => {
-                // Se houver busca, procurar em TODAS as categorias
-                if (searchProduct !== '') {
-                  return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-                         (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
-                }
-                // Sem busca, mostrar apenas categoria 'gamer'
-                return p.category === 'gamer';
-              })
-              .slice(0, 4)
-              .length === 0 ? (
-                <div style={{
-                  gridColumn: '1 / -1',
-                  textAlign: 'center',
-                  padding: '60px 20px',
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: '1.2rem',
-                }}>
-                  {searchProduct ? '🔍 Nenhum produto encontrado' : '📦 Nenhum produto disponível'}
-                  <p style={{fontSize: '0.9rem', marginTop: '10px'}}>
-                    {searchProduct ? 'Tente outra busca' : 'Adicione produtos no painel admin'}
-                  </p>
-                </div>
-              ) : (
-                storeProducts
-                  .filter(p => {
-                    // Se houver busca, procurar em TODAS as categorias
-                    if (searchProduct !== '') {
-                      return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-                             (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
-                    }
-                    // Sem busca, mostrar apenas categoria 'gamer'
-                    return p.category === 'gamer';
-                  })
-                  .slice(0, 4)
-                  .map((product) => (
+          {!isMobile && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 350px))',
+              gap: '30px',
+              padding: '0',
+              justifyContent: 'center',
+            }}>
+              {storeProducts
+                .filter(p => {
+                  // Se houver busca, procurar em TODAS as categorias
+                  if (searchProduct !== '') {
+                    return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                           (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
+                  }
+                  // Sem busca, mostrar apenas categoria 'gamer'
+                  return p.category === 'gamer';
+                })
+                .slice(0, 4)
+                .length === 0 ? (
+                  <div style={{
+                    gridColumn: '1 / -1',
+                    textAlign: 'center',
+                    padding: '60px 20px',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.2rem',
+                  }}>
+                    {searchProduct ? '🔍 Nenhum produto encontrado' : '📦 Nenhum produto disponível'}
+                    <p style={{fontSize: '0.9rem', marginTop: '10px'}}>
+                      {searchProduct ? 'Tente outra busca' : 'Adicione produtos no painel admin'}
+                    </p>
+                  </div>
+                ) : (
+                  storeProducts
+                    .filter(p => {
+                      // Se houver busca, procurar em TODAS as categorias
+                      if (searchProduct !== '') {
+                        return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                               (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
+                      }
+                      // Sem busca, mostrar apenas categoria 'gamer'
+                      return p.category === 'gamer';
+                    })
+                    .slice(0, 4)
+                    .map((product) => (
               <div 
                 key={product.id} 
                 onClick={() => navigate(`/produto/${product.id}`)}
@@ -4173,7 +4106,8 @@ export default function GamerWorld() {
               </div>
             ))
           )}
-          </div>
+        </div>
+      )}
         </div>
       </section>
       
@@ -4522,6 +4456,12 @@ styleSheet.innerText = `
   @keyframes borderSlide {
     0% { transform: translateX(-100%) skewY(-2deg); }
     100% { transform: translateX(100%) skewY(-2deg); }
+  }
+
+  @keyframes float {
+    0% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+    100% { transform: translateX(-3px); }
   }
 `;
 

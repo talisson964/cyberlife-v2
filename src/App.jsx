@@ -133,6 +133,13 @@ function MenuWrapper() {
 
 function LojaWrapper() {
   const navigate = useNavigate()
+  // Detectar se é um dispositivo móvel
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  if (isMobile) {
+    return <LojaGeekMobile onBack={() => navigate('/menu')} />
+  }
+
   return <LojaGeek onBack={() => navigate('/menu')} />
 }
 
@@ -143,6 +150,13 @@ function AdminWrapper() {
 
 function CarrinhoWrapper() {
   const navigate = useNavigate()
+  // Detectar se é um dispositivo móvel
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  if (isMobile) {
+    return <CarrinhoPage onBack={() => navigate('/menu')} />
+  }
+
   return <CarrinhoPage onBack={() => navigate('/loja-geek')} />
 }
 
