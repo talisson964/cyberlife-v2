@@ -97,6 +97,7 @@ function AccessLogger({ children }) {
   useAccessLog(currentUser, location.pathname)
 
   return children
+  
 }
 
 // Componente de proteção para redirecionar mobile para o gamer-world
