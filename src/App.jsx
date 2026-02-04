@@ -103,11 +103,15 @@ function StartWrapper() {
   // Detectar se é um dispositivo móvel
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-  // Função para mostrar o carregamento e depois ir para o menu
+  // Função para mostrar o carregamento e depois ir para gamer-world no mobile ou menu no desktop
   const startWithLoading = () => {
     // Simular o carregamento como no StartScreen
     setTimeout(() => {
-      navigate('/menu')
+      if (isMobile) {
+        navigate('/gamer-world')
+      } else {
+        navigate('/menu')
+      }
     }, 4000) // 4 segundos como no StartScreen
   }
 
@@ -120,7 +124,7 @@ function StartWrapper() {
 
   // Se for mobile, renderizar o StartScreen com o carregamento automático, senão renderizar normalmente
   if (isMobile) {
-    return <StartScreen onStart={() => navigate('/menu')} autoStart={true} />
+    return <StartScreen onStart={() => navigate('/gamer-world')} autoStart={true} />
   }
 
   return <StartScreen onStart={() => navigate('/menu')} />
