@@ -496,6 +496,9 @@ export default function GamerWorld() {
 
   // Show tutorial randomly with 1/3 chance on every visit
   useEffect(() => {
+    // Não mostrar tutorial em dispositivos móveis
+    if (isMobile) return;
+
     setTimeout(() => {
       // Generate a random number between 1 and 3
       const shouldShowTutorial = Math.random() < 1 / 3;
@@ -503,7 +506,7 @@ export default function GamerWorld() {
         setShowTutorial(true);
       }
     }, 1000); // Show tutorial after 1 second to allow page to load
-  }, []);
+  }, [isMobile]);
 
   // Tutorial data
   const tutorialSteps = [
