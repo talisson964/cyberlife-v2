@@ -187,8 +187,8 @@ export default function App() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 9999, pointerEvents: 'none', background: 'rgba(0,0,0,0.15)' }}>
           <AudioVisualizer key={audioTick} />
         </div>
-        {/* Botão flutuante de download do app */}
-        <DownloadAppButton />
+        {/* Botão flutuante de download do app - não aparece na tela inicial */}
+        {location !== '/' && <DownloadAppButton />}
         {/* CommunityFab aparece em todas as telas exceto na tela inicial */}
         {location !== '/' && <CommunityFab />}
         <Routes>
