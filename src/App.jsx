@@ -99,6 +99,21 @@ function AccessLogger({ children }) {
   return children
 }
 
+// Componente de proteção para redirecionar mobile para o gamer-world
+function MobileRedirect({ children }) {
+  const navigate = useNavigate()
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  React.useEffect(() => {
+    if (isMobile) {
+      navigate('/gamer-world')
+    }
+  }, [isMobile, navigate])
+
+  if (isMobile) return null
+  return children
+}
+
 function StartWrapper() {
   const navigate = useNavigate()
 
@@ -134,62 +149,43 @@ function StartWrapper() {
 
 function MenuWrapper() {
   const navigate = useNavigate()
-  return <NextScreen onNavigate={(page) => navigate(`/${page}`)} />
+  return (
+    <MobileRedirect>
+      <NextScreen onNavigate={(page) => navigate(`/${page}`)} />
+    </MobileRedirect>
+  )
 }
 
 function LojaWrapper() {
   const navigate = useNavigate()
-  // Detectar se é um dispositivo móvel
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
-  // Remover a página loja-geek no mobile conforme requisito
-  if (isMobile) {
-    // Redirecionar para o menu no mobile
-    React.useEffect(() => {
-      const timer = setTimeout(() => {
-        navigate('/menu');
-      }, 100); // Pequeno delay para garantir que o componente foi montado
-      return () => clearTimeout(timer);
-    }, [navigate]);
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: '#000',
-        color: '#00d9ff',
-        fontFamily: 'Rajdhani, sans-serif',
-        fontSize: '1.2rem'
-      }}>
-        Redirecionando...
-      </div>
-    );
-  }
-
-  return <LojaGeek onBack={() => navigate('/menu')} />
+  return (
+    <MobileRedirect>
+      <LojaGeek onBack={() => navigate('/menu')} />
+    </MobileRedirect>
+  )
 }
 
 function AdminWrapper() {
   const navigate = useNavigate()
-  return <AdminPanel3 onNavigate={(page) => navigate(`/${page}`)} />
+  return (
+    <MobileRedirect>
+      <AdminPanel3 onNavigate={(page) => navigate(`/${page}`)} />
+    </MobileRedirect>
+  )
 }
 
 function CarrinhoWrapper() {
   const navigate = useNavigate()
-  // Detectar se é um dispositivo móvel
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
-  if (isMobile) {
-    return <CarrinhoPage onBack={() => navigate('/menu')} />
-  }
-
-  return <CarrinhoPage onBack={() => navigate('/loja-geek')} />
+  return (
+    <MobileRedirect>
+      <CarrinhoPage onBack={() => navigate('/loja-geek')} />
+    </MobileRedirect>
+  )
 }
 
 function GameHouseWrapper() {
   const navigate = useNavigate()
-  return <GameHouse onBack={() => navigate('/menu')} />
+  return <GameHouse onBack={() => navigate('/gamer-world')} />
 }
 
 
@@ -232,9 +228,11 @@ export default function App() {
             </LazySection>
           } />
           <Route path="/produto/:id" element={
-            <LazySection>
-              <ProductDetailPage />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <ProductDetailPage />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/carrinho" element={
             <LazySection>
@@ -247,9 +245,11 @@ export default function App() {
             </LazySection>
           } />
           <Route path="/loja-geek/admin" element={
-            <LazySection>
-              <AdminWrapper />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <AdminWrapper />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/gamer-world" element={
             <LazySection>
@@ -257,34 +257,46 @@ export default function App() {
             </LazySection>
           } />
           <Route path="/perfil" element={
-            <LazySection>
-              <PerfilPage />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <PerfilPage />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/evento/:eventoId" element={
-            <LazySection>
-              <EventoPage />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <EventoPage />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/atividade/:atividadeId" element={
-            <LazySection>
-              <AtividadePage />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <AtividadePage />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/jogo/:jogoId" element={
-            <LazySection>
-              <JogoPage />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <JogoPage />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/comprar-cyberpoints" element={
-            <LazySection>
-              <CompraCyberPoints />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <CompraCyberPoints />
+              </LazySection>
+            </MobileRedirect>
           } />
           <Route path="/login" element={
-            <LazySection>
-              <LoginGamer />
-            </LazySection>
+            <MobileRedirect>
+              <LazySection>
+                <LoginGamer />
+              </LazySection>
+            </MobileRedirect>
           } />
         </Routes>
       </AccessLogger>
