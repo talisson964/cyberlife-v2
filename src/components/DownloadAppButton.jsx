@@ -14,10 +14,11 @@ const DownloadAppButton = () => {
     <div
       style={{
         position: 'fixed',
-        top: '60px', // Posicionado logo abaixo do cabeçalho (assumindo altura de 60px)
-        right: '20px',
+        top: '80px', // Ajustado para dispositivos móveis
+        right: '15px',
         zIndex: 10000, // Garante que fique acima de outros elementos
         pointerEvents: 'auto', // Permite interações com o botão
+        width: 'auto',
       }}
     >
       <button
@@ -27,15 +28,15 @@ const DownloadAppButton = () => {
           color: '#fff',
           border: 'none',
           borderRadius: '30px',
-          padding: '12px 24px',
-          fontSize: '16px',
+          padding: '10px 20px', // Ajustado para dispositivos móveis
+          fontSize: '14px', // Ajustado para dispositivos móveis
           fontWeight: 'bold',
           cursor: 'pointer',
           boxShadow: '0 6px 20px rgba(0, 217, 255, 0.3), 0 0 15px rgba(227, 34, 188, 0.3)',
           transition: 'all 0.3s ease',
           fontFamily: 'Rajdhani, sans-serif',
           textTransform: 'uppercase',
-          letterSpacing: '1.2px',
+          letterSpacing: '1px', // Ajustado para dispositivos móveis
           opacity: 0.9, // Menos opacidade
         }}
         onMouseEnter={(e) => {
