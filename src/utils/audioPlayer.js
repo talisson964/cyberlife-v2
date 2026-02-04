@@ -40,7 +40,7 @@ function shuffleArray(array) {
   const arr = array.slice()
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    ;[arr[i], arr[j]] = [arr[j], arr[i]]
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
   }
   return arr
 }
@@ -74,6 +74,11 @@ function getNextAudioFile() {
  */
 
 function playNextAudio() {
+  // Verificação de segurança para mobile
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    return
+  }
+
   if (!isPlaying) return
   try {
     const audioPath = getNextAudioFile()
@@ -81,18 +86,18 @@ function playNextAudio() {
       currentAudio = new Audio()
       audioInitialized = true
     }
-    
+
     // Sempre reconfigura os event listeners para garantir continuidade
     currentAudio.onended = () => {
       console.log('🎵 Faixa finalizada, tocando próxima...')
       playNextAudio()
     }
-    
+
     currentAudio.onerror = () => {
       console.error('Erro ao carregar áudio, tentando próxima faixa...')
       playNextAudio()
     }
-    
+
     currentAudio.src = audioPath
     currentAudio.currentTime = 0
     currentAudio.load()
@@ -111,6 +116,11 @@ function playNextAudio() {
  */
 
 export function playRandomAudio() {
+  // Verificação de segurança para mobile
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+    return
+  }
+
   if (isPlaying) return // Already playing
   isPlaying = true
   refillQueue()
@@ -137,5 +147,8 @@ export function stopAudio() {
  * Check if audio is currently playing
  */
 export function isAudioPlaying() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  if (isMobile) return false
+
   return isPlaying && currentAudio && !currentAudio.paused
 }

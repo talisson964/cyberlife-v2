@@ -228,38 +228,41 @@ export default function GamerWorld() {
       setNotification(null);
     }, duration);
   };
-  
+
   // Estado para produtos da loja centralizada
   const [storeProducts, setStoreProducts] = useState([]);
   const [searchProduct, setSearchProduct] = useState('');
   const [addedToCart, setAddedToCart] = useState(null);
-  
+
   // Função para adicionar ao carrinho
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
     const cart = JSON.parse(localStorage.getItem('cyberlife_cart') || '[]');
     const existingProduct = cart.find(item => item.id === product.id);
-    
+
     if (existingProduct) {
       existingProduct.quantity += 1;
     } else {
       cart.push({ ...product, quantity: 1 });
     }
-    
+
     localStorage.setItem('cyberlife_cart', JSON.stringify(cart));
     setAddedToCart(product.id);
-    
+
     setTimeout(() => setAddedToCart(null), 2000);
   };
 
-  // Parar a música ao entrar nesta tela (exceto em dispositivos móveis)
+  // Parar a música ao entrar nesta tela (exceto em dispositivos móveis que nem deveriam tocar)
   useEffect(() => {
     // Detectar se é um dispositivo móvel
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
-    // Só para o áudio se não for mobile
-    if (!isMobile) {
-      stopAudio()
+    // Parar áudio sempre ao entrar no GameHouse
+    stopAudio()
+
+    // Se for mobile, garantir que não há processamento de áudio
+    if (isMobileDevice) {
+      window.removeEventListener('cyberlife-audio-tick', () => { })
     }
   }, [])
 
@@ -281,7 +284,7 @@ export default function GamerWorld() {
       subscription.unsubscribe();
     };
   }, []);
-  
+
   // Carregar produtos do banco de dados
   useEffect(() => {
     const loadProducts = async () => {
@@ -311,14 +314,14 @@ export default function GamerWorld() {
         }
       }
     };
-    
+
     loadProducts();
-    
+
     // Recarregar produtos quando a aba voltar ao foco
     const handleFocus = () => {
       loadProducts();
     };
-    
+
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
@@ -333,7 +336,7 @@ export default function GamerWorld() {
     imgBeyond,
     imgConcret,
   ];
-  
+
   const eventsData = [
     {
       title: 'Campeonato League of Legends',
@@ -415,14 +418,14 @@ export default function GamerWorld() {
           slug: event.slug, // Usar o slug do banco de dados
           type: event.type || 'Torneio',
         }));
-        
+
         setDisplayEvents(formattedEvents);
-        
+
         // Usar imagens dos eventos se existirem
         const eventImageUrls = events
           .map(event => event.image_url)
           .filter(Boolean);
-        
+
         if (eventImageUrls.length > 0) {
           setDisplayEventImages(eventImageUrls);
         } else {
@@ -462,7 +465,7 @@ export default function GamerWorld() {
 
     // Animação de entrada do texto
     setTimeout(() => setTextVisible(true), 300);
-    
+
     return () => {
       clearInterval(timer);
       clearInterval(eventTimer);
@@ -473,13 +476,13 @@ export default function GamerWorld() {
   // Auto-fechar menu após 5 segundos
   useEffect(() => {
     let menuTimer;
-    
+
     if (menuOpen) {
       menuTimer = setTimeout(() => {
         setMenuOpen(false);
       }, 5000);
     }
-    
+
     return () => {
       if (menuTimer) {
         clearTimeout(menuTimer);
@@ -491,7 +494,7 @@ export default function GamerWorld() {
   useEffect(() => {
     setTimeout(() => {
       // Generate a random number between 1 and 3
-      const shouldShowTutorial = Math.random() < 1/3;
+      const shouldShowTutorial = Math.random() < 1 / 3;
       if (shouldShowTutorial) {
         setShowTutorial(true);
       }
@@ -753,8 +756,8 @@ export default function GamerWorld() {
           transition: 'transform 0.3s ease',
           cursor: 'pointer',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           <img
             src="/cyberlife-icone2.png"
@@ -843,23 +846,23 @@ export default function GamerWorld() {
               transition: 'all 0.3s ease',
               boxShadow: '0 0 15px rgba(0, 217, 255, 0.3)',
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
-              e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
-              e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
+                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
               Início
             </button>
           </Link>
         </nav>
       </header>
-      
+
       {/* Menu Bar Dropdown */}
       <nav style={{
         position: 'absolute',
@@ -909,44 +912,44 @@ export default function GamerWorld() {
                   fontFamily: 'Rajdhani, sans-serif',
                   fontSize: '0.95rem',
                   fontWeight: 600,
-                color: '#00d9ff',
-                textDecoration: 'none',
-                padding: '12px 16px',
-                position: 'relative',
-                transition: 'all 0.3s ease',
-                letterSpacing: '0.5px',
-                borderRadius: '8px',
-                background: 'rgba(0, 217, 255, 0.05)',
-                cursor: 'pointer',
-                overflow: 'hidden',
-                animation: menuOpen ? `slideInMenu 0.4s ease-out ${idx * 0.1}s both` : 'none',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
-                e.currentTarget.style.color = '#fff';
-                e.currentTarget.style.paddingLeft = '24px';
-                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 217, 255, 0.05)';
-                e.currentTarget.style.color = '#00d9ff';
-                e.currentTarget.style.paddingLeft = '16px';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              {item.name}
-              <div style={{
-                position: 'absolute',
-                left: 0,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '3px',
-                height: '0%',
-                background: 'linear-gradient(180deg, #ff00ea 0%, #00d9ff 100%)',
-                transition: 'height 0.3s ease',
-                boxShadow: '0 0 10px #ff00ea',
-              }} />
-            </a>
+                  color: '#00d9ff',
+                  textDecoration: 'none',
+                  padding: '12px 16px',
+                  position: 'relative',
+                  transition: 'all 0.3s ease',
+                  letterSpacing: '0.5px',
+                  borderRadius: '8px',
+                  background: 'rgba(0, 217, 255, 0.05)',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  animation: menuOpen ? `slideInMenu 0.4s ease-out ${idx * 0.1}s both` : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.paddingLeft = '24px';
+                  e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.05)';
+                  e.currentTarget.style.color = '#00d9ff';
+                  e.currentTarget.style.paddingLeft = '16px';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                {item.name}
+                <div style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '3px',
+                  height: '0%',
+                  background: 'linear-gradient(180deg, #ff00ea 0%, #00d9ff 100%)',
+                  transition: 'height 0.3s ease',
+                  boxShadow: '0 0 10px #ff00ea',
+                }} />
+              </a>
             ) : (
               <Link
                 key={idx}
@@ -998,13 +1001,13 @@ export default function GamerWorld() {
           ))}
         </div>
       </nav>
-      
+
       <section id="hero" className="gamer-world-hero" style={{
-        position: 'relative', 
-        height: 'calc(100vh - 68px)', 
+        position: 'relative',
+        height: 'calc(100vh - 68px)',
         width: '100vw',
         overflow: 'hidden',
-        padding: '0', 
+        padding: '0',
         margin: 0,
         boxShadow: '0 20px 60px rgba(0, 217, 255, 0.4)',
       }}>
@@ -1038,7 +1041,7 @@ export default function GamerWorld() {
             }}
           />
         ))}
-        
+
         {/* Overlay escuro para melhor legibilidade do texto */}
         <div style={{
           position: 'absolute',
@@ -1049,9 +1052,9 @@ export default function GamerWorld() {
           background: 'linear-gradient(90deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.5) 100%)',
           zIndex: 2,
         }} />
-        
-        {/* Partículas flutuantes decorativas - Múltiplas camadas */}
-        {[...Array(12)].map((_, i) => (
+
+        {/* Partículas flutuantes decorativas - Múltiplas camadas (Reduzido em mobile) */}
+        {(!isMobile || (isMobile && !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)))) && [...Array(isMobile ? 4 : 12)].map((_, i) => (
           <div key={i} style={{
             position: 'absolute',
             width: i < 6 ? '4px' : '2px',
@@ -1066,9 +1069,9 @@ export default function GamerWorld() {
             animationDelay: `${i * 0.15}s`,
           }} />
         ))}
-        
-        {/* Círculos expandindo de fundo */}
-        {[...Array(3)].map((_, i) => (
+
+        {/* Círculos expandindo de fundo (Desativado em mobile para performance) */}
+        {!isMobile && [...Array(3)].map((_, i) => (
           <div key={`circle-${i}`} style={{
             position: 'absolute',
             width: '300px',
@@ -1082,14 +1085,14 @@ export default function GamerWorld() {
             animationDelay: `${i * 1.3}s`,
           }} />
         ))}
-        
+
         {/* Texto sobreposto - Novo Design Futurista */}
         <div style={{
-          position: 'absolute', 
-          top: '30%', 
-          left: '8vw', 
-          zIndex: 3, 
-          textAlign: 'left', 
+          position: 'absolute',
+          top: '30%',
+          left: '8vw',
+          zIndex: 3,
+          textAlign: 'left',
           maxWidth: '700px',
           transform: textVisible ? 'translateY(0)' : 'translateY(30px)',
           opacity: textVisible ? 1 : 0,
@@ -1121,7 +1124,7 @@ export default function GamerWorld() {
               // GAME MODE ACTIVATED
             </span>
           </div>
-          
+
           {/* Título principal - Stack vertical */}
           <div style={{ marginBottom: '25px' }}>
             {['ARE', 'YOU', 'PLAYER?'].map((word, idx) => (
@@ -1158,27 +1161,29 @@ export default function GamerWorld() {
               </div>
             ))}
           </div>
-          
-          {/* Grid de pontos decorativos */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(8, 4px)',
-            gap: '8px',
-            marginBottom: '20px',
-            animation: 'fadeIn 1s ease-out 0.8s both',
-          }}>
-            {[...Array(8)].map((_, i) => (
-              <div key={i} style={{
-                width: '4px',
-                height: '4px',
-                background: i === 3 || i === 4 ? '#ff00ea' : '#00d9ff',
-                boxShadow: `0 0 8px ${i === 3 || i === 4 ? '#ff00ea' : '#00d9ff'}`,
-                animation: `dotBlink ${1 + i * 0.2}s ease-in-out infinite`,
-                animationDelay: `${i * 0.1}s`,
-              }} />
-            ))}
-          </div>
-          
+
+          {/* Grid de pontos decorativos (Ocultar em mobile) */}
+          {!isMobile && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(8, 4px)',
+              gap: '8px',
+              marginBottom: '20px',
+              animation: 'fadeIn 1s ease-out 0.8s both',
+            }}>
+              {[...Array(8)].map((_, i) => (
+                <div key={i} style={{
+                  width: '4px',
+                  height: '4px',
+                  background: i === 3 || i === 4 ? '#ff00ea' : '#00d9ff',
+                  boxShadow: `0 0 8px ${i === 3 || i === 4 ? '#ff00ea' : '#00d9ff'}`,
+                  animation: `dotBlink ${1 + i * 0.2}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.1}s`,
+                }} />
+              ))}
+            </div>
+          )}
+
           {/* Subtítulo moderno */}
           <div style={{
             fontFamily: 'Rajdhani, sans-serif',
@@ -1209,8 +1214,9 @@ export default function GamerWorld() {
               real life is very boring!
             </span>
           </div>
-          
+
           {/* Elemento decorativo inferior */}
+          {/* Ocultar em mobile se necessário, mas vou manter pois é leve, talvez reduzir sombra */}
           <div style={{
             display: 'flex',
             gap: '10px',
@@ -1223,19 +1229,19 @@ export default function GamerWorld() {
               height: '2px',
               background: '#00d9ff',
               animation: 'expandWidth 1.5s ease-out 1.3s both',
-              boxShadow: '0 0 10px #00d9ff',
+              boxShadow: isMobile ? 'none' : '0 0 10px #00d9ff',
             }} />
             <div style={{
               width: '8px',
               height: '8px',
               background: '#ff00ea',
               transform: 'rotate(45deg)',
-              boxShadow: '0 0 15px #ff00ea',
+              boxShadow: isMobile ? 'none' : '0 0 15px #ff00ea',
               animation: 'rotatePulse 3s ease-in-out infinite',
             }} />
           </div>
         </div>
-        
+
         {/* Estilos de animação */}
         <style>{`
           @keyframes glowPulse {
@@ -1567,7 +1573,7 @@ export default function GamerWorld() {
             }
           }
         `}</style>
-        
+
         {/* Gradiente escuro no fim da seção */}
         <div style={{
           position: 'absolute',
@@ -1578,7 +1584,7 @@ export default function GamerWorld() {
           background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.9) 100%)',
           zIndex: 2,
         }} />
-        
+
         {/* Ambilight effect na transição */}
         <div style={{
           position: 'absolute',
@@ -1639,7 +1645,7 @@ export default function GamerWorld() {
           animation: 'floatSlow 6s ease-in-out infinite 3s',
           zIndex: 1,
         }} />
-        
+
         {/* Overlay com gradiente */}
         <div style={{
           position: 'absolute',
@@ -1650,8 +1656,8 @@ export default function GamerWorld() {
           background: 'radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.7) 70%)',
           zIndex: 2,
         }} />
-        
-        <div style={{maxWidth: '1000px', margin: '0 auto', position: 'relative', zIndex: 3}}>
+
+        <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative', zIndex: 3 }}>
           {/* Tag superior */}
           <div style={{
             textAlign: 'center',
@@ -1669,7 +1675,7 @@ export default function GamerWorld() {
               // ABOUT US
             </span>
           </div>
-          
+
           {/* Título */}
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
@@ -1688,8 +1694,8 @@ export default function GamerWorld() {
             lineHeight: '1.2',
             wordWrap: 'break-word',
             padding: isMobile ? '0 10px' : '0',
-          }}>Cyber<span style={{color: '#ff00ea', textShadow: '0 0 30px rgba(255, 0, 234, 0.8)'}}>House</span></h2>
-          
+          }}>Cyber<span style={{ color: '#ff00ea', textShadow: '0 0 30px rgba(255, 0, 234, 0.8)' }}>House</span></h2>
+
           {/* Card de conteúdo */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
@@ -1713,7 +1719,7 @@ export default function GamerWorld() {
               background: 'linear-gradient(90deg, transparent, #00d9ff, #ff00ea, transparent)',
               animation: 'borderSlide 3s linear infinite',
             }} />
-            
+
             {/* Texto descritivo */}
             <p style={{
               fontFamily: 'Rajdhani, sans-serif',
@@ -1727,10 +1733,10 @@ export default function GamerWorld() {
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
             }}>
-              A <span style={{color: '#00d9ff', fontWeight: 700, textShadow: '0 0 10px rgba(0, 217, 255, 0.6)'}}>CyberHouse</span> é o paraíso dos gamers!
+              A <span style={{ color: '#00d9ff', fontWeight: 700, textShadow: '0 0 10px rgba(0, 217, 255, 0.6)' }}>CyberHouse</span> é o paraíso dos gamers!
               Oferecemos os melhores jogos, hardware de Diversas Gerações e uma comunidade apaixonada por games.
             </p>
-            
+
             <p style={{
               fontFamily: 'Rajdhani, sans-serif',
               fontSize: isMobile ? '1rem' : '1.3rem',
@@ -1743,12 +1749,12 @@ export default function GamerWorld() {
               wordWrap: 'break-word',
               overflowWrap: 'break-word',
             }}>
-              Aqui você encontra tudo o que precisa para levar sua experiência de jogo ao próximo nível. 
-              Seja você um jogador <span style={{color: '#ff00ea', fontWeight: 700, textShadow: '0 0 10px rgba(255, 0, 234, 0.6)'}}>casual</span> ou{' '}
-              <span style={{color: '#00d9ff', fontWeight: 700, textShadow: '0 0 10px rgba(0, 217, 255, 0.6)'}}>profissional</span>, 
+              Aqui você encontra tudo o que precisa para levar sua experiência de jogo ao próximo nível.
+              Seja você um jogador <span style={{ color: '#ff00ea', fontWeight: 700, textShadow: '0 0 10px rgba(255, 0, 234, 0.6)' }}>casual</span> ou{' '}
+              <span style={{ color: '#00d9ff', fontWeight: 700, textShadow: '0 0 10px rgba(0, 217, 255, 0.6)' }}>profissional</span>,
               temos o equipamento perfeito para você dominar suas partidas.
             </p>
-            
+
             {/* Grid de features */}
             <div style={{
               display: 'grid',
@@ -1770,17 +1776,17 @@ export default function GamerWorld() {
                   transition: 'all 0.3s ease',
                   boxSizing: 'border-box',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.boxShadow = `0 10px 30px ${item.color}60`;
-                  e.currentTarget.style.borderColor = item.color;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.borderColor = `${item.color}40`;
-                }}>
-                  <div style={{fontSize: isMobile ? '2.5rem' : '3rem', marginBottom: '10px'}}>{item.icon}</div>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = `0 10px 30px ${item.color}60`;
+                    e.currentTarget.style.borderColor = item.color;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = `${item.color}40`;
+                  }}>
+                  <div style={{ fontSize: isMobile ? '2.5rem' : '3rem', marginBottom: '10px' }}>{item.icon}</div>
                   <div style={{
                     fontFamily: 'Rajdhani, sans-serif',
                     fontSize: isMobile ? '1rem' : '1.2rem',
@@ -1869,8 +1875,8 @@ export default function GamerWorld() {
             zIndex: 0,
           }} />
         )}
-        
-        <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: isMobile ? '0 5px' : '0'}}>
+
+        <div style={{ maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: isMobile ? '0 5px' : '0' }}>
           {/* Tag line superior */}
           <div style={{
             fontFamily: 'Courier New, monospace',
@@ -1882,7 +1888,7 @@ export default function GamerWorld() {
             opacity: 0.8,
             animation: 'fadeIn 1s ease-out',
           }}>// UPCOMING EVENTS</div>
-          
+
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: 700,
@@ -1896,7 +1902,7 @@ export default function GamerWorld() {
             textTransform: 'uppercase',
             animation: 'glowPulse 3s ease-in-out infinite',
           }}>Eventos</h2>
-          
+
           {/* Linha decorativa sob título */}
           <div style={{
             width: '120px',
@@ -1906,7 +1912,7 @@ export default function GamerWorld() {
             boxShadow: '0 0 15px #ff00ea',
             animation: 'expandWidth 1.5s ease-out',
           }} />
-          
+
           <p style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: '1.3rem',
@@ -1916,246 +1922,216 @@ export default function GamerWorld() {
             opacity: 0.9,
             animation: 'fadeIn 1s ease-out 0.3s both',
           }}>
-            Experiências <span style={{color: '#ff00ea', fontWeight: 700}}>exclusivas</span> para gamers de <span style={{color: '#00d9ff', fontWeight: 700}}>verdade</span>
+            Experiências <span style={{ color: '#ff00ea', fontWeight: 700 }}>exclusivas</span> para gamers de <span style={{ color: '#00d9ff', fontWeight: 700 }}>verdade</span>
           </p>
-          
+
           {/* Carrossel Próximos Eventos - Ocultar em dispositivos móveis */}
           {isMobile ? null : (
-          <div style={{
-            marginBottom: '80px',
-            position: 'relative',
-            animation: 'fadeInUp 1s ease-out 0.5s both',
-          }}>
-            <h3 style={{
-              fontFamily: 'Rajdhani, sans-serif',
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: '#ff00ea',
-              textAlign: 'center',
-              marginBottom: '30px',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-              textShadow: '0 0 20px rgba(255, 0, 234, 0.6)',
-              animation: 'glowPulse 3s ease-in-out infinite, slideRight 1s ease-out',
-            }}>Próximos Eventos</h3>
-
             <div style={{
+              marginBottom: '80px',
               position: 'relative',
-              maxWidth: '1100px',
-              margin: '0 auto',
-              height: '500px',
-              borderRadius: '20px',
-              overflow: 'hidden',
-              border: '3px solid #00d9ff',
-              boxShadow: '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
-              animation: 'borderPulseCarousel 3s ease-in-out infinite',
+              animation: 'fadeInUp 1s ease-out 0.5s both',
             }}>
-              {/* Brilho animado nas bordas - removido para mobile */}
-              {!isMobile && (
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                borderRadius: '20px',
-                background: 'linear-gradient(45deg, transparent 30%, rgba(0, 217, 255, 0.3) 50%, transparent 70%)',
-                backgroundSize: '200% 200%',
-                animation: 'borderShine 3s linear infinite',
-                zIndex: 4,
-                pointerEvents: 'none',
-              }} />
-              )}
+              <h3 style={{
+                fontFamily: 'Rajdhani, sans-serif',
+                fontSize: '2rem',
+                fontWeight: 700,
+                color: '#ff00ea',
+                textAlign: 'center',
+                marginBottom: '30px',
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
+                textShadow: '0 0 20px rgba(255, 0, 234, 0.6)',
+                animation: 'glowPulse 3s ease-in-out infinite, slideRight 1s ease-out',
+              }}>Próximos Eventos</h3>
 
-              {/* Partículas decorativas - removido para mobile */}
-              {!isMobile && [...Array(8)].map((_, i) => (
-                <div key={i} style={{
-                  position: 'absolute',
-                  width: '4px',
-                  height: '4px',
-                  background: i % 2 === 0 ? '#00d9ff' : '#ff00ea',
-                  borderRadius: '50%',
-                  top: `${10 + i * 12}%`,
-                  left: `${5 + i * 10}%`,
-                  opacity: 0.6,
-                  animation: `carouselParticle ${3 + i * 0.5}s ease-in-out infinite`,
-                  animationDelay: `${i * 0.2}s`,
-                  boxShadow: `0 0 10px ${i % 2 === 0 ? '#00d9ff' : '#ff00ea'}`,
-                  zIndex: 3,
-                }} />
-              ))}
-              
-              {/* Imagens do carrossel - otimizado para mobile */}
-              {displayEventImages.map((img, index) => (
-                <img
-                  key={index}
-                  src={index === currentEvent ? img : (isMobile ? null : img)} // Apenas carrega imagem atual no mobile
-                  data-src={img}
-                  alt={`Evento ${index + 1}`}
-                  loading={index === currentEvent ? "eager" : "lazy"} // Carrega a imagem visível imediatamente
-                  decoding="async"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
+              <div style={{
+                position: 'relative',
+                maxWidth: '1100px',
+                margin: '0 auto',
+                height: '500px',
+                borderRadius: '20px',
+                overflow: 'hidden',
+                border: '3px solid #00d9ff',
+                boxShadow: '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
+                animation: 'borderPulseCarousel 3s ease-in-out infinite',
+              }}>
+                {/* Brilho animado nas bordas - removido para mobile */}
+                {!isMobile && (
+                  <div style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
-                    opacity: index === currentEvent ? 1 : 0,
-                    transform: index === currentEvent ? 'scale(1)' : 'scale(1.05)',
-                    transition: 'opacity 1s ease-in-out, transform 1s ease-in-out',
-                    zIndex: index === currentEvent ? 1 : 0,
+                    width: '100%',
+                    height: '100%',
                     borderRadius: '20px',
-                  }}
-                  onLoad={(e) => {
-                    // Quando a imagem carrega, define o src definitivo
-                    if (e.target.dataset.src) {
-                      e.target.src = e.target.dataset.src;
-                      e.target.removeAttribute('data-src');
-                    }
-                  }}
-                />
-              ))}
-              
-              {/* Overlay gradiente geral */}
-              <div style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%)',
-                zIndex: 2,
-                borderRadius: '20px',
-              }} />
-              
-              {/* Informações do Evento - Lado Esquerdo */}
-              {displayEvents.map((event, index) => (
-                <div key={index} style={{
-                  position: 'absolute',
-                  left: isMobile ? '20px' : '70px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  maxWidth: isMobile ? '85%' : '500px',
-                  opacity: index === currentEvent ? 1 : 0,
-                  transition: 'opacity 0.8s ease-in-out',
-                  zIndex: index === currentEvent ? 20 : 0,
-                  animation: isMobile ? 'none' : (index === currentEvent ? 'slideInLeft 0.8s ease-out' : 'none'),
-                  pointerEvents: index === currentEvent ? 'auto' : 'none',
-                  paddingRight: isMobile ? '10px' : '20px',
-                  paddingLeft: isMobile ? '10px' : '0',
-                  boxSizing: 'border-box',
-                  maxHeight: isMobile ? '85%' : 'none',  /* Limitar altura em dispositivos móveis */
-                  overflowY: isMobile ? 'auto' : 'visible',  /* Permitir rolagem em dispositivos móveis */
-                }}>
-                  {/* Tag superior */}
-                  <div style={{
-                    fontFamily: 'Courier New, monospace',
-                    fontSize: '0.85rem',
-                    color: '#ff00ea',
-                    marginBottom: '12px',
-                    letterSpacing: '2px',
-                    textTransform: 'uppercase',
-                    opacity: 0.9,
-                  }}>// Próximo Evento</div>
-                  
-                  {/* Tipo de evento */}
-                  {event.type && (
-                    <div style={{
-                      display: 'inline-block',
-                      background: event.type === 'Torneio' 
-                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
-                        : event.type === 'Corujão'
-                        ? 'linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2))'
-                        : 'linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 150, 255, 0.2))',
-                      border: `2px solid ${
-                        event.type === 'Torneio' ? '#FFD700'
-                        : event.type === 'Corujão' ? '#8a2be2'
-                        : '#00d9ff'
-                      }`,
-                      padding: '6px 14px',
-                      borderRadius: '20px',
-                      marginBottom: '15px',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
-                      color: event.type === 'Torneio' ? '#FFD700'
-                        : event.type === 'Corujão' ? '#8a2be2'
-                        : '#00d9ff',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1.5px',
-                      boxShadow: `0 0 15px ${
-                        event.type === 'Torneio' ? 'rgba(255, 215, 0, 0.4)'
-                        : event.type === 'Corujão' ? 'rgba(138, 43, 226, 0.4)'
-                        : 'rgba(0, 217, 255, 0.4)'
-                      }`,
-                    }}>
-                      {event.type === 'Torneio' && '🏆'}
-                      {event.type === 'Corujão' && '🦉'}
-                      {event.type === 'Rush Play' && '⚡'}
-                      {' '}{event.type}
-                    </div>
-                  )}
-                  
-                  {/* Título */}
-                  <h4 style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: isMobile ? '1.6rem' : '2.5rem',
-                    fontWeight: 700,
-                    color: '#00d9ff',
-                    marginBottom: isMobile ? '12px' : '18px',
-                    lineHeight: '1.2',
-                    textShadow: '0 0 20px rgba(0, 217, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    letterSpacing: '1px',
-                    wordWrap: 'break-word',
-                    overflowWrap: 'break-word',
-                  }}>{event.title}</h4>
-                  
-                  {/* Linha decorativa */}
-                  <div style={{
-                    width: '80px',
-                    height: '3px',
-                    background: 'linear-gradient(90deg, #ff00ea, #00d9ff)',
-                    marginBottom: '20px',
-                    boxShadow: '0 0 10px rgba(255, 0, 234, 0.6)',
+                    background: 'linear-gradient(45deg, transparent 30%, rgba(0, 217, 255, 0.3) 50%, transparent 70%)',
+                    backgroundSize: '200% 200%',
+                    animation: 'borderShine 3s linear infinite',
+                    zIndex: 4,
+                    pointerEvents: 'none',
                   }} />
-                  
-                  {/* Detalhes do evento */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '15px',
-                    marginBottom: '30px',
+                )}
+
+                {/* Partículas decorativas - removido para mobile */}
+                {!isMobile && [...Array(8)].map((_, i) => (
+                  <div key={i} style={{
+                    position: 'absolute',
+                    width: '4px',
+                    height: '4px',
+                    background: i % 2 === 0 ? '#00d9ff' : '#ff00ea',
+                    borderRadius: '50%',
+                    top: `${10 + i * 12}%`,
+                    left: `${5 + i * 10}%`,
+                    opacity: 0.6,
+                    animation: `carouselParticle ${3 + i * 0.5}s ease-in-out infinite`,
+                    animationDelay: `${i * 0.2}s`,
+                    boxShadow: `0 0 10px ${i % 2 === 0 ? '#00d9ff' : '#ff00ea'}`,
+                    zIndex: 3,
+                  }} />
+                ))}
+
+                {/* Imagens do carrossel - otimizado para mobile */}
+                {displayEventImages.map((img, index) => (
+                  <img
+                    key={index}
+                    src={index === currentEvent ? img : (isMobile ? null : img)} // Apenas carrega imagem atual no mobile
+                    data-src={img}
+                    alt={`Evento ${index + 1}`}
+                    loading={index === currentEvent ? "eager" : "lazy"} // Carrega a imagem visível imediatamente
+                    decoding="async"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      opacity: index === currentEvent ? 1 : 0,
+                      transform: index === currentEvent ? 'scale(1)' : 'scale(1.05)',
+                      transition: 'opacity 1s ease-in-out, transform 1s ease-in-out',
+                      zIndex: index === currentEvent ? 1 : 0,
+                      borderRadius: '20px',
+                    }}
+                    onLoad={(e) => {
+                      // Quando a imagem carrega, define o src definitivo
+                      if (e.target.dataset.src) {
+                        e.target.src = e.target.dataset.src;
+                        e.target.removeAttribute('data-src');
+                      }
+                    }}
+                  />
+                ))}
+
+                {/* Overlay gradiente geral */}
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%)',
+                  zIndex: 2,
+                  borderRadius: '20px',
+                }} />
+
+                {/* Informações do Evento - Lado Esquerdo */}
+                {displayEvents.map((event, index) => (
+                  <div key={index} style={{
+                    position: 'absolute',
+                    left: isMobile ? '20px' : '70px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    maxWidth: isMobile ? '85%' : '500px',
+                    opacity: index === currentEvent ? 1 : 0,
+                    transition: 'opacity 0.8s ease-in-out',
+                    zIndex: index === currentEvent ? 20 : 0,
+                    animation: isMobile ? 'none' : (index === currentEvent ? 'slideInLeft 0.8s ease-out' : 'none'),
+                    pointerEvents: index === currentEvent ? 'auto' : 'none',
+                    paddingRight: isMobile ? '10px' : '20px',
+                    paddingLeft: isMobile ? '10px' : '0',
+                    boxSizing: 'border-box',
+                    maxHeight: isMobile ? '85%' : 'none',  /* Limitar altura em dispositivos móveis */
+                    overflowY: isMobile ? 'auto' : 'visible',  /* Permitir rolagem em dispositivos móveis */
                   }}>
-                    {/* Data */}
+                    {/* Tag superior */}
+                    <div style={{
+                      fontFamily: 'Courier New, monospace',
+                      fontSize: '0.85rem',
+                      color: '#ff00ea',
+                      marginBottom: '12px',
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase',
+                      opacity: 0.9,
+                    }}>// Próximo Evento</div>
+
+                    {/* Tipo de evento */}
+                    {event.type && (
+                      <div style={{
+                        display: 'inline-block',
+                        background: event.type === 'Torneio'
+                          ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
+                          : event.type === 'Corujão'
+                            ? 'linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2))'
+                            : 'linear-gradient(135deg, rgba(0, 217, 255, 0.2), rgba(0, 150, 255, 0.2))',
+                        border: `2px solid ${event.type === 'Torneio' ? '#FFD700'
+                          : event.type === 'Corujão' ? '#8a2be2'
+                            : '#00d9ff'
+                          }`,
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        marginBottom: '15px',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        color: event.type === 'Torneio' ? '#FFD700'
+                          : event.type === 'Corujão' ? '#8a2be2'
+                            : '#00d9ff',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1.5px',
+                        boxShadow: `0 0 15px ${event.type === 'Torneio' ? 'rgba(255, 215, 0, 0.4)'
+                          : event.type === 'Corujão' ? 'rgba(138, 43, 226, 0.4)'
+                            : 'rgba(0, 217, 255, 0.4)'
+                          }`,
+                      }}>
+                        {event.type === 'Torneio' && '🏆'}
+                        {event.type === 'Corujão' && '🦉'}
+                        {event.type === 'Rush Play' && '⚡'}
+                        {' '}{event.type}
+                      </div>
+                    )}
+
+                    {/* Título */}
+                    <h4 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: isMobile ? '1.6rem' : '2.5rem',
+                      fontWeight: 700,
+                      color: '#00d9ff',
+                      marginBottom: isMobile ? '12px' : '18px',
+                      lineHeight: '1.2',
+                      textShadow: '0 0 20px rgba(0, 217, 255, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.8)',
+                      letterSpacing: '1px',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word',
+                    }}>{event.title}</h4>
+
+                    {/* Linha decorativa */}
+                    <div style={{
+                      width: '80px',
+                      height: '3px',
+                      background: 'linear-gradient(90deg, #ff00ea, #00d9ff)',
+                      marginBottom: '20px',
+                      boxShadow: '0 0 10px rgba(255, 0, 234, 0.6)',
+                    }} />
+
+                    {/* Detalhes do evento */}
                     <div style={{
                       display: 'flex',
-                      alignItems: 'center',
+                      flexDirection: 'column',
                       gap: '15px',
+                      marginBottom: '30px',
                     }}>
-                      <div style={{
-                        fontSize: '1.5rem',
-                      }}>📅</div>
-                      <div>
-                        <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: '0.9rem',
-                          color: '#aaa',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                        }}>Data</div>
-                        <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: isMobile ? '1rem' : '1.2rem',
-                          color: '#fff',
-                          fontWeight: 600,
-                          wordWrap: 'break-word',
-                        }}>{event.date}</div>
-                      </div>
-                    </div>
-                    
-                    {/* Prêmio - só exibir para Torneio */}
-                    {event.type === 'Torneio' && event.prize && (
+                      {/* Data */}
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -2163,7 +2139,7 @@ export default function GamerWorld() {
                       }}>
                         <div style={{
                           fontSize: '1.5rem',
-                        }}>🏆</div>
+                        }}>📅</div>
                         <div>
                           <div style={{
                             fontFamily: 'Rajdhani, sans-serif',
@@ -2171,249 +2147,277 @@ export default function GamerWorld() {
                             color: '#aaa',
                             textTransform: 'uppercase',
                             letterSpacing: '1px',
-                          }}>Prêmio</div>
+                          }}>Data</div>
                           <div style={{
                             fontFamily: 'Rajdhani, sans-serif',
-                            fontSize: isMobile ? '1.2rem' : '1.5rem',
-                            color: '#ffea00',
-                            fontWeight: 700,
-                            textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
-                          }}>{event.prize}</div>
+                            fontSize: isMobile ? '1rem' : '1.2rem',
+                            color: '#fff',
+                            fontWeight: 600,
+                            wordWrap: 'break-word',
+                          }}>{event.date}</div>
                         </div>
                       </div>
-                    )}
-                    
-                    {/* Horário */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px',
-                    }}>
-                      <div style={{
-                        fontSize: '1.5rem',
-                      }}>🕐</div>
-                      <div>
+
+                      {/* Prêmio - só exibir para Torneio */}
+                      {event.type === 'Torneio' && event.prize && (
                         <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: '0.9rem',
-                          color: '#aaa',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                        }}>Horário</div>
-                        <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: '1.1rem',
-                          color: event.time ? '#00d9ff' : '#666',
-                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '15px',
                         }}>
-                          {event.time ? event.time : 'Horário ainda não determinado'}
+                          <div style={{
+                            fontSize: '1.5rem',
+                          }}>🏆</div>
+                          <div>
+                            <div style={{
+                              fontFamily: 'Rajdhani, sans-serif',
+                              fontSize: '0.9rem',
+                              color: '#aaa',
+                              textTransform: 'uppercase',
+                              letterSpacing: '1px',
+                            }}>Prêmio</div>
+                            <div style={{
+                              fontFamily: 'Rajdhani, sans-serif',
+                              fontSize: isMobile ? '1.2rem' : '1.5rem',
+                              color: '#ffea00',
+                              fontWeight: 700,
+                              textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
+                            }}>{event.prize}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Horário */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '15px',
+                      }}>
+                        <div style={{
+                          fontSize: '1.5rem',
+                        }}>🕐</div>
+                        <div>
+                          <div style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '0.9rem',
+                            color: '#aaa',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                          }}>Horário</div>
+                          <div style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '1.1rem',
+                            color: event.time ? '#00d9ff' : '#666',
+                            fontWeight: 600,
+                          }}>
+                            {event.time ? event.time : 'Horário ainda não determinado'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Inscrição */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '15px',
+                      }}>
+                        <div style={{
+                          fontSize: '1.5rem',
+                        }}>✍️</div>
+                        <div>
+                          <div style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '0.9rem',
+                            color: '#aaa',
+                            textTransform: 'uppercase',
+                            letterSpacing: '1px',
+                          }}>Inscrição</div>
+                          <div style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '1.1rem',
+                            color: '#fff',
+                            fontWeight: 600,
+                          }}>{event.inscription}</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Inscrição */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '15px',
-                    }}>
-                      <div style={{
-                        fontSize: '1.5rem',
-                      }}>✍️</div>
-                      <div>
-                        <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: '0.9rem',
-                          color: '#aaa',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                        }}>Inscrição</div>
-                        <div style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: '1.1rem',
-                          color: '#fff',
-                          fontWeight: 600,
-                        }}>{event.inscription}</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Botão Saiba Mais */}
-                  <Link to={`/evento/${event.slug}`} style={{ textDecoration: 'none' }}>
-                    <button style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: isMobile ? '0.95rem' : '1.1rem',
-                      fontWeight: 700,
-                      color: '#000',
-                      background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
-                      border: '2px solid #00d9ff',
-                      padding: isMobile ? '12px 28px' : '16px 40px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      letterSpacing: isMobile ? '1px' : '2px',
-                      textTransform: 'uppercase',
-                      boxShadow: '0 5px 20px rgba(0, 217, 255, 0.4)',
-                      transition: 'all 0.3s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      position: 'relative',
-                      zIndex: 20,
-                      whiteSpace: 'nowrap',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateX(10px) scale(1.05)';
-                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.6)';
-                      e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateX(0) scale(1)';
-                      e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 217, 255, 0.4)';
-                      e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
-                    }}>
-                      Saiba Mais
-                      <span style={{ fontSize: '1.2rem' }}>▶</span>
-                    </button>
-                  </Link>
-                </div>
-              ))}
-              
-              {/* Botões de navegação - só mostrar se houver mais de 1 evento */}
-              {displayEventImages.length > 1 && (
-                <>
-                  <button
-                    onClick={() => setCurrentEvent((prev) => (prev - 1 + displayEventImages.length) % displayEventImages.length)}
-                    style={{
-                      position: 'absolute',
-                      left: '20px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'rgba(0, 217, 255, 0.15)',
-                      border: '1px solid rgba(0, 217, 255, 0.4)',
-                      color: '#00d9ff',
-                      width: '45px',
-                      height: '45px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontSize: '1.2rem',
-                      fontWeight: 300,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 5,
-                      backdropFilter: isMobile ? 'none' : 'blur(10px)',
-                      transition: isMobile ? 'background 0.3s ease' : 'all 0.3s ease',
-                      boxShadow: isMobile ? '0 2px 5px rgba(0, 0, 0, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
-                      if (!isMobile) {
-                        e.currentTarget.style.transform = 'translateY(-50%) translateX(-5px)';
-                      }
-                      e.currentTarget.style.borderColor = '#00d9ff';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
-                      if (!isMobile) {
-                        e.currentTarget.style.transform = 'translateY(-50%)';
-                      }
-                      e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
-                    }}
-                  >&lt;</button>
-
-                  <button
-                    onClick={() => setCurrentEvent((prev) => (prev + 1) % displayEventImages.length)}
-                    style={{
-                  position: 'absolute',
-                  right: '20px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'rgba(0, 217, 255, 0.15)',
-                  border: '1px solid rgba(0, 217, 255, 0.4)',
-                  color: '#00d9ff',
-                  width: '45px',
-                  height: '45px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1.2rem',
-                  fontWeight: 300,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 5,
-                  backdropFilter: isMobile ? 'none' : 'blur(10px)',
-                  transition: isMobile ? 'background 0.3s ease' : 'all 0.3s ease',
-                  boxShadow: isMobile ? '0 2px 5px rgba(0, 0, 0, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
-                  if (!isMobile) {
-                    e.currentTarget.style.transform = 'translateY(-50%) translateX(5px)';
-                  }
-                  e.currentTarget.style.borderColor = '#00d9ff';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
-                  if (!isMobile) {
-                    e.currentTarget.style.transform = 'translateY(-50%)';
-                  }
-                  e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
-                }}
-              >&gt;</button>
-                </>
-              )}
-              
-              {/* Indicadores - só mostrar se houver mais de 1 evento */}
-              {displayEventImages.length > 1 && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '20px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  display: 'flex',
-                  gap: '12px',
-                  zIndex: 5,
-                  animation: isMobile ? 'none' : 'fadeIn 1s ease-out 0.8s both',
-                }}>
-                  {displayEventImages.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentEvent(index)}
-                      style={{
-                        width: index === currentEvent ? '40px' : '12px',
-                        height: '12px',
-                        borderRadius: '6px',
-                        background: index === currentEvent ? '#ff00ea' : 'rgba(255, 255, 255, 0.3)',
-                        border: index === currentEvent ? '2px solid #ff00ea' : '2px solid rgba(255, 255, 255, 0.5)',
+                    {/* Botão Saiba Mais */}
+                    <Link to={`/evento/${event.slug}`} style={{ textDecoration: 'none' }}>
+                      <button style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: isMobile ? '0.95rem' : '1.1rem',
+                        fontWeight: 700,
+                        color: '#000',
+                        background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                        border: '2px solid #00d9ff',
+                        padding: isMobile ? '12px 28px' : '16px 40px',
+                        borderRadius: '8px',
                         cursor: 'pointer',
-                        transition: isMobile
-                          ? 'background 0.3s ease'
-                          : 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                        boxShadow: index === currentEvent ? (isMobile ? '0 0 8px #ff00ea' : '0 0 15px #ff00ea') : 'none',
-                        animation: isMobile ? 'none' : (index === currentEvent ? 'indicatorPulse 1s ease-in-out infinite' : 'none'),
+                        letterSpacing: isMobile ? '1px' : '2px',
+                        textTransform: 'uppercase',
+                        boxShadow: '0 5px 20px rgba(0, 217, 255, 0.4)',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        position: 'relative',
+                        zIndex: 20,
+                        whiteSpace: 'nowrap',
+                      }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateX(10px) scale(1.05)';
+                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.6)';
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateX(0) scale(1)';
+                          e.currentTarget.style.boxShadow = '0 5px 20px rgba(0, 217, 255, 0.4)';
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
+                        }}>
+                        Saiba Mais
+                        <span style={{ fontSize: '1.2rem' }}>▶</span>
+                      </button>
+                    </Link>
+                  </div>
+                ))}
+
+                {/* Botões de navegação - só mostrar se houver mais de 1 evento */}
+                {displayEventImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setCurrentEvent((prev) => (prev - 1 + displayEventImages.length) % displayEventImages.length)}
+                      style={{
+                        position: 'absolute',
+                        left: '20px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(0, 217, 255, 0.15)',
+                        border: '1px solid rgba(0, 217, 255, 0.4)',
+                        color: '#00d9ff',
+                        width: '45px',
+                        height: '45px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem',
+                        fontWeight: 300,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 5,
+                        backdropFilter: isMobile ? 'none' : 'blur(10px)',
+                        transition: isMobile ? 'background 0.3s ease' : 'all 0.3s ease',
+                        boxShadow: isMobile ? '0 2px 5px rgba(0, 0, 0, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
                       }}
                       onMouseEnter={(e) => {
-                        if (index !== currentEvent) {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.6)';
-                          if (!isMobile) {
-                            e.currentTarget.style.transform = 'scale(1.3)';
-                          }
-                        }
-                      }}
-                    onMouseLeave={(e) => {
-                      if (index !== currentEvent) {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
                         if (!isMobile) {
-                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.transform = 'translateY(-50%) translateX(-5px)';
                         }
-                      }
-                    }}
-                  />
-                ))}
-                </div>
-              )}
+                        e.currentTarget.style.borderColor = '#00d9ff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
+                        if (!isMobile) {
+                          e.currentTarget.style.transform = 'translateY(-50%)';
+                        }
+                        e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
+                      }}
+                    >&lt;</button>
+
+                    <button
+                      onClick={() => setCurrentEvent((prev) => (prev + 1) % displayEventImages.length)}
+                      style={{
+                        position: 'absolute',
+                        right: '20px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'rgba(0, 217, 255, 0.15)',
+                        border: '1px solid rgba(0, 217, 255, 0.4)',
+                        color: '#00d9ff',
+                        width: '45px',
+                        height: '45px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '1.2rem',
+                        fontWeight: 300,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 5,
+                        backdropFilter: isMobile ? 'none' : 'blur(10px)',
+                        transition: isMobile ? 'background 0.3s ease' : 'all 0.3s ease',
+                        boxShadow: isMobile ? '0 2px 5px rgba(0, 0, 0, 0.2)' : '0 2px 10px rgba(0, 0, 0, 0.3)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.3)';
+                        if (!isMobile) {
+                          e.currentTarget.style.transform = 'translateY(-50%) translateX(5px)';
+                        }
+                        e.currentTarget.style.borderColor = '#00d9ff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 217, 255, 0.15)';
+                        if (!isMobile) {
+                          e.currentTarget.style.transform = 'translateY(-50%)';
+                        }
+                        e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.4)';
+                      }}
+                    >&gt;</button>
+                  </>
+                )}
+
+                {/* Indicadores - só mostrar se houver mais de 1 evento */}
+                {displayEventImages.length > 1 && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '20px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    gap: '12px',
+                    zIndex: 5,
+                    animation: isMobile ? 'none' : 'fadeIn 1s ease-out 0.8s both',
+                  }}>
+                    {displayEventImages.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentEvent(index)}
+                        style={{
+                          width: index === currentEvent ? '40px' : '12px',
+                          height: '12px',
+                          borderRadius: '6px',
+                          background: index === currentEvent ? '#ff00ea' : 'rgba(255, 255, 255, 0.3)',
+                          border: index === currentEvent ? '2px solid #ff00ea' : '2px solid rgba(255, 255, 255, 0.5)',
+                          cursor: 'pointer',
+                          transition: isMobile
+                            ? 'background 0.3s ease'
+                            : 'all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+                          boxShadow: index === currentEvent ? (isMobile ? '0 0 8px #ff00ea' : '0 0 15px #ff00ea') : 'none',
+                          animation: isMobile ? 'none' : (index === currentEvent ? 'indicatorPulse 1s ease-in-out infinite' : 'none'),
+                        }}
+                        onMouseEnter={(e) => {
+                          if (index !== currentEvent) {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.6)';
+                            if (!isMobile) {
+                              e.currentTarget.style.transform = 'scale(1.3)';
+                            }
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (index !== currentEvent) {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                            if (!isMobile) {
+                              e.currentTarget.style.transform = 'scale(1)';
+                            }
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
           )}
 
           {/* Carrossel para dispositivos móveis - Mais espaço e fontes maiores */}
@@ -2580,14 +2584,14 @@ export default function GamerWorld() {
                             boxShadow: `0 5px 20px ${event.color}60`,
                             transition: 'all 0.2s ease',
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)';
-                            e.currentTarget.style.boxShadow = `0 7px 25px ${event.color}80`;
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)';
-                            e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
-                          }}>
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.1)';
+                              e.currentTarget.style.boxShadow = `0 7px 25px ${event.color}80`;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
+                            }}>
                             Saiba Mais
                           </button>
                         </Link>
@@ -2752,18 +2756,18 @@ export default function GamerWorld() {
                 boxSizing: 'border-box',
                 wordWrap: 'break-word',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-15px) scale(1.02)';
-                e.currentTarget.style.boxShadow = `0 25px 50px ${event.color}80, inset 0 0 30px ${event.color}20`;
-                e.currentTarget.style.borderWidth = '3px';
-                setHoveredEvent(idx);
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.borderWidth = '2px';
-                setHoveredEvent(null);
-              }}>
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-15px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = `0 25px 50px ${event.color}80, inset 0 0 30px ${event.color}20`;
+                  e.currentTarget.style.borderWidth = '3px';
+                  setHoveredEvent(idx);
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.borderWidth = '2px';
+                  setHoveredEvent(null);
+                }}>
                 {/* Efeito de luz rotativa */}
                 <div style={{
                   position: 'absolute',
@@ -2876,14 +2880,14 @@ export default function GamerWorld() {
                       boxShadow: `0 5px 20px ${event.color}60`,
                       transition: 'all 0.3s ease',
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                      e.currentTarget.style.boxShadow = `0 8px 30px ${event.color}80`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
-                    }}>
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                        e.currentTarget.style.boxShadow = `0 8px 30px ${event.color}80`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
+                      }}>
                       Saiba Mais
                     </button>
                   </Link>
@@ -2904,7 +2908,7 @@ export default function GamerWorld() {
             ))}
           </div>
         </div>
-        
+
         {/* Estilos de animação específicos */}
         <style>{`
           @keyframes gradientMove {
@@ -3059,599 +3063,599 @@ export default function GamerWorld() {
 
       {/* Seção Explore Jogos - Oculta em dispositivos móveis */}
       {isMobile ? null : (
-      <section id="galeria" style={{
-        padding: '120px 48px',
-        background: `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center right',
-        backgroundAttachment: 'fixed',
-        position: 'relative',
-        overflow: 'hidden',
-        clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
-        marginTop: '-3%',
-        marginBottom: '-3%',
-      }}>
-        {/* Bordas diagonais brilhantes */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: 'linear-gradient(90deg, transparent 0%, rgba(138, 43, 226, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
-          transform: 'skewY(-2deg)',
-          boxShadow: '0 0 20px rgba(138, 43, 226, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
-          animation: 'borderSlide 3s linear infinite',
-          zIndex: 2,
-        }} />
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '3px',
-          background: 'linear-gradient(90deg, transparent 0%, rgba(255, 0, 234, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
-          transform: 'skewY(-2deg)',
-          boxShadow: '0 0 20px rgba(255, 0, 234, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
-          animation: 'borderSlide 3s linear infinite reverse',
-          zIndex: 2,
-        }} />
-        {/* Elementos flutuantes aleatórios */}
-        {[...Array(8)].map((_, i) => (
-          <div key={i} style={{
+        <section id="galeria" style={{
+          padding: '120px 48px',
+          background: `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center right',
+          backgroundAttachment: 'fixed',
+          position: 'relative',
+          overflow: 'hidden',
+          clipPath: 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
+          marginTop: '-3%',
+          marginBottom: '-3%',
+        }}>
+          {/* Bordas diagonais brilhantes */}
+          <div style={{
             position: 'absolute',
-            width: `${150 + Math.random() * 200}px`,
-            height: `${150 + Math.random() * 200}px`,
-            background: i % 3 === 0 
-              ? 'radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%)'
-              : i % 3 === 1
-              ? 'radial-gradient(ellipse, rgba(0, 217, 255, 0.12) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(255, 0, 234, 0.1) 0%, transparent 70%)',
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            animation: `randomFloat${(i % 3) + 1} ${15 + Math.random() * 10}s ease-in-out infinite, morphShape ${20 + Math.random() * 15}s ease-in-out infinite`,
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-            opacity: 0.6,
-            zIndex: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(138, 43, 226, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
+            transform: 'skewY(-2deg)',
+            boxShadow: '0 0 20px rgba(138, 43, 226, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
+            animation: 'borderSlide 3s linear infinite',
+            zIndex: 2,
           }} />
-        ))}
-        <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: isMobile ? '0 10px' : '0'}}>
-          <h2 style={{
-            fontFamily: 'Rajdhani, sans-serif',
-            fontWeight: 700,
-            fontSize: isMobile ? '1.8rem' : '2.5rem',
-            color: '#00d9ff',
-            textAlign: 'center',
-            marginBottom: isMobile ? '30px' : '50px',
-            letterSpacing: isMobile ? '1px' : '2px',
-            textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
-          }}>Explore Jogos</h2>
-          
-          {/* Barra de Pesquisa */}
           <div style={{
-            maxWidth: isMobile ? '90%' : '600px',
-            margin: isMobile ? '0 auto 25px' : '0 auto 40px',
-            position: 'relative',
-          }}>
-            <input
-              type="text"
-              placeholder={isMobile ? "Buscar jogos..." : "Buscar jogos e colocar em destaque..."}
-              value={searchGame}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSearchGame(value);
-                
-                // Busca em tempo real
-                if (value.trim()) {
-                  const foundIndex = gamesData.findIndex(game => 
-                    game.title.toLowerCase().includes(value.toLowerCase())
-                  );
-                  
-                  if (foundIndex !== -1) {
-                    setCurrentGame(foundIndex);
-                  }
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: isMobile ? '12px 45px 12px 15px' : '15px 50px 15px 20px',
-                fontFamily: 'Rajdhani, sans-serif',
-                fontSize: isMobile ? '0.95rem' : '1.1rem',
-                color: '#fff',
-                background: 'rgba(138, 43, 226, 0.05)',
-                border: '2px solid rgba(138, 43, 226, 0.3)',
-                borderRadius: isMobile ? '10px' : '12px',
-                outline: 'none',
-                transition: 'all 0.3s ease',
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#8a2be2';
-                e.target.style.boxShadow = '0 0 20px rgba(138, 43, 226, 0.4)';
-                e.target.style.background = 'rgba(138, 43, 226, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = 'rgba(138, 43, 226, 0.3)';
-                e.target.style.boxShadow = 'none';
-                e.target.style.background = 'rgba(138, 43, 226, 0.05)';
-              }}
-            />
-            <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '3px',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255, 0, 234, 0.8) 30%, rgba(0, 217, 255, 0.8) 70%, transparent 100%)',
+            transform: 'skewY(-2deg)',
+            boxShadow: '0 0 20px rgba(255, 0, 234, 0.6), 0 0 40px rgba(0, 217, 255, 0.4)',
+            animation: 'borderSlide 3s linear infinite reverse',
+            zIndex: 2,
+          }} />
+          {/* Elementos flutuantes aleatórios */}
+          {[...Array(8)].map((_, i) => (
+            <div key={i} style={{
               position: 'absolute',
-              right: '15px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              fontSize: '1.5rem',
-              color: '#8a2be2',
-              pointerEvents: 'none',
-            }}>🔍</div>
-          </div>
+              width: `${150 + Math.random() * 200}px`,
+              height: `${150 + Math.random() * 200}px`,
+              background: i % 3 === 0
+                ? 'radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%)'
+                : i % 3 === 1
+                  ? 'radial-gradient(ellipse, rgba(0, 217, 255, 0.12) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(255, 0, 234, 0.1) 0%, transparent 70%)',
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animation: `randomFloat${(i % 3) + 1} ${15 + Math.random() * 10}s ease-in-out infinite, morphShape ${20 + Math.random() * 15}s ease-in-out infinite`,
+              borderRadius: '50%',
+              filter: 'blur(40px)',
+              opacity: 0.6,
+              zIndex: 0,
+            }} />
+          ))}
+          <div style={{ maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: isMobile ? '0 10px' : '0' }}>
+            <h2 style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontWeight: 700,
+              fontSize: isMobile ? '1.8rem' : '2.5rem',
+              color: '#00d9ff',
+              textAlign: 'center',
+              marginBottom: isMobile ? '30px' : '50px',
+              letterSpacing: isMobile ? '1px' : '2px',
+              textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
+            }}>Explore Jogos</h2>
 
-          {/* Carrossel de Jogos - 3 Cards com Destaque Central */}
-          <div style={{
-            position: 'relative',
-            maxWidth: isMobile ? '100%' : '1200px',
-            height: isMobile ? '450px' : '550px',
-            padding: isMobile ? '20px 0' : '40px 0',
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            perspective: '2000px',
-          }}>
-            {/* Cards do Carrossel - 3 visíveis (anterior, atual, próximo) ou 1 em mobile */}
-            {(isMobile ? [0] : [-1, 0, 1]).map((offset) => {
-              const gameIndex = (currentGame + offset + totalGames) % totalGames;
-              const gameCard = gamesData[gameIndex];
-              const isCenter = offset === 0;
-              
-              return (
-                <div
-                  key={offset}
-                  onClick={() => !isCenter && setCurrentGame(gameIndex)}
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    width: isMobile ? '85%' : (isCenter ? '350px' : '280px'),
-                    height: isMobile ? '400px' : (isCenter ? '480px' : '400px'),
-                    borderRadius: isMobile ? '15px' : '20px',
-                    border: isCenter ? '4px solid rgba(138, 43, 226, 0.8)' : '3px solid rgba(138, 43, 226, 0.3)',
-                    overflow: 'hidden',
-                    cursor: isCenter ? 'default' : 'pointer',
-                    transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    background: `url(${gameCard.image})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    transform: isMobile 
-                      ? 'translateX(-50%)'
-                      : `
+            {/* Barra de Pesquisa */}
+            <div style={{
+              maxWidth: isMobile ? '90%' : '600px',
+              margin: isMobile ? '0 auto 25px' : '0 auto 40px',
+              position: 'relative',
+            }}>
+              <input
+                type="text"
+                placeholder={isMobile ? "Buscar jogos..." : "Buscar jogos e colocar em destaque..."}
+                value={searchGame}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchGame(value);
+
+                  // Busca em tempo real
+                  if (value.trim()) {
+                    const foundIndex = gamesData.findIndex(game =>
+                      game.title.toLowerCase().includes(value.toLowerCase())
+                    );
+
+                    if (foundIndex !== -1) {
+                      setCurrentGame(foundIndex);
+                    }
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: isMobile ? '12px 45px 12px 15px' : '15px 50px 15px 20px',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: isMobile ? '0.95rem' : '1.1rem',
+                  color: '#fff',
+                  background: 'rgba(138, 43, 226, 0.05)',
+                  border: '2px solid rgba(138, 43, 226, 0.3)',
+                  borderRadius: isMobile ? '10px' : '12px',
+                  outline: 'none',
+                  transition: 'all 0.3s ease',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#8a2be2';
+                  e.target.style.boxShadow = '0 0 20px rgba(138, 43, 226, 0.4)';
+                  e.target.style.background = 'rgba(138, 43, 226, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(138, 43, 226, 0.3)';
+                  e.target.style.boxShadow = 'none';
+                  e.target.style.background = 'rgba(138, 43, 226, 0.05)';
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                right: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '1.5rem',
+                color: '#8a2be2',
+                pointerEvents: 'none',
+              }}>🔍</div>
+            </div>
+
+            {/* Carrossel de Jogos - 3 Cards com Destaque Central */}
+            <div style={{
+              position: 'relative',
+              maxWidth: isMobile ? '100%' : '1200px',
+              height: isMobile ? '450px' : '550px',
+              padding: isMobile ? '20px 0' : '40px 0',
+              margin: '0 auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              perspective: '2000px',
+            }}>
+              {/* Cards do Carrossel - 3 visíveis (anterior, atual, próximo) ou 1 em mobile */}
+              {(isMobile ? [0] : [-1, 0, 1]).map((offset) => {
+                const gameIndex = (currentGame + offset + totalGames) % totalGames;
+                const gameCard = gamesData[gameIndex];
+                const isCenter = offset === 0;
+
+                return (
+                  <div
+                    key={offset}
+                    onClick={() => !isCenter && setCurrentGame(gameIndex)}
+                    style={{
+                      position: 'absolute',
+                      left: '50%',
+                      width: isMobile ? '85%' : (isCenter ? '350px' : '280px'),
+                      height: isMobile ? '400px' : (isCenter ? '480px' : '400px'),
+                      borderRadius: isMobile ? '15px' : '20px',
+                      border: isCenter ? '4px solid rgba(138, 43, 226, 0.8)' : '3px solid rgba(138, 43, 226, 0.3)',
+                      overflow: 'hidden',
+                      cursor: isCenter ? 'default' : 'pointer',
+                      transition: 'all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      background: `url(${gameCard.image})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      transform: isMobile
+                        ? 'translateX(-50%)'
+                        : `
                         translateX(calc(-50% + ${offset * 350}px))
                         translateZ(${isCenter ? '0px' : '-150px'})
                         scale(${isCenter ? '1' : '0.85'})
                       `,
-                    opacity: isCenter ? '1' : '0.6',
-                    boxShadow: isCenter 
-                      ? '0 20px 60px rgba(138, 43, 226, 0.6), 0 0 80px rgba(138, 43, 226, 0.4), 0 0 0 2px rgba(138, 43, 226, 0.6) inset'
-                      : '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(138, 43, 226, 0.2) inset',
-                    zIndex: isCenter ? '10' : '5',
-                    filter: isCenter ? 'brightness(1.1)' : 'brightness(0.7)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isCenter) {
-                      e.currentTarget.style.opacity = '0.85';
-                      e.currentTarget.style.transform = `
+                      opacity: isCenter ? '1' : '0.6',
+                      boxShadow: isCenter
+                        ? '0 20px 60px rgba(138, 43, 226, 0.6), 0 0 80px rgba(138, 43, 226, 0.4), 0 0 0 2px rgba(138, 43, 226, 0.6) inset'
+                        : '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(138, 43, 226, 0.2) inset',
+                      zIndex: isCenter ? '10' : '5',
+                      filter: isCenter ? 'brightness(1.1)' : 'brightness(0.7)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCenter) {
+                        e.currentTarget.style.opacity = '0.85';
+                        e.currentTarget.style.transform = `
                         translateX(calc(-50% + ${offset * 350}px))
                         translateZ(-100px)
                         scale(0.9)
                       `;
-                      e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.6)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isCenter) {
-                      e.currentTarget.style.opacity = '0.6';
-                      e.currentTarget.style.transform = `
+                        e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.6)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCenter) {
+                        e.currentTarget.style.opacity = '0.6';
+                        e.currentTarget.style.transform = `
                         translateX(calc(-50% + ${offset * 350}px))
                         translateZ(-150px)
                         scale(0.85)
                       `;
-                      e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.3)';
-                    }
-                  }}
-                >
-                  {/* Overlay com gradiente */}
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: isCenter 
-                      ? 'linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.9) 100%)'
-                      : 'linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.9) 100%)',
-                    zIndex: 1,
-                  }} />
-                  
-                  {/* Efeito de brilho no topo (apenas centro) */}
-                  {isCenter && (
+                        e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.3)';
+                      }
+                    }}
+                  >
+                    {/* Overlay com gradiente */}
                     <div style={{
                       position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: isMobile ? '80px' : '120px',
-                      background: 'linear-gradient(180deg, rgba(138, 43, 226, 0.2) 0%, transparent 100%)',
+                      inset: 0,
+                      background: isCenter
+                        ? 'linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.5) 50%, rgba(0, 0, 0, 0.9) 100%)'
+                        : 'linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.9) 100%)',
                       zIndex: 1,
                     }} />
-                  )}
-                  
-                  {/* Título do jogo */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: isCenter ? '25px' : '15px',
-                    left: isCenter ? '25px' : '15px',
-                    right: isCenter ? '25px' : '15px',
-                    zIndex: 2,
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: isCenter ? '1.7rem' : '1.3rem',
-                    fontWeight: 800,
-                    color: '#fff',
-                    letterSpacing: '1.5px',
-                    textTransform: 'uppercase',
-                    textShadow: isCenter 
-                      ? '0 2px 10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(138, 43, 226, 1)'
-                      : '0 2px 10px rgba(0, 0, 0, 0.8)',
-                    lineHeight: '1.2',
-                  }}>
-                    {gameCard.title}
-                  </div>
-                  
-                  {/* Badge "EM DESTAQUE" apenas no card central */}
-                  {isCenter && (
-                    <div style={{
-                      position: 'absolute',
-                      top: isMobile ? '12px' : '20px',
-                      right: isMobile ? '12px' : '20px',
-                      background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.95) 0%, rgba(0, 217, 255, 0.95) 100%)',
-                      padding: isMobile ? '6px 12px' : '8px 16px',
-                      borderRadius: isMobile ? '15px' : '20px',
-                      fontSize: isMobile ? '0.65rem' : '0.75rem',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontWeight: 700,
-                      color: '#fff',
-                      textTransform: 'uppercase',
-                      letterSpacing: isMobile ? '1px' : '1.5px',
-                      zIndex: 2,
-                      boxShadow: '0 4px 20px rgba(138, 43, 226, 0.6)',
-                      animation: 'borderPulseCarousel 2s ease-in-out infinite',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      ⭐ Em Destaque
-                    </div>
-                  )}
 
-                  {/* Hover Overlay - Design Moderno com Glassmorphism */}
-                  {isCenter && (
-                  <div style={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.75) 0%, rgba(0, 5, 16, 0.85) 30%, rgba(0, 16, 32, 0.9) 100%)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                    alignItems: 'flex-start',
-                    padding: isMobile ? '25px' : '40px',
-                    opacity: 0,
-                    transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                    zIndex: 3,
-                    boxSizing: 'border-box',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = '1';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = '0';
-                  }}>
-                    {/* Efeitos de luz ambiente */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '-50%',
-                      right: '-20%',
-                      width: '400px',
-                      height: '400px',
-                      background: 'radial-gradient(circle, rgba(138, 43, 226, 0.4) 0%, transparent 70%)',
-                      filter: 'blur(80px)',
-                      animation: 'float 6s ease-in-out infinite',
-                      pointerEvents: 'none',
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '-30%',
-                      left: '-10%',
-                      width: '350px',
-                      height: '350px',
-                      background: 'radial-gradient(circle, rgba(0, 217, 255, 0.3) 0%, transparent 70%)',
-                      filter: 'blur(80px)',
-                      animation: 'float 8s ease-in-out infinite reverse',
-                      pointerEvents: 'none',
-                    }} />
-                    
-                    {/* Barra de categoria/tag */}
-                    <div style={{
-                      position: 'absolute',
-                      top: isMobile ? '20px' : '30px',
-                      left: isMobile ? '20px' : '30px',
-                      background: 'rgba(138, 43, 226, 0.25)',
-                      border: '1px solid rgba(138, 43, 226, 0.5)',
-                      backdropFilter: 'blur(10px)',
-                      padding: isMobile ? '6px 14px' : '8px 18px',
-                      borderRadius: '25px',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: isMobile ? '0.75rem' : '0.85rem',
-                      fontWeight: 700,
-                      color: '#00d9ff',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1.5px',
-                      boxShadow: '0 4px 15px rgba(138, 43, 226, 0.3)',
-                    }}>
-                      🎮 Jogo em Destaque
-                    </div>
-                    
-                    {/* Container de conteúdo */}
-                    <div style={{
-                      position: 'relative',
-                      zIndex: 1,
-                      width: '100%',
-                    }}>
-                      {/* Título do jogo */}
-                      <h3 style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: isMobile ? '1.6rem' : '2.2rem',
-                        fontWeight: 900,
-                        color: '#fff',
-                        marginBottom: isMobile ? '12px' : '16px',
-                        textShadow: '0 4px 20px rgba(0, 0, 0, 0.9), 0 0 40px rgba(138, 43, 226, 0.8)',
-                        textTransform: 'uppercase',
-                        letterSpacing: isMobile ? '1.5px' : '2.5px',
-                        lineHeight: '1.2',
-                        background: 'linear-gradient(135deg, #fff 0%, #00d9ff 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}>{gameCard.title}</h3>
-                      
-                      {/* Linha decorativa */}
+                    {/* Efeito de brilho no topo (apenas centro) */}
+                    {isCenter && (
                       <div style={{
-                        width: isMobile ? '60px' : '80px',
-                        height: '3px',
-                        background: 'linear-gradient(90deg, #8a2be2 0%, #00d9ff 100%)',
-                        marginBottom: isMobile ? '12px' : '16px',
-                        borderRadius: '2px',
-                        boxShadow: '0 0 20px rgba(138, 43, 226, 0.8)',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: isMobile ? '80px' : '120px',
+                        background: 'linear-gradient(180deg, rgba(138, 43, 226, 0.2) 0%, transparent 100%)',
+                        zIndex: 1,
                       }} />
-                      
-                      {/* Descrição do jogo */}
-                      <p style={{
-                        fontFamily: 'Roboto, sans-serif',
-                        fontSize: isMobile ? '0.9rem' : '1.05rem',
-                        color: 'rgba(255, 255, 255, 0.95)',
-                        lineHeight: isMobile ? '1.6' : '1.75',
-                        marginBottom: isMobile ? '18px' : '24px',
-                        textShadow: '0 2px 10px rgba(0, 0, 0, 0.9)',
-                        fontWeight: 400,
-                        maxWidth: '95%',
-                      }}>{gameCard.description}</p>
-                      
-                      {/* Botão de ação */}
-                      <Link to="#" onClick={(e) => {
-                          e.preventDefault();
-                          showNotification(`Abrindo o jogo ${gameCard.title}`, 'info');
-                          setTimeout(() => navigate(`/jogo/${gameCard.slug}`), 500);
-                        }} style={{ textDecoration: 'none' }}>
-                        <button style={{
-                          fontFamily: 'Rajdhani, sans-serif',
-                          fontSize: isMobile ? '0.95rem' : '1.15rem',
-                          fontWeight: 800,
-                          color: '#0a0015',
-                          background: 'linear-gradient(135deg, #00d9ff 0%, #8a2be2 50%, #ff00ea 100%)',
-                          backgroundSize: '200% 100%',
-                          backgroundPosition: '0% 0%',
-                          border: 'none',
-                          padding: isMobile ? '12px 32px' : '16px 45px',
-                          borderRadius: '50px',
-                          cursor: 'pointer',
-                          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                          textTransform: 'uppercase',
-                          letterSpacing: isMobile ? '1.5px' : '2.5px',
-                          boxShadow: '0 8px 30px rgba(0, 217, 255, 0.5), 0 0 50px rgba(138, 43, 226, 0.3)',
-                          position: 'relative',
-                          overflow: 'hidden',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                        }}
+                    )}
+
+                    {/* Título do jogo */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: isCenter ? '25px' : '15px',
+                      left: isCenter ? '25px' : '15px',
+                      right: isCenter ? '25px' : '15px',
+                      zIndex: 2,
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: isCenter ? '1.7rem' : '1.3rem',
+                      fontWeight: 800,
+                      color: '#fff',
+                      letterSpacing: '1.5px',
+                      textTransform: 'uppercase',
+                      textShadow: isCenter
+                        ? '0 2px 10px rgba(0, 0, 0, 0.8), 0 0 40px rgba(138, 43, 226, 1)'
+                        : '0 2px 10px rgba(0, 0, 0, 0.8)',
+                      lineHeight: '1.2',
+                    }}>
+                      {gameCard.title}
+                    </div>
+
+                    {/* Badge "EM DESTAQUE" apenas no card central */}
+                    {isCenter && (
+                      <div style={{
+                        position: 'absolute',
+                        top: isMobile ? '12px' : '20px',
+                        right: isMobile ? '12px' : '20px',
+                        background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.95) 0%, rgba(0, 217, 255, 0.95) 100%)',
+                        padding: isMobile ? '6px 12px' : '8px 16px',
+                        borderRadius: isMobile ? '15px' : '20px',
+                        fontSize: isMobile ? '0.65rem' : '0.75rem',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 700,
+                        color: '#fff',
+                        textTransform: 'uppercase',
+                        letterSpacing: isMobile ? '1px' : '1.5px',
+                        zIndex: 2,
+                        boxShadow: '0 4px 20px rgba(138, 43, 226, 0.6)',
+                        animation: 'borderPulseCarousel 2s ease-in-out infinite',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        ⭐ Em Destaque
+                      </div>
+                    )}
+
+                    {/* Hover Overlay - Design Moderno com Glassmorphism */}
+                    {isCenter && (
+                      <div style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.75) 0%, rgba(0, 5, 16, 0.85) 30%, rgba(0, 16, 32, 0.9) 100%)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-end',
+                        alignItems: 'flex-start',
+                        padding: isMobile ? '25px' : '40px',
+                        opacity: 0,
+                        transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                        zIndex: 3,
+                        boxSizing: 'border-box',
+                      }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundPosition = '100% 0%';
-                          e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 15px 50px rgba(0, 217, 255, 0.9), 0 0 80px rgba(138, 43, 226, 0.6), 0 0 100px rgba(255, 0, 234, 0.4)';
-                          e.currentTarget.style.color = '#fff';
+                          e.currentTarget.style.opacity = '1';
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundPosition = '0% 0%';
-                          e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.5), 0 0 50px rgba(138, 43, 226, 0.3)';
-                          e.currentTarget.style.color = '#0a0015';
+                          e.currentTarget.style.opacity = '0';
                         }}>
-                          <span style={{ position: 'relative', zIndex: 1 }}>Ver Detalhes</span>
-                          <span style={{ 
-                            fontSize: isMobile ? '1.2rem' : '1.4rem',
-                            position: 'relative', 
-                            zIndex: 1,
-                            transition: 'transform 0.3s ease',
-                          }}>→</span>
-                        </button>
-                      </Link>
-                    </div>
+                        {/* Efeitos de luz ambiente */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '-50%',
+                          right: '-20%',
+                          width: '400px',
+                          height: '400px',
+                          background: 'radial-gradient(circle, rgba(138, 43, 226, 0.4) 0%, transparent 70%)',
+                          filter: 'blur(80px)',
+                          animation: 'float 6s ease-in-out infinite',
+                          pointerEvents: 'none',
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '-30%',
+                          left: '-10%',
+                          width: '350px',
+                          height: '350px',
+                          background: 'radial-gradient(circle, rgba(0, 217, 255, 0.3) 0%, transparent 70%)',
+                          filter: 'blur(80px)',
+                          animation: 'float 8s ease-in-out infinite reverse',
+                          pointerEvents: 'none',
+                        }} />
+
+                        {/* Barra de categoria/tag */}
+                        <div style={{
+                          position: 'absolute',
+                          top: isMobile ? '20px' : '30px',
+                          left: isMobile ? '20px' : '30px',
+                          background: 'rgba(138, 43, 226, 0.25)',
+                          border: '1px solid rgba(138, 43, 226, 0.5)',
+                          backdropFilter: 'blur(10px)',
+                          padding: isMobile ? '6px 14px' : '8px 18px',
+                          borderRadius: '25px',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: isMobile ? '0.75rem' : '0.85rem',
+                          fontWeight: 700,
+                          color: '#00d9ff',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1.5px',
+                          boxShadow: '0 4px 15px rgba(138, 43, 226, 0.3)',
+                        }}>
+                          🎮 Jogo em Destaque
+                        </div>
+
+                        {/* Container de conteúdo */}
+                        <div style={{
+                          position: 'relative',
+                          zIndex: 1,
+                          width: '100%',
+                        }}>
+                          {/* Título do jogo */}
+                          <h3 style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: isMobile ? '1.6rem' : '2.2rem',
+                            fontWeight: 900,
+                            color: '#fff',
+                            marginBottom: isMobile ? '12px' : '16px',
+                            textShadow: '0 4px 20px rgba(0, 0, 0, 0.9), 0 0 40px rgba(138, 43, 226, 0.8)',
+                            textTransform: 'uppercase',
+                            letterSpacing: isMobile ? '1.5px' : '2.5px',
+                            lineHeight: '1.2',
+                            background: 'linear-gradient(135deg, #fff 0%, #00d9ff 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                          }}>{gameCard.title}</h3>
+
+                          {/* Linha decorativa */}
+                          <div style={{
+                            width: isMobile ? '60px' : '80px',
+                            height: '3px',
+                            background: 'linear-gradient(90deg, #8a2be2 0%, #00d9ff 100%)',
+                            marginBottom: isMobile ? '12px' : '16px',
+                            borderRadius: '2px',
+                            boxShadow: '0 0 20px rgba(138, 43, 226, 0.8)',
+                          }} />
+
+                          {/* Descrição do jogo */}
+                          <p style={{
+                            fontFamily: 'Roboto, sans-serif',
+                            fontSize: isMobile ? '0.9rem' : '1.05rem',
+                            color: 'rgba(255, 255, 255, 0.95)',
+                            lineHeight: isMobile ? '1.6' : '1.75',
+                            marginBottom: isMobile ? '18px' : '24px',
+                            textShadow: '0 2px 10px rgba(0, 0, 0, 0.9)',
+                            fontWeight: 400,
+                            maxWidth: '95%',
+                          }}>{gameCard.description}</p>
+
+                          {/* Botão de ação */}
+                          <Link to="#" onClick={(e) => {
+                            e.preventDefault();
+                            showNotification(`Abrindo o jogo ${gameCard.title}`, 'info');
+                            setTimeout(() => navigate(`/jogo/${gameCard.slug}`), 500);
+                          }} style={{ textDecoration: 'none' }}>
+                            <button style={{
+                              fontFamily: 'Rajdhani, sans-serif',
+                              fontSize: isMobile ? '0.95rem' : '1.15rem',
+                              fontWeight: 800,
+                              color: '#0a0015',
+                              background: 'linear-gradient(135deg, #00d9ff 0%, #8a2be2 50%, #ff00ea 100%)',
+                              backgroundSize: '200% 100%',
+                              backgroundPosition: '0% 0%',
+                              border: 'none',
+                              padding: isMobile ? '12px 32px' : '16px 45px',
+                              borderRadius: '50px',
+                              cursor: 'pointer',
+                              transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                              textTransform: 'uppercase',
+                              letterSpacing: isMobile ? '1.5px' : '2.5px',
+                              boxShadow: '0 8px 30px rgba(0, 217, 255, 0.5), 0 0 50px rgba(138, 43, 226, 0.3)',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '10px',
+                            }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundPosition = '100% 0%';
+                                e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 15px 50px rgba(0, 217, 255, 0.9), 0 0 80px rgba(138, 43, 226, 0.6), 0 0 100px rgba(255, 0, 234, 0.4)';
+                                e.currentTarget.style.color = '#fff';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundPosition = '0% 0%';
+                                e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 8px 30px rgba(0, 217, 255, 0.5), 0 0 50px rgba(138, 43, 226, 0.3)';
+                                e.currentTarget.style.color = '#0a0015';
+                              }}>
+                              <span style={{ position: 'relative', zIndex: 1 }}>Ver Detalhes</span>
+                              <span style={{
+                                fontSize: isMobile ? '1.2rem' : '1.4rem',
+                                position: 'relative',
+                                zIndex: 1,
+                                transition: 'transform 0.3s ease',
+                              }}>→</span>
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {/* Botões de Navegação Melhorados */}
-            <button
-              onClick={() => setCurrentGame((prev) => (prev - 1 + totalGames) % totalGames)}
-              style={{
-                position: 'absolute',
-                left: isMobile ? '10px' : '-25px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: isMobile ? '45px' : '60px',
-                height: isMobile ? '45px' : '60px',
-                borderRadius: '50%',
-                border: '3px solid rgba(138, 43, 226, 0.6)',
-                background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)',
-                color: '#8a2be2',
-                fontSize: isMobile ? '1.3rem' : '1.8rem',
-                cursor: 'pointer',
-                transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                boxShadow: '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)',
-                zIndex: 10,
-                fontWeight: 'bold',
+              {/* Botões de Navegação Melhorados */}
+              <button
+                onClick={() => setCurrentGame((prev) => (prev - 1 + totalGames) % totalGames)}
+                style={{
+                  position: 'absolute',
+                  left: isMobile ? '10px' : '-25px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: isMobile ? '45px' : '60px',
+                  height: isMobile ? '45px' : '60px',
+                  borderRadius: '50%',
+                  border: '3px solid rgba(138, 43, 226, 0.6)',
+                  background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)',
+                  color: '#8a2be2',
+                  fontSize: isMobile ? '1.3rem' : '1.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)',
+                  zIndex: 10,
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #8a2be2 0%, #00d9ff 100%)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.2) rotate(-5deg)';
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.borderColor = '#00d9ff';
+                  e.currentTarget.style.boxShadow = '0 10px 40px rgba(0, 217, 255, 0.8), 0 0 60px rgba(138, 43, 226, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1) rotate(0deg)';
+                  e.currentTarget.style.color = '#8a2be2';
+                  e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.6)';
+                  e.currentTarget.style.boxShadow = '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)';
+                }}
+              >
+                &lt;
+              </button>
+
+              <button
+                onClick={() => setCurrentGame((prev) => (prev + 1) % totalGames)}
+                style={{
+                  position: 'absolute',
+                  right: isMobile ? '10px' : '-25px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: isMobile ? '45px' : '60px',
+                  height: isMobile ? '45px' : '60px',
+                  borderRadius: '50%',
+                  border: '3px solid rgba(138, 43, 226, 0.6)',
+                  background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)',
+                  color: '#8a2be2',
+                  fontSize: isMobile ? '1.3rem' : '1.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  boxShadow: '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)',
+                  zIndex: 10,
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #8a2be2 0%, #00d9ff 100%)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.2) rotate(5deg)';
+                  e.currentTarget.style.color = '#fff';
+                  e.currentTarget.style.borderColor = '#00d9ff';
+                  e.currentTarget.style.boxShadow = '0 10px 40px rgba(0, 217, 255, 0.8), 0 0 60px rgba(138, 43, 226, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1) rotate(0deg)';
+                  e.currentTarget.style.color = '#8a2be2';
+                  e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.6)';
+                  e.currentTarget.style.boxShadow = '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)';
+                }}
+              >
+                &gt;
+              </button>
+
+              {/* Indicadores Melhorados - 20 indicadores (um por jogo) */}
+              <div style={{
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'center',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #8a2be2 0%, #00d9ff 100%)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.2) rotate(-5deg)';
-                e.currentTarget.style.color = '#fff';
-                e.currentTarget.style.borderColor = '#00d9ff';
-                e.currentTarget.style.boxShadow = '0 10px 40px rgba(0, 217, 255, 0.8), 0 0 60px rgba(138, 43, 226, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1) rotate(0deg)';
-                e.currentTarget.style.color = '#8a2be2';
-                e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.6)';
-                e.currentTarget.style.boxShadow = '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)';
-              }}
-            >
-              &lt;
-            </button>
-
-            <button
-              onClick={() => setCurrentGame((prev) => (prev + 1) % totalGames)}
-              style={{
-                position: 'absolute',
-                right: isMobile ? '10px' : '-25px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: isMobile ? '45px' : '60px',
-                height: isMobile ? '45px' : '60px',
-                borderRadius: '50%',
-                border: '3px solid rgba(138, 43, 226, 0.6)',
-                background: 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)',
-                color: '#8a2be2',
-                fontSize: isMobile ? '1.3rem' : '1.8rem',
-                cursor: 'pointer',
-                transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                boxShadow: '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)',
-                zIndex: 10,
-                fontWeight: 'bold',
-                display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #8a2be2 0%, #00d9ff 100%)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1.2) rotate(5deg)';
-                e.currentTarget.style.color = '#fff';
-                e.currentTarget.style.borderColor = '#00d9ff';
-                e.currentTarget.style.boxShadow = '0 10px 40px rgba(0, 217, 255, 0.8), 0 0 60px rgba(138, 43, 226, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(10, 0, 21, 0.98) 0%, rgba(26, 0, 51, 0.98) 100%)';
-                e.currentTarget.style.transform = 'translateY(-50%) scale(1) rotate(0deg)';
-                e.currentTarget.style.color = '#8a2be2';
-                e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.6)';
-                e.currentTarget.style.boxShadow = '0 5px 25px rgba(138, 43, 226, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)';
-              }}
-            >
-              &gt;
-            </button>
-
-            {/* Indicadores Melhorados - 20 indicadores (um por jogo) */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: isMobile ? '5px' : '8px',
-              marginTop: isMobile ? '25px' : '40px',
-              flexWrap: 'wrap',
-              maxWidth: isMobile ? '95%' : '800px',
-              margin: isMobile ? '25px auto 0' : '40px auto 0',
-              padding: isMobile ? '0 10px' : '0',
-            }}>
-              {Array.from({ length: totalGames }).map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentGame(idx)}
-                  style={{
-                    width: currentGame === idx ? (isMobile ? '35px' : '50px') : (isMobile ? '10px' : '14px'),
-                    height: isMobile ? '10px' : '14px',
-                    borderRadius: isMobile ? '5px' : '7px',
-                    border: currentGame === idx ? '2px solid rgba(0, 217, 255, 0.6)' : '2px solid transparent',
-                    background: currentGame === idx 
-                      ? 'linear-gradient(90deg, #8a2be2 0%, #00d9ff 100%)'
-                      : 'rgba(138, 43, 226, 0.4)',
-                    cursor: 'pointer',
-                    transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    boxShadow: currentGame === idx 
-                      ? '0 0 20px rgba(138, 43, 226, 0.8), 0 0 40px rgba(0, 217, 255, 0.5)' 
-                      : 'none',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (currentGame !== idx) {
-                      e.currentTarget.style.background = 'rgba(138, 43, 226, 0.7)';
-                      e.currentTarget.style.transform = 'scale(1.3)';
-                      e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.8)';
-                    } else {
-                      e.currentTarget.style.transform = 'scale(1.15)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (currentGame !== idx) {
-                      e.currentTarget.style.background = 'rgba(138, 43, 226, 0.4)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.borderColor = 'transparent';
-                    } else {
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }
-                  }}
-                >
-                  {/* Efeito de pulso no indicador ativo */}
-                  {currentGame === idx && (
-                    <div style={{
-                      position: 'absolute',
-                      inset: '-4px',
-                      border: '2px solid rgba(0, 217, 255, 0.4)',
-                      borderRadius: '9px',
-                      animation: 'indicatorPulse 2s ease-in-out infinite',
-                      pointerEvents: 'none',
-                    }} />
-                  )}
-                </button>
-              ))}
+                gap: isMobile ? '5px' : '8px',
+                marginTop: isMobile ? '25px' : '40px',
+                flexWrap: 'wrap',
+                maxWidth: isMobile ? '95%' : '800px',
+                margin: isMobile ? '25px auto 0' : '40px auto 0',
+                padding: isMobile ? '0 10px' : '0',
+              }}>
+                {Array.from({ length: totalGames }).map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentGame(idx)}
+                    style={{
+                      width: currentGame === idx ? (isMobile ? '35px' : '50px') : (isMobile ? '10px' : '14px'),
+                      height: isMobile ? '10px' : '14px',
+                      borderRadius: isMobile ? '5px' : '7px',
+                      border: currentGame === idx ? '2px solid rgba(0, 217, 255, 0.6)' : '2px solid transparent',
+                      background: currentGame === idx
+                        ? 'linear-gradient(90deg, #8a2be2 0%, #00d9ff 100%)'
+                        : 'rgba(138, 43, 226, 0.4)',
+                      cursor: 'pointer',
+                      transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      boxShadow: currentGame === idx
+                        ? '0 0 20px rgba(138, 43, 226, 0.8), 0 0 40px rgba(0, 217, 255, 0.5)'
+                        : 'none',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentGame !== idx) {
+                        e.currentTarget.style.background = 'rgba(138, 43, 226, 0.7)';
+                        e.currentTarget.style.transform = 'scale(1.3)';
+                        e.currentTarget.style.borderColor = 'rgba(138, 43, 226, 0.8)';
+                      } else {
+                        e.currentTarget.style.transform = 'scale(1.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentGame !== idx) {
+                        e.currentTarget.style.background = 'rgba(138, 43, 226, 0.4)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                        e.currentTarget.style.borderColor = 'transparent';
+                      } else {
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }
+                    }}
+                  >
+                    {/* Efeito de pulso no indicador ativo */}
+                    {currentGame === idx && (
+                      <div style={{
+                        position: 'absolute',
+                        inset: '-4px',
+                        border: '2px solid rgba(0, 217, 255, 0.4)',
+                        borderRadius: '9px',
+                        animation: 'indicatorPulse 2s ease-in-out infinite',
+                        pointerEvents: 'none',
+                      }} />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
       {/* Seção Loja Gamer */}
@@ -3706,8 +3710,8 @@ export default function GamerWorld() {
                 background: i % 3 === 0
                   ? 'radial-gradient(circle, rgba(138, 43, 226, 0.15) 0%, transparent 70%)'
                   : i % 3 === 1
-                  ? 'radial-gradient(ellipse, rgba(0, 217, 255, 0.12) 0%, transparent 70%)'
-                  : 'radial-gradient(circle, rgba(255, 0, 234, 0.1) 0%, transparent 70%)',
+                    ? 'radial-gradient(ellipse, rgba(0, 217, 255, 0.12) 0%, transparent 70%)'
+                    : 'radial-gradient(circle, rgba(255, 0, 234, 0.1) 0%, transparent 70%)',
                 top: `${Math.random() * 100}%`,
                 left: `${Math.random() * 100}%`,
                 animation: `randomFloat${(i % 3) + 1} ${15 + Math.random() * 10}s ease-in-out infinite, morphShape ${20 + Math.random() * 15}s ease-in-out infinite`,
@@ -3719,7 +3723,7 @@ export default function GamerWorld() {
             ))}
           </>
         )}
-        <div style={{maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1}}>
+        <div style={{ maxWidth: isMobile ? '100%' : '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: 700,
@@ -3741,9 +3745,9 @@ export default function GamerWorld() {
             marginTop: isMobile ? '20px' : '30px',
             opacity: 0.8,
           }}>
-            Destaque em <span style={{color: '#00d9ff', fontWeight: 700}}>Geek</span>
-            <br/>
-            <small style={{fontSize: '0.85rem'}}>Explore também: Gamer & SmartHome</small>
+            Destaque em <span style={{ color: '#00d9ff', fontWeight: 700 }}>Geek</span>
+            <br />
+            <small style={{ fontSize: '0.85rem' }}>Explore também: Gamer & SmartHome</small>
           </p>
 
           {/* Imagem principal para dispositivos móveis */}
@@ -3780,387 +3784,387 @@ export default function GamerWorld() {
                   // Se houver busca, procurar em TODAS as categorias
                   if (searchProduct !== '') {
                     return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-                           (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
+                      (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
                   }
                   // Sem busca, mostrar apenas categoria 'gamer'
                   return p.category === 'gamer';
                 })
                 .slice(0, 4)
                 .length === 0 ? (
-                  <div style={{
-                    gridColumn: '1 / -1',
-                    textAlign: 'center',
-                    padding: '60px 20px',
-                    color: 'rgba(255, 255, 255, 0.5)',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1.2rem',
-                  }}>
-                    {searchProduct ? '🔍 Nenhum produto encontrado' : '📦 Nenhum produto disponível'}
-                    <p style={{fontSize: '0.9rem', marginTop: '10px'}}>
-                      {searchProduct ? 'Tente outra busca' : 'Adicione produtos no painel admin'}
-                    </p>
-                  </div>
-                ) : (
-                  storeProducts
-                    .filter(p => {
-                      // Se houver busca, procurar em TODAS as categorias
-                      if (searchProduct !== '') {
-                        return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
-                               (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
-                      }
-                      // Sem busca, mostrar apenas categoria 'gamer'
-                      return p.category === 'gamer';
-                    })
-                    .slice(0, 4)
-                    .map((product) => (
-              <div 
-                key={product.id} 
-                onClick={() => navigate(`/produto/${product.id}`)}
-                style={{
-                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)',
-                  border: '2px solid rgba(0, 217, 255, 0.3)',
-                  borderRadius: '16px',
-                  padding: isMobile ? '20px' : '28px',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  boxSizing: 'border-box',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-10px)';
-                  e.currentTarget.style.borderColor = '#00d9ff';
-                  e.currentTarget.style.boxShadow = '0 20px 50px rgba(0, 217, 255, 0.5)';
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(255, 0, 234, 0.15) 100%)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)';
+                <div style={{
+                  gridColumn: '1 / -1',
+                  textAlign: 'center',
+                  padding: '60px 20px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontFamily: 'Rajdhani, sans-serif',
+                  fontSize: '1.2rem',
                 }}>
-                
-                {/* Badge de categoria */}
-                {product.category !== 'gamer' && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '15px',
-                    left: '15px',
-                    background: product.category === 'geek' 
-                      ? 'linear-gradient(135deg, #ff00ea, #cc00ba)'
-                      : product.category === 'smarthome'
-                      ? 'linear-gradient(135deg, #00ff88, #00cc66)'
-                      : 'linear-gradient(135deg, #ff00ea, #cc00ba)',
-                    color: '#fff',
-                    padding: '5px 12px',
-                    borderRadius: '20px',
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    zIndex: 2,
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
-                  }}>
-                    {product.category === 'geek' ? '🎮 Geek' : product.category === 'smarthome' ? '🏠 Smart' : '🎮 Geek'}
-                  </div>
-                )}
-                
-                {/* Feedback de adicionado ao carrinho */}
-                {addedToCart === product.id && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '15px',
-                    right: '15px',
-                    background: 'linear-gradient(135deg, #00ff88, #00cc66)',
-                    color: '#000',
-                    padding: '8px 15px',
-                    borderRadius: '25px',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    fontFamily: 'Rajdhani, sans-serif',
-                    zIndex: 3,
-                    boxShadow: '0 4px 20px rgba(0, 255, 136, 0.6)',
-                    animation: 'pulse 0.5s ease-in-out',
-                  }}>
-                    ✓ Adicionado!
-                  </div>
-                )}
-                
-                {/* Imagem ou Modelo 3D do produto */}
-                <div 
-                  style={{
-                    width: '100%',
-                    height: isMobile ? '180px' : '220px',
-                    marginBottom: '20px',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    background: 'rgba(0, 0, 0, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                  }}
-                >
-                  {(() => {
-                    // Detectar se é um dispositivo móvel
-                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                  {searchProduct ? '🔍 Nenhum produto encontrado' : '📦 Nenhum produto disponível'}
+                  <p style={{ fontSize: '0.9rem', marginTop: '10px' }}>
+                    {searchProduct ? 'Tente outra busca' : 'Adicione produtos no painel admin'}
+                  </p>
+                </div>
+              ) : (
+                storeProducts
+                  .filter(p => {
+                    // Se houver busca, procurar em TODAS as categorias
+                    if (searchProduct !== '') {
+                      return p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
+                        (p.description && p.description.toLowerCase().includes(searchProduct.toLowerCase()));
+                    }
+                    // Sem busca, mostrar apenas categoria 'gamer'
+                    return p.category === 'gamer';
+                  })
+                  .slice(0, 4)
+                  .map((product) => (
+                    <div
+                      key={product.id}
+                      onClick={() => navigate(`/produto/${product.id}`)}
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)',
+                        border: '2px solid rgba(0, 217, 255, 0.3)',
+                        borderRadius: '16px',
+                        padding: isMobile ? '20px' : '28px',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        boxSizing: 'border-box',
+                        position: 'relative',
+                        overflow: 'hidden',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-10px)';
+                        e.currentTarget.style.borderColor = '#00d9ff';
+                        e.currentTarget.style.boxShadow = '0 20px 50px rgba(0, 217, 255, 0.5)';
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(255, 0, 234, 0.15) 100%)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.borderColor = 'rgba(0, 217, 255, 0.3)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.08) 0%, rgba(255, 0, 234, 0.08) 100%)';
+                      }}>
 
-                    if (product.model_3d && !isMobile) {
-                      // Em desktop, mostrar o modelo 3D
-                      return (
-                        <>
-                          <model-viewer
-                            src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                            data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                            alt={`Modelo 3D de ${product.name}`}
-                            shadow-intensity="1"
-                            disable-pan
-                            disable-zoom
-                            camera-orbit="90deg 75deg 2.5m"
-                            field-of-view="30deg"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              background: 'rgba(0, 0, 0, 0.1)',
-                              borderRadius: '12px',
-                            }}
-                            onLoad={(e) => {
-                              e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.setAttribute('auto-rotate', '');
-                              e.target.setAttribute('rotation-per-second', '60deg');
-                              e.target.setAttribute('camera-controls', '');
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.removeAttribute('auto-rotate');
-                              e.target.removeAttribute('camera-controls');
-                              e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                            }}
-                          />
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '10px',
-                            right: '10px',
-                            background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
-                            color: '#fff',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            fontFamily: 'Rajdhani, sans-serif',
-                            boxShadow: '0 4px 15px rgba(0, 217, 255, 0.5)',
-                            zIndex: 2,
-                          }}>
-                            🎮 3D
-                          </div>
-                        </>
-                      );
-                    } else if (product.model_3d && isMobile) {
-                      // Em mobile, mostrar imagem padrão em vez do modelo 3D
-                      return (
-                        <>
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            loading="lazy"
-                            decoding="async"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              transition: 'transform 0.3s ease',
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          />
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '10px',
-                            right: '10px',
-                            background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
-                            color: '#fff',
-                            padding: '6px 12px',
-                            borderRadius: '20px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            fontFamily: 'Rajdhani, sans-serif',
-                            boxShadow: '0 4px 15px rgba(255, 107, 107, 0.5)',
-                            zIndex: 2,
-                          }}>
-                            📱 3D OFF
-                          </div>
-                        </>
-                      );
-                    } else if (product.images && product.images.length > 0) {
-                      // Se não tiver modelo 3D mas tiver imagens
-                      return (
-                        <img
-                          src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
-                          data-src={product.images[0]}
-                          alt={product.name}
-                          loading="lazy"
-                          decoding="async"
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            transition: 'transform 0.3s ease',
-                          }}
-                          onLoad={(e) => {
-                            // Carrega a imagem somente quando visível em mobile
-                            if (isMobile) {
-                              const rect = e.target.getBoundingClientRect();
-                              if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-                                e.target.src = e.target.dataset.src;
-                                e.target.removeAttribute('data-src');
-                              }
-                            }
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                        />
-                      );
-                    } else {
-                      // Se não tiver modelo 3D nem imagens
-                      return (
+                      {/* Badge de categoria */}
+                      {product.category !== 'gamer' && (
                         <div style={{
+                          position: 'absolute',
+                          top: '15px',
+                          left: '15px',
+                          background: product.category === 'geek'
+                            ? 'linear-gradient(135deg, #ff00ea, #cc00ba)'
+                            : product.category === 'smarthome'
+                              ? 'linear-gradient(135deg, #00ff88, #00cc66)'
+                              : 'linear-gradient(135deg, #ff00ea, #cc00ba)',
+                          color: '#fff',
+                          padding: '5px 12px',
+                          borderRadius: '20px',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          zIndex: 2,
+                          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)',
+                        }}>
+                          {product.category === 'geek' ? '🎮 Geek' : product.category === 'smarthome' ? '🏠 Smart' : '🎮 Geek'}
+                        </div>
+                      )}
+
+                      {/* Feedback de adicionado ao carrinho */}
+                      {addedToCart === product.id && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '15px',
+                          right: '15px',
+                          background: 'linear-gradient(135deg, #00ff88, #00cc66)',
+                          color: '#000',
+                          padding: '8px 15px',
+                          borderRadius: '25px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          fontFamily: 'Rajdhani, sans-serif',
+                          zIndex: 3,
+                          boxShadow: '0 4px 20px rgba(0, 255, 136, 0.6)',
+                          animation: 'pulse 0.5s ease-in-out',
+                        }}>
+                          ✓ Adicionado!
+                        </div>
+                      )}
+
+                      {/* Imagem ou Modelo 3D do produto */}
+                      <div
+                        style={{
                           width: '100%',
-                          height: '100%',
+                          height: isMobile ? '180px' : '220px',
+                          marginBottom: '20px',
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          background: 'rgba(0, 0, 0, 0.3)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#666',
-                          fontSize: '3rem',
-                        }}>
-                          📦
-                        </div>
-                      );
-                    }
-                  })()}
-                </div>
-                
-                <h3 style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontWeight: 700,
-                  fontSize: isMobile ? '1.3rem' : '1.5rem',
-                  color: '#00d9ff',
-                  marginBottom: '12px',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  lineHeight: '1.3',
-                }}>{product.name}</h3>
-                
-                <p style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: isMobile ? '0.9rem' : '1rem',
-                  color: '#fff',
-                  opacity: 0.75,
-                  marginBottom: '18px',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  lineHeight: '1.5',
-                  maxHeight: '4.5em',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                }}>{product.description}</p>
-                
-                <p style={{
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: isMobile ? '1.5rem' : '1.8rem',
-                  color: '#ff00ea',
-                  fontWeight: 'bold',
-                  marginBottom: '18px',
-                  textShadow: '0 0 20px rgba(255, 0, 234, 0.5)',
-                }}>
-                  {new Intl.NumberFormat('pt-BR', { 
-                    style: 'currency', 
-                    currency: 'BRL' 
-                  }).format(product.price)}
-                </p>
-                
-                {/* Botões de ação */}
-                <div style={{
-                  display: 'flex',
-                  gap: '10px',
-                }}>
-                  <button 
-                    onClick={(e) => handleAddToCart(product, e)}
-                    style={{
-                      flex: 1,
-                      padding: isMobile ? '12px' : '14px',
-                      background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
-                      border: 'none',
-                      borderRadius: '10px',
-                      color: '#000',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontWeight: 'bold',
-                      fontSize: isMobile ? '0.95rem' : '1.05rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      whiteSpace: 'nowrap',
-                      boxSizing: 'border-box',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.stopPropagation();
-                      e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.stopPropagation();
-                      e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}>
-                    🛒 Adicionar
-                  </button>
-                  
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate(`/produto/${product.id}`);
-                    }}
-                    style={{
-                      padding: isMobile ? '12px 16px' : '14px 20px',
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '2px solid rgba(255, 255, 255, 0.3)',
-                      borderRadius: '10px',
-                      color: '#fff',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontWeight: 'bold',
-                      fontSize: isMobile ? '0.95rem' : '1.05rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      boxSizing: 'border-box',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.stopPropagation();
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                      e.currentTarget.style.borderColor = '#fff';
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.stopPropagation();
-                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}>
-                    👁️
-                  </button>
-                </div>
-              </div>
-            ))
+                          position: 'relative',
+                        }}
+                      >
+                        {(() => {
+                          // Detectar se é um dispositivo móvel
+                          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                          if (product.model_3d && !isMobile) {
+                            // Em desktop, mostrar o modelo 3D
+                            return (
+                              <>
+                                <model-viewer
+                                  src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                                  data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                                  alt={`Modelo 3D de ${product.name}`}
+                                  shadow-intensity="1"
+                                  disable-pan
+                                  disable-zoom
+                                  camera-orbit="90deg 75deg 2.5m"
+                                  field-of-view="30deg"
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    background: 'rgba(0, 0, 0, 0.1)',
+                                    borderRadius: '12px',
+                                  }}
+                                  onLoad={(e) => {
+                                    e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.setAttribute('auto-rotate', '');
+                                    e.target.setAttribute('rotation-per-second', '60deg');
+                                    e.target.setAttribute('camera-controls', '');
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.removeAttribute('auto-rotate');
+                                    e.target.removeAttribute('camera-controls');
+                                    e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                                  }}
+                                />
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: '10px',
+                                  right: '10px',
+                                  background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
+                                  color: '#fff',
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  fontFamily: 'Rajdhani, sans-serif',
+                                  boxShadow: '0 4px 15px rgba(0, 217, 255, 0.5)',
+                                  zIndex: 2,
+                                }}>
+                                  🎮 3D
+                                </div>
+                              </>
+                            );
+                          } else if (product.model_3d && isMobile) {
+                            // Em mobile, mostrar imagem padrão em vez do modelo 3D
+                            return (
+                              <>
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  loading="lazy"
+                                  decoding="async"
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    transition: 'transform 0.3s ease',
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                />
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: '10px',
+                                  right: '10px',
+                                  background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+                                  color: '#fff',
+                                  padding: '6px 12px',
+                                  borderRadius: '20px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  fontFamily: 'Rajdhani, sans-serif',
+                                  boxShadow: '0 4px 15px rgba(255, 107, 107, 0.5)',
+                                  zIndex: 2,
+                                }}>
+                                  📱 3D OFF
+                                </div>
+                              </>
+                            );
+                          } else if (product.images && product.images.length > 0) {
+                            // Se não tiver modelo 3D mas tiver imagens
+                            return (
+                              <img
+                                src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
+                                data-src={product.images[0]}
+                                alt={product.name}
+                                loading="lazy"
+                                decoding="async"
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  transition: 'transform 0.3s ease',
+                                }}
+                                onLoad={(e) => {
+                                  // Carrega a imagem somente quando visível em mobile
+                                  if (isMobile) {
+                                    const rect = e.target.getBoundingClientRect();
+                                    if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                                      e.target.src = e.target.dataset.src;
+                                      e.target.removeAttribute('data-src');
+                                    }
+                                  }
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                              />
+                            );
+                          } else {
+                            // Se não tiver modelo 3D nem imagens
+                            return (
+                              <div style={{
+                                width: '100%',
+                                height: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#666',
+                                fontSize: '3rem',
+                              }}>
+                                📦
+                              </div>
+                            );
+                          }
+                        })()}
+                      </div>
+
+                      <h3 style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 700,
+                        fontSize: isMobile ? '1.3rem' : '1.5rem',
+                        color: '#00d9ff',
+                        marginBottom: '12px',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        lineHeight: '1.3',
+                      }}>{product.name}</h3>
+
+                      <p style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: isMobile ? '0.9rem' : '1rem',
+                        color: '#fff',
+                        opacity: 0.75,
+                        marginBottom: '18px',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        lineHeight: '1.5',
+                        maxHeight: '4.5em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                      }}>{product.description}</p>
+
+                      <p style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: isMobile ? '1.5rem' : '1.8rem',
+                        color: '#ff00ea',
+                        fontWeight: 'bold',
+                        marginBottom: '18px',
+                        textShadow: '0 0 20px rgba(255, 0, 234, 0.5)',
+                      }}>
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL'
+                        }).format(product.price)}
+                      </p>
+
+                      {/* Botões de ação */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '10px',
+                      }}>
+                        <button
+                          onClick={(e) => handleAddToCart(product, e)}
+                          style={{
+                            flex: 1,
+                            padding: isMobile ? '12px' : '14px',
+                            background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
+                            border: 'none',
+                            borderRadius: '10px',
+                            color: '#000',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 'bold',
+                            fontSize: isMobile ? '0.95rem' : '1.05rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            whiteSpace: 'nowrap',
+                            boxSizing: 'border-box',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.stopPropagation();
+                            e.currentTarget.style.background = 'linear-gradient(135deg, #00ffff 0%, #00d9ff 100%)';
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                            e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.6)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.stopPropagation();
+                            e.currentTarget.style.background = 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}>
+                          🛒 Adicionar
+                        </button>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/produto/${product.id}`);
+                          }}
+                          style={{
+                            padding: isMobile ? '12px 16px' : '14px 20px',
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            border: '2px solid rgba(255, 255, 255, 0.3)',
+                            borderRadius: '10px',
+                            color: '#fff',
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontWeight: 'bold',
+                            fontSize: isMobile ? '0.95rem' : '1.05rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            boxSizing: 'border-box',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.stopPropagation();
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                            e.currentTarget.style.borderColor = '#fff';
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.stopPropagation();
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}>
+                          👁️
+                        </button>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
           )}
-        </div>
-      )}
         </div>
       </section>
 
@@ -4199,7 +4203,7 @@ export default function GamerWorld() {
               opacity: 0.9,
               lineHeight: '1.6',
             }}>
-              Tenha a CyberLife sempre com você!<br/>
+              Tenha a CyberLife sempre com você!<br />
               Acesse nossa Loja, promoções exclusivas, acompanhe eventos e muito mais.
             </p>
 
@@ -4466,13 +4470,13 @@ export default function GamerWorld() {
             background: 'linear-gradient(135deg, rgba(10, 10, 20, 0.95) 0%, rgba(20, 5, 30, 0.95) 100%)',
             border: '2px solid',
             borderColor: notification.type === 'error' ? '#ff0055' :
-                         notification.type === 'success' ? '#00cc66' : '#00d9ff',
+              notification.type === 'success' ? '#00cc66' : '#00d9ff',
             borderRadius: '16px',
             padding: '16px 20px',
             boxShadow: `0 10px 30px rgba(0, 0, 0, 0.5),
                         0 0 20px ${notification.type === 'error' ? 'rgba(255, 0, 85, 0.4)' :
-                                   notification.type === 'success' ? 'rgba(0, 204, 102, 0.4)' :
-                                   'rgba(0, 217, 255, 0.4)'},
+                notification.type === 'success' ? 'rgba(0, 204, 102, 0.4)' :
+                  'rgba(0, 217, 255, 0.4)'},
                         inset 0 0 15px rgba(255, 255, 255, 0.1)`,
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: '500',
@@ -4489,7 +4493,7 @@ export default function GamerWorld() {
               marginTop: '2px'
             }}>
               {notification.type === 'error' ? '⚠️' :
-               notification.type === 'success' ? '✅' : '📢'}
+                notification.type === 'success' ? '✅' : '📢'}
             </div>
             <div style={{
               flex: 1,
