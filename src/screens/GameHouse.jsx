@@ -523,12 +523,12 @@ export default function GamerWorld() {
       elementId: "eventos-link",
       position: "bottom-left"
     },
-    {
+    ...(isMobile ? [] : [{
       title: "Explore Jogos",
       description: "Descubra nossa galeria de jogos disponíveis para experimentar.",
       elementId: "galeria-link",
       position: "bottom-left"
-    },
+    }]),
     {
       title: "Loja Gamer",
       description: "Acesse nossa loja especializada em produtos para gamers.",
@@ -882,10 +882,10 @@ export default function GamerWorld() {
             { name: 'Início', id: 'hero', isScroll: true, tutorialId: 'inicio-link' },
             { name: 'CyberHouse', id: 'cyberhouse', isScroll: true, tutorialId: 'cyberhouse-link' },
             { name: 'Eventos', id: 'eventos', isScroll: true, tutorialId: 'eventos-link' },
-            { name: 'Explore Jogos', id: 'galeria', isScroll: true, tutorialId: 'galeria-link' },
+            ...(isMobile ? [] : [{ name: 'Explore Jogos', id: 'galeria', isScroll: true, tutorialId: 'galeria-link' }]),
             { name: 'Loja Gamer', id: 'loja', isScroll: true, tutorialId: 'loja-link' },
             { name: 'Perfil', id: 'perfil', isScroll: false, tutorialId: 'perfil-link' },
-          ].map((item, idx) => (
+          ].filter(item => !(isMobile && item.name === 'Explore Jogos')).map((item, idx) => (
             item.isScroll ? (
               <a
                 key={idx}
@@ -3724,7 +3724,7 @@ export default function GamerWorld() {
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
             wordWrap: 'break-word',
-          }}>Loja Única</h2>
+          }}>Loja Geek</h2>
           <p style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontSize: isMobile ? '0.95rem' : '1.1rem',
@@ -3734,9 +3734,9 @@ export default function GamerWorld() {
             marginTop: isMobile ? '20px' : '30px',
             opacity: 0.8,
           }}>
-            Destaque em <span style={{color: '#00d9ff', fontWeight: 700}}>Gamer</span>
+            Destaque em <span style={{color: '#00d9ff', fontWeight: 700}}>Geek</span>
             <br/>
-            <small style={{fontSize: '0.85rem'}}>Explore também: Geek & SmartHome</small>
+            <small style={{fontSize: '0.85rem'}}>Explore também: Gamer & SmartHome</small>
           </p>
           
           {/* Barra de Pesquisa e Carrinho */}
