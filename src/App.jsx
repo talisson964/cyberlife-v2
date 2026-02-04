@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-ro
 import { supabase } from './supabaseClient'
 import { initAuthErrorHandler, checkAndCleanSession } from './utils/authErrorHandler'
 import useAccessLog from './hooks/useAccessLog'
+import LazySection from './components/LazySection'
 import StartScreen from './screens/StartScreen'
 import NextScreen from './screens/NextScreen'
 import LojaGeek from './screens/LojaGeek'
@@ -183,29 +184,87 @@ export default function App() {
   return (
     <BrowserRouter>
       <AccessLogger>
-        {/* Visualizador de áudio global, sempre visível */}
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 9999, pointerEvents: 'none', background: 'rgba(0,0,0,0.15)' }}>
-          <AudioVisualizer key={audioTick} />
-        </div>
+        {/* Visualizador de áudio global, sempre visível - ocultar em dispositivos móveis para melhor performance */}
+        {!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 9999, pointerEvents: 'none', background: 'rgba(0,0,0,0.15)' }}>
+            <AudioVisualizer key={audioTick} />
+          </div>
+        )}
         {/* Botão flutuante de download do app - não aparece na tela inicial */}
         {location !== '/' && <DownloadAppButton />}
         {/* CommunityFab aparece em todas as telas exceto na tela inicial */}
         {location !== '/' && <CommunityFab />}
         <Routes>
-          <Route path="/" element={<StartWrapper />} />
-          <Route path="/menu" element={<MenuWrapper />} />
-          <Route path="/loja-geek" element={<LojaWrapper />} />
-          <Route path="/produto/:id" element={<ProductDetailPage />} />
-          <Route path="/carrinho" element={<CarrinhoWrapper />} />
-          <Route path="/admin" element={<AdminWrapper />} />
-          <Route path="/loja-geek/admin" element={<AdminWrapper />} />
-          <Route path="/gamer-world" element={<GameHouseWrapper />} />
-          <Route path="/perfil" element={<PerfilPage />} />
-          <Route path="/evento/:eventoId" element={<EventoPage />} />
-          <Route path="/atividade/:atividadeId" element={<AtividadePage />} />
-          <Route path="/jogo/:jogoId" element={<JogoPage />} />
-          <Route path="/comprar-cyberpoints" element={<CompraCyberPoints />} />
-          <Route path="/login" element={<LoginGamer />} />
+          <Route path="/" element={
+            <LazySection>
+              <StartWrapper />
+            </LazySection>
+          } />
+          <Route path="/menu" element={
+            <LazySection>
+              <MenuWrapper />
+            </LazySection>
+          } />
+          <Route path="/loja-geek" element={
+            <LazySection>
+              <LojaWrapper />
+            </LazySection>
+          } />
+          <Route path="/produto/:id" element={
+            <LazySection>
+              <ProductDetailPage />
+            </LazySection>
+          } />
+          <Route path="/carrinho" element={
+            <LazySection>
+              <CarrinhoWrapper />
+            </LazySection>
+          } />
+          <Route path="/admin" element={
+            <LazySection>
+              <AdminWrapper />
+            </LazySection>
+          } />
+          <Route path="/loja-geek/admin" element={
+            <LazySection>
+              <AdminWrapper />
+            </LazySection>
+          } />
+          <Route path="/gamer-world" element={
+            <LazySection>
+              <GameHouseWrapper />
+            </LazySection>
+          } />
+          <Route path="/perfil" element={
+            <LazySection>
+              <PerfilPage />
+            </LazySection>
+          } />
+          <Route path="/evento/:eventoId" element={
+            <LazySection>
+              <EventoPage />
+            </LazySection>
+          } />
+          <Route path="/atividade/:atividadeId" element={
+            <LazySection>
+              <AtividadePage />
+            </LazySection>
+          } />
+          <Route path="/jogo/:jogoId" element={
+            <LazySection>
+              <JogoPage />
+            </LazySection>
+          } />
+          <Route path="/comprar-cyberpoints" element={
+            <LazySection>
+              <CompraCyberPoints />
+            </LazySection>
+          } />
+          <Route path="/login" element={
+            <LazySection>
+              <LoginGamer />
+            </LazySection>
+          } />
         </Routes>
       </AccessLogger>
     </BrowserRouter>

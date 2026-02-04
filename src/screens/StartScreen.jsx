@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Calendar } from 'lucide-react'
 import { supabase } from '../supabaseClient'
+import LazyImage from '../components/LazyImage'
 import img1 from '../imagens/mexendo-pc.png'
 import img2 from '../imagens/mascarado-com-controle.png'
 import img3 from '../imagens/um-homem-em-um-terno-de-neon-esta-sentado-em-uma-cadeira-com-um-letreiro-de-neon-que-diz-palavra.jpg'
@@ -44,11 +45,21 @@ export default function StartScreen({ onStart, autoStart = false }){
 
   // Pré-carregar todas as imagens para evitar flashes brancos
   useEffect(() => {
-    const preloadImages = images.map(src => {
+    // Detectar se é um dispositivo móvel
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+    // Em dispositivos móveis, carregar apenas a primeira imagem para economizar banda e memória
+    if (isMobile) {
       const img = new Image();
-      img.src = src;
-      return img;
-    });
+      img.src = images[0];
+    } else {
+      // Em desktop, pré-carregar todas as imagens
+      const preloadImages = images.map(src => {
+        const img = new Image();
+        img.src = src;
+        return img;
+      });
+    }
   }, []);
 
   // Iniciar automaticamente o carregamento se autoStart for verdadeiro
@@ -540,11 +551,22 @@ export default function StartScreen({ onStart, autoStart = false }){
       {/* Container de fundo permanente para evitar flashes brancos */}
       <div className="background-container">
         {/* Carregamento otimizado para mobile - apenas uma imagem visível por vez */}
-        <div
+        <LazyImage
+          src={images[index]}
+          alt="Fundo CyberLife"
+          asBackground={true}
           className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
-          style={{backgroundImage:`url(${images[index]})`}}
-          // Otimização para mobile: carregamento preguiçoso
-          loading="lazy"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: fade ? 1 : 0,
+            transition: 'opacity 0.5s ease-in-out', // Mantendo a transição suave
+            zIndex: -1,
+            filter: 'blur(1px) brightness(0.9)',
+          }}
         />
       </div>
       {!showLogin ? (

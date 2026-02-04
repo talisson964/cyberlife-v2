@@ -13,6 +13,14 @@ export default function AudioVisualizer() {
   const bufferLengthRef = useRef(null)
   const [paused, setPaused] = useState(false)
 
+  // Detectar se é um dispositivo móvel
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+  // Retornar null se for dispositivo móvel para evitar problemas de performance
+  if (isMobile) {
+    return null;
+  }
+
   useEffect(() => {
     let running = true;
     function draw() {

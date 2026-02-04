@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShoppingCart, Instagram, Store, ShoppingBag, MessageCircle, Mail, MapPin, Phone, Zap, Heart, ArrowRight } from 'lucide-react'
+import LazyImage from '../components/LazyImage'
+import LazySection from '../components/LazySection'
 import geekConvention from '../imagens/Geek convention-rafiki.png'
 import { defaultOffers } from '../data/lojaData'
 import { supabase } from '../supabaseClient'
@@ -308,9 +310,15 @@ export default function LojaGeek({ onBack }){
 
   useEffect(() => {
     if (offers.length > 0) {
+      // Detectar se é um dispositivo móvel
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+      // Aumentar o intervalo em dispositivos móveis para melhorar performance
+      const intervalTime = isMobile ? 6000 : 4000
+
       const timer = setInterval(() => {
         setCurrentOffer((prev) => (prev + 1) % offers.length)
-      }, 4000)
+      }, intervalTime)
       return () => clearInterval(timer)
     }
   }, [offers.length])
@@ -703,7 +711,7 @@ export default function LojaGeek({ onBack }){
                       background: 'radial-gradient(circle, rgba(0, 217, 255, 0.3) 0%, transparent 70%)',
                       animation: 'pulse 2s ease-in-out infinite',
                     }}></div>
-                    <img
+                    <LazyImage
                       src={offer.image}
                       alt={offer.title}
                       className="offer-image"
@@ -713,8 +721,6 @@ export default function LojaGeek({ onBack }){
                       objectFit: 'cover',
                       borderRadius: '12px'
                     }}
-                      loading="lazy"
-                      decoding="async"
                     />
                   </div>
 
@@ -931,58 +937,78 @@ export default function LojaGeek({ onBack }){
                   zIndex: 10,
                 }}>★ Destaque</div>
               )}
-              <div 
-                className="product-image-wrapper" 
+              <div
+                className="product-image-wrapper"
                 onClick={() => navigate(`/produto/${product.id}`)}
                 style={{ cursor: 'pointer' }}
               >
                 {product.model_3d ? (
-                  <div className="product-3d-container">
-                    <model-viewer
-                      src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                      alt={`Modelo 3D de ${product.name}`}
-                      shadow-intensity="1"
-                      disable-pan
-                      disable-zoom
-                      camera-orbit="90deg 75deg 2.5m"
-                      field-of-view="30deg"
-                      style={{
-                        width: '100%',
-                        height: '250px',
-                        background: 'rgba(0, 0, 0, 0.1)',
-                        borderRadius: '8px',
-                      }}
-                      onLoad={(e) => {
-                        e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.setAttribute('auto-rotate', '');
-                        e.target.setAttribute('rotation-per-second', '60deg');
-                        e.target.setAttribute('camera-controls', '');
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.removeAttribute('auto-rotate');
-                        e.target.removeAttribute('camera-controls');
-                        e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                      }}
-                    />
-                    <div className="model-3d-badge-catalog">🎮 3D</div>
-                  </div>
+                  (() => {
+                    // Detectar se é um dispositivo móvel
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                    return isMobile ? (
+                      // Em dispositivos móveis, mostrar imagem padrão em vez do modelo 3D
+                      <>
+                        <LazyImage
+                          src={product.image}
+                          alt={product.name}
+                          className="product-image default"
+                        />
+                        <LazyImage
+                          src={product.hoverImage}
+                          alt={product.name}
+                          className="product-image hover"
+                        />
+                        <div className="model-3d-badge-catalog-mobile">🎮 3D</div>
+                      </>
+                    ) : (
+                      // Em desktop, continuar mostrando o modelo 3D
+                      <div className="product-3d-container">
+                        <model-viewer
+                          src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                          alt={`Modelo 3D de ${product.name}`}
+                          shadow-intensity="1"
+                          disable-pan
+                          disable-zoom
+                          camera-orbit="90deg 75deg 2.5m"
+                          field-of-view="30deg"
+                          style={{
+                            width: '100%',
+                            height: '250px',
+                            background: 'rgba(0, 0, 0, 0.1)',
+                            borderRadius: '8px',
+                          }}
+                          onLoad={(e) => {
+                            e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.setAttribute('auto-rotate', '');
+                            e.target.setAttribute('rotation-per-second', '60deg');
+                            e.target.setAttribute('camera-controls', '');
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.removeAttribute('auto-rotate');
+                            e.target.removeAttribute('camera-controls');
+                            e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                          }}
+                        />
+                        <div className="model-3d-badge-catalog">🎮 3D</div>
+              <div className="model-3d-badge-catalog-mobile">🎮 3D</div>
+                      </div>
+                    );
+                  })()
                 ) : (
                   <>
-                    <img
+                    <LazyImage
                       src={product.image}
                       alt={product.name}
                       className="product-image default"
-                      loading="lazy"
-                      decoding="async"
                     />
-                    <img
+                    <LazyImage
                       src={product.hoverImage}
                       alt={product.name}
                       className="product-image hover"
-                      loading="lazy"
-                      decoding="async"
                     />
                   </>
                 )}
@@ -1099,9 +1125,9 @@ export default function LojaGeek({ onBack }){
                 filter: 'drop-shadow(0 0 30px rgba(0, 217, 255, 0.3))',
                 animation: 'float 6s ease-in-out infinite',
               }}>
-                <img 
-                  src={geekConvention} 
-                  alt="Geek Convention" 
+                <LazyImage
+                  src={geekConvention}
+                  alt="Geek Convention"
                   style={{
                     width: '100%',
                     height: 'auto',
