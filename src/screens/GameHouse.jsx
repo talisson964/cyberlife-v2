@@ -4110,7 +4110,81 @@ export default function GamerWorld() {
       )}
         </div>
       </section>
-      
+
+      {/* Nova seção para download do app - visível apenas em mobile */}
+      {isMobile && (
+        <section style={{
+          padding: '40px 20px',
+          background: 'linear-gradient(135deg, #0a0a2a 0%, #1a0a2a 100%)',
+          position: 'relative',
+          marginTop: '20px',
+          border: '1px solid rgba(0, 217, 255, 0.2)',
+          borderRadius: '12px',
+        }}>
+          <div style={{
+            maxWidth: '100%',
+            width: '90%',
+            margin: '0 auto',
+            textAlign: 'center',
+            position: 'relative',
+            zIndex: 2,
+          }}>
+            <h2 style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontWeight: 700,
+              fontSize: '1.6rem',
+              color: '#00d9ff',
+              marginBottom: '15px',
+            }}>Baixe nosso App!</h2>
+
+            <p style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontSize: '0.95rem',
+              color: '#fff',
+              marginBottom: '30px',
+              opacity: 0.9,
+              lineHeight: '1.6',
+            }}>
+              Tenha a CyberLife sempre com você!<br/>
+              Acesse nossa Loja, promoções exclusivas, acompanhe eventos e muito mais.
+            </p>
+
+            {/* Botão personalizado */}
+            <button
+              onClick={() => {
+                // Em um ambiente real, isso levaria para a loja de aplicativos
+                alert('App disponível em breve nas lojas!');
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #00d9ff 0%, #ff00ea 100%)',
+                border: 'none',
+                borderRadius: '50px',
+                padding: '14px 28px',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                fontFamily: 'Rajdhani, sans-serif',
+                color: '#fff',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 5px 15px rgba(0, 217, 255, 0.3), 0 0 10px rgba(255, 0, 234, 0.2)',
+                position: 'relative',
+                minWidth: '200px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 217, 255, 0.4), 0 0 20px rgba(255, 0, 234, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 5px 15px rgba(0, 217, 255, 0.3), 0 0 10px rgba(255, 0, 234, 0.2)';
+              }}
+            >
+              Baixe o App Agora!
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Tutorial Modal */}
       {showTutorial && (
         <div style={{
