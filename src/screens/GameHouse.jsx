@@ -251,9 +251,15 @@ export default function GamerWorld() {
     setTimeout(() => setAddedToCart(null), 2000);
   };
 
-  // Parar a música ao entrar nesta tela
+  // Parar a música ao entrar nesta tela (exceto em dispositivos móveis)
   useEffect(() => {
-    stopAudio()
+    // Detectar se é um dispositivo móvel
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+    // Só para o áudio se não for mobile
+    if (!isMobile) {
+      stopAudio()
+    }
   }, [])
 
   // Carregar usuário autenticado

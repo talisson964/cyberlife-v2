@@ -279,9 +279,15 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [previewType, setPreviewType] = useState(null); // 'product', 'banner', 'event'
   const [previewData, setPreviewData] = useState(null);
 
-  // Parar música
+  // Parar música (exceto em dispositivos móveis)
   useEffect(() => {
-    stopAudio();
+    // Detectar se é um dispositivo móvel
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Só para o áudio se não for mobile
+    if (!isMobile) {
+      stopAudio();
+    }
   }, []);
 
   // Carregar dados quando autenticado
