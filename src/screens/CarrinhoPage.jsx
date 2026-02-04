@@ -220,7 +220,16 @@ export default function CarrinhoPage({ onBack }) {
           <span style={{fontFamily: 'Rajdhani, sans-serif', fontWeight: 700, fontSize: '2rem', color: '#00d9ff', letterSpacing: '2px'}}>CyberLife</span>
         </div>
         <nav className="nav">
-          <button className="nav-button" onClick={() => onBack ? onBack() : navigate('/loja-geek')}>Voltar à Loja</button>
+          <button className="nav-button" onClick={() => {
+            // Detectar se é um dispositivo móvel
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (isMobile) {
+              onBack ? onBack() : navigate('/menu'); // Ir para o menu no mobile
+            } else {
+              onBack ? onBack() : navigate('/loja-geek'); // Ir para a loja geek no desktop
+            }
+          }}>Voltar à Loja</button>
           <button className="nav-button">Contato</button>
         </nav>
       </header>
@@ -255,7 +264,14 @@ export default function CarrinhoPage({ onBack }) {
                 onBack();
                 sessionStorage.setItem('scrollToCatalog', 'true');
               } else {
-                navigate('/loja-geek');
+                // Detectar se é um dispositivo móvel
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                if (isMobile) {
+                  navigate('/menu'); // Ir para o menu no mobile
+                } else {
+                  navigate('/loja-geek'); // Ir para a loja geek no desktop
+                }
               }
             }}>
               Explorar Produtos
@@ -267,49 +283,89 @@ export default function CarrinhoPage({ onBack }) {
               {cartItems.map((item) => (
                 <div key={item.id} className="cart-item">
                   <div className="item-image">
-                    {item.model_3d ? (
-                      <model-viewer
-                        src={item.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || item.model_3d}
-                        alt={`Modelo 3D de ${item.name}`}
-                        shadow-intensity="1"
-                        disable-pan
-                        disable-zoom
-                        camera-orbit="90deg 75deg 2.5m"
-                        field-of-view="30deg"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          background: 'rgba(0, 0, 0, 0.1)',
-                          borderRadius: '8px',
-                        }}
-                      />
-                    ) : item.images && item.images.length > 0 ? (
-                      <img
-                        src={item.images[0]}
-                        alt={item.name}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '3rem',
-                        color: '#666'
-                      }}>
-                        📦
-                      </div>
-                    )}
+                    {(() => {
+                      // Detectar se é um dispositivo móvel
+                      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                      if (item.model_3d && !isMobile) {
+                        // Em desktop, mostrar o modelo 3D
+                        return (
+                          <model-viewer
+                            src={item.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || item.model_3d}
+                            alt={`Modelo 3D de ${item.name}`}
+                            shadow-intensity="1"
+                            disable-pan
+                            disable-zoom
+                            camera-orbit="90deg 75deg 2.5m"
+                            field-of-view="30deg"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              background: 'rgba(0, 0, 0, 0.1)',
+                              borderRadius: '8px',
+                            }}
+                          />
+                        );
+                      } else if (item.model_3d && isMobile) {
+                        // Em mobile, mostrar imagem padrão em vez do modelo 3D
+                        return item.images && item.images.length > 0 ? (
+                          <img
+                            src={item.images[0]}
+                            alt={item.name}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : (
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '3rem',
+                            color: '#666'
+                          }}>
+                            📦
+                          </div>
+                        );
+                      } else {
+                        // Se não tiver modelo 3D, mostrar imagem normalmente
+                        return item.images && item.images.length > 0 ? (
+                          <img
+                            src={item.images[0]}
+                            alt={item.name}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        ) : (
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '3rem',
+                            color: '#666'
+                          }}>
+                            📦
+                          </div>
+                        );
+                      }
+                    })()}
                   </div>
                   <div className="item-details">
                     <h3 className="item-name">{item.name}</h3>

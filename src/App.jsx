@@ -142,8 +142,29 @@ function LojaWrapper() {
   // Detectar se é um dispositivo móvel
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
+  // Remover a página loja-geek no mobile conforme requisito
   if (isMobile) {
-    return <LojaGeekMobile onBack={() => navigate('/menu')} />
+    // Redirecionar para o menu no mobile
+    React.useEffect(() => {
+      const timer = setTimeout(() => {
+        navigate('/menu');
+      }, 100); // Pequeno delay para garantir que o componente foi montado
+      return () => clearTimeout(timer);
+    }, [navigate]);
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#000',
+        color: '#00d9ff',
+        fontFamily: 'Rajdhani, sans-serif',
+        fontSize: '1.2rem'
+      }}>
+        Redirecionando...
+      </div>
+    );
   }
 
   return <LojaGeek onBack={() => navigate('/menu')} />

@@ -810,8 +810,6 @@ export default function JogoPage() {
                 {[
                   { nome: 'Início', rota: '/' },
                   { nome: 'Gamer World', rota: '/gamer-world' },
-                  { nome: 'Loja Geek', rota: '/loja-geek' },
-                  { nome: 'Smart Home', rota: '/smart-home' },
                   { nome: 'Perfil', rota: '/perfil' },
                 ].map((item, index) => (
                   <Link

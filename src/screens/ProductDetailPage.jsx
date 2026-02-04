@@ -382,7 +382,16 @@ export default function ProductDetailPage() {
     <div className="product-detail-page">
       <header className="product-detail-header">
         <div className="header-content">
-          <button className="back-button" onClick={() => navigate('/loja-geek')}>
+          <button className="back-button" onClick={() => {
+            // Detectar se é um dispositivo móvel
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (isMobile) {
+              navigate('/menu'); // Voltar para o menu no mobile
+            } else {
+              navigate('/loja-geek'); // Voltar para a loja geek no desktop
+            }
+          }}>
             <ArrowLeft size={24} />
             Voltar
           </button>
@@ -406,23 +415,46 @@ export default function ProductDetailPage() {
       <div className="product-detail-container">
         <div className="product-gallery">
           {product.model_3d && !showImageInstead3D ? (
-            <div className="model-3d-viewer" onClick={handleModelViewerClick}>
-              <model-viewer
-                src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                alt={`Modelo 3D de ${product.name}`}
-                auto-rotate
-                camera-controls
-                shadow-intensity="1"
-                style={{
-                  width: '100%',
-                  height: '400px',
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  borderRadius: '12px',
-                  cursor: showImageInstead3D ? 'pointer' : 'default'
-                }}
-              />
-              <div className="model-3d-badge">🎮 Visualização 3D Interativa</div>
-            </div>
+            (() => {
+              // Detectar se é um dispositivo móvel
+              const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+              return isMobile ? (
+                // Em dispositivos móveis, mostrar imagem padrão em vez do modelo 3D
+                <div className="main-image" onClick={handleModelViewerClick} style={{
+                  cursor: product.model_3d ? 'pointer' : 'default'
+                }}>
+                  <img
+                    src={productImages[selectedImage] || product.image}
+                    alt={product.name}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  {product.model_3d && (
+                    <div className="view-3d-hint">📱 Modelo 3D indisponível no mobile</div>
+                  )}
+                </div>
+              ) : (
+                // Em desktop, continuar mostrando o modelo 3D
+                <div className="model-3d-viewer" onClick={handleModelViewerClick}>
+                  <model-viewer
+                    src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                    alt={`Modelo 3D de ${product.name}`}
+                    auto-rotate
+                    camera-controls
+                    shadow-intensity="1"
+                    style={{
+                      width: '100%',
+                      height: '400px',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      borderRadius: '12px',
+                      cursor: showImageInstead3D ? 'pointer' : 'default'
+                    }}
+                  />
+                  <div className="model-3d-badge">🎮 Visualização 3D Interativa</div>
+                </div>
+              );
+            })()
           ) : (
             <div className="main-image" onClick={handleModelViewerClick} style={{
               cursor: product.model_3d ? 'pointer' : 'default'

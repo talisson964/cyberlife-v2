@@ -17,14 +17,14 @@ import { stopAudio } from '../utils/audioPlayer';
 
 // Função auxiliar para lazy loading otimizado em mobile
 const useLazyLoading = () => {
-  const [isMobileState] = useState(window.innerWidth <= 768);
+  const [isMobileState] = useState(() => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 
   useEffect(() => {
     if (isMobileState) {
       const observerOptions = {
         root: null,
-        rootMargin: '50px',
-        threshold: 0.1
+        rootMargin: '100px', // Aumentar a margem para mobile para melhor experiência
+        threshold: 0.05 // Reduzir o threshold para carregar antes
       };
 
       const observer = new IntersectionObserver((entries) => {
@@ -45,7 +45,7 @@ const useLazyLoading = () => {
       }, observerOptions);
 
       // Observar todas as imagens com data-src após o componente montar
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         const lazyImages = document.querySelectorAll('img[data-src]');
         lazyImages.forEach(img => observer.observe(img));
 
@@ -55,6 +55,7 @@ const useLazyLoading = () => {
       }, 100);
 
       return () => {
+        clearTimeout(timer);
         observer.disconnect();
       };
     }
@@ -3900,97 +3901,143 @@ export default function GamerWorld() {
                     position: 'relative',
                   }}
                 >
-                  {product.model_3d ? (
-                    <>
-                      <model-viewer
-                        src={isMobile ? null : (product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d)}
-                        data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                        alt={`Modelo 3D de ${product.name}`}
-                        shadow-intensity="1"
-                        disable-pan
-                        disable-zoom
-                        camera-orbit="90deg 75deg 2.5m"
-                        field-of-view="30deg"
-                        style={{
+                  {(() => {
+                    // Detectar se é um dispositivo móvel
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+                    if (product.model_3d && !isMobile) {
+                      // Em desktop, mostrar o modelo 3D
+                      return (
+                        <>
+                          <model-viewer
+                            src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                            data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
+                            alt={`Modelo 3D de ${product.name}`}
+                            shadow-intensity="1"
+                            disable-pan
+                            disable-zoom
+                            camera-orbit="90deg 75deg 2.5m"
+                            field-of-view="30deg"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              background: 'rgba(0, 0, 0, 0.1)',
+                              borderRadius: '12px',
+                            }}
+                            onLoad={(e) => {
+                              e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.setAttribute('auto-rotate', '');
+                              e.target.setAttribute('rotation-per-second', '60deg');
+                              e.target.setAttribute('camera-controls', '');
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.removeAttribute('auto-rotate');
+                              e.target.removeAttribute('camera-controls');
+                              e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
+                            }}
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            right: '10px',
+                            background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
+                            color: '#fff',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            fontFamily: 'Rajdhani, sans-serif',
+                            boxShadow: '0 4px 15px rgba(0, 217, 255, 0.5)',
+                            zIndex: 2,
+                          }}>
+                            🎮 3D
+                          </div>
+                        </>
+                      );
+                    } else if (product.model_3d && isMobile) {
+                      // Em mobile, mostrar imagem padrão em vez do modelo 3D
+                      return (
+                        <>
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            loading="lazy"
+                            decoding="async"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              transition: 'transform 0.3s ease',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          />
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '10px',
+                            right: '10px',
+                            background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+                            color: '#fff',
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            fontFamily: 'Rajdhani, sans-serif',
+                            boxShadow: '0 4px 15px rgba(255, 107, 107, 0.5)',
+                            zIndex: 2,
+                          }}>
+                            📱 3D OFF
+                          </div>
+                        </>
+                      );
+                    } else if (product.images && product.images.length > 0) {
+                      // Se não tiver modelo 3D mas tiver imagens
+                      return (
+                        <img
+                          src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
+                          data-src={product.images[0]}
+                          alt={product.name}
+                          loading="lazy"
+                          decoding="async"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            transition: 'transform 0.3s ease',
+                          }}
+                          onLoad={(e) => {
+                            // Carrega a imagem somente quando visível em mobile
+                            if (isMobile) {
+                              const rect = e.target.getBoundingClientRect();
+                              if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                                e.target.src = e.target.dataset.src;
+                                e.target.removeAttribute('data-src');
+                              }
+                            }
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                        />
+                      );
+                    } else {
+                      // Se não tiver modelo 3D nem imagens
+                      return (
+                        <div style={{
                           width: '100%',
                           height: '100%',
-                          background: 'rgba(0, 0, 0, 0.1)',
-                          borderRadius: '12px',
-                        }}
-                        onLoad={(e) => {
-                          e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isMobile) { // Não habilitar recursos 3D em mobile para economizar recursos
-                            e.target.setAttribute('auto-rotate', '');
-                            e.target.setAttribute('rotation-per-second', '60deg');
-                            e.target.setAttribute('camera-controls', '');
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isMobile) {
-                            e.target.removeAttribute('auto-rotate');
-                            e.target.removeAttribute('camera-controls');
-                            e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                          }
-                        }}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        right: '10px',
-                        background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
-                        color: '#fff',
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        fontFamily: 'Rajdhani, sans-serif',
-                        boxShadow: '0 4px 15px rgba(0, 217, 255, 0.5)',
-                        zIndex: 2,
-                      }}>
-                        🎮 3D
-                      </div>
-                    </>
-                  ) : product.images && product.images.length > 0 ? (
-                    <img
-                      src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
-                      data-src={product.images[0]}
-                      alt={product.name}
-                      loading="lazy"
-                      decoding="async"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.3s ease',
-                      }}
-                      onLoad={(e) => {
-                        // Carrega a imagem somente quando visível em mobile
-                        if (isMobile) {
-                          const rect = e.target.getBoundingClientRect();
-                          if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-                            e.target.src = e.target.dataset.src;
-                            e.target.removeAttribute('data-src');
-                          }
-                        }
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#666',
-                      fontSize: '3rem',
-                    }}>
-                      📦
-                    </div>
-                  )}
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#666',
+                          fontSize: '3rem',
+                        }}>
+                          📦
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
                 
                 <h3 style={{

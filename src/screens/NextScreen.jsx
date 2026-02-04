@@ -61,34 +61,8 @@ export default function NextScreen({ onNavigate }) {
         </nav>
       </header>
       <div className="menu-container">
-        <div
-          className={`menu-item ${!isMobile ? 'disabled' : ''}`}
-          onClick={() => {
-            if (isMobile) {
-              showDevelopmentPopup('Loja Geek')
-            } else {
-              alert('Botão desabilitado na versão de PC!')
-            }
-          }}
-          style={!isMobile ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-        >
-          <h2>Loja Geek</h2>
-        </div>
         <div className="menu-item" onClick={() => onNavigate('gamer-world')}>
           <h2>Gamer World</h2>
-        </div>
-        <div
-          className={`menu-item ${!isMobile ? 'disabled' : ''}`}
-          onClick={() => {
-            if (isMobile) {
-              onNavigate('loja-geek')
-            } else {
-              alert('Botão desabilitado na versão de PC!')
-            }
-          }}
-          style={!isMobile ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-        >
-          <h2>Smart Home</h2>
         </div>
       </div>
 
