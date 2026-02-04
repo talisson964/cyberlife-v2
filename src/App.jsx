@@ -131,16 +131,11 @@ function MobileRedirect({ children }) {
 
 function StartWrapper() {
   const navigate = useNavigate()
-
-  // Detectar se é um dispositivo móvel
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
-  // Se for mobile, o StartScreen com autoStart cuidará da navegação
-  if (isMobile) {
-    return <StartScreen onStart={() => navigate('/gamer-world')} autoStart={true} />
-  }
-
-  return <StartScreen onStart={() => navigate('/menu')} />
+  return (
+    <MobileRedirect>
+      <StartScreen onStart={() => navigate('/menu')} />
+    </MobileRedirect>
+  )
 }
 
 function MenuWrapper() {
