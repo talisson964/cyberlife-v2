@@ -18,6 +18,7 @@ import JogoPage from './screens/JogoPage'
 import ProductDetailPage from './screens/ProductDetailPage'
 import AudioVisualizer from './components/AudioVisualizer'
 import CommunityFab from './components/CommunityFab'
+import DownloadAppButton from './components/DownloadAppButton'
 import { isAudioPlaying } from './utils/audioPlayer'
 
 // Componente para registrar acessos
@@ -186,6 +187,8 @@ export default function App() {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 9999, pointerEvents: 'none', background: 'rgba(0,0,0,0.15)' }}>
           <AudioVisualizer key={audioTick} />
         </div>
+        {/* Botão flutuante de download do app */}
+        <DownloadAppButton />
         {/* CommunityFab aparece em todas as telas exceto na tela inicial */}
         {location !== '/' && <CommunityFab />}
         <Routes>
