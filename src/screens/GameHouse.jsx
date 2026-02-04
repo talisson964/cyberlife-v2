@@ -541,12 +541,12 @@ export default function GamerWorld() {
       elementId: "loja-link",
       position: "bottom-left"
     },
-    {
+    ...(isMobile ? [] : [{
       title: "Perfil",
       description: "Acesse suas informações pessoais, visualize suas insígnias conquistadas, compre CyberPoints e edite seu perfil como quiser!",
       elementId: "perfil-link",
       position: "bottom-left"
-    }
+    }])
   ];
 
   const currentTutorialStep = tutorialSteps[tutorialStep];
@@ -827,7 +827,7 @@ export default function GamerWorld() {
           </button>
 
 
-          <Link to="/menu">
+          <Link to={isMobile ? "/gamer-world" : "/menu"}>
             <button id="inicio-btn" style={{
               background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)',
               border: '2px solid #00d9ff',
@@ -890,7 +890,7 @@ export default function GamerWorld() {
             { name: 'Eventos', id: 'eventos', isScroll: true, tutorialId: 'eventos-link' },
             ...(isMobile ? [] : [{ name: 'Explore Jogos', id: 'galeria', isScroll: true, tutorialId: 'galeria-link' }]),
             { name: 'Loja Gamer', id: 'loja', isScroll: true, tutorialId: 'loja-link' },
-            { name: 'Perfil', id: 'perfil', isScroll: false, tutorialId: 'perfil-link' },
+            ...(isMobile ? [] : [{ name: 'Perfil', id: 'perfil', isScroll: false, tutorialId: 'perfil-link' }]),
           ].filter(item => !(isMobile && item.name === 'Explore Jogos')).map((item, idx) => (
             item.isScroll ? (
               <a
