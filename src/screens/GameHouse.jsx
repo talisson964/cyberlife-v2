@@ -3649,7 +3649,7 @@ export default function GamerWorld() {
 
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
-        padding: isMobile ? '60px 20px' : '10px 48px',
+        padding: isMobile ? '60px 20px 20px 20px' : '10px 48px',
         background: isMobile
           ? `linear-gradient(135deg, rgba(10, 0, 21, 0.85) 0%, rgba(0, 5, 16, 0.9) 50%, rgba(0, 16, 32, 0.85) 100%), url(${caraJogando})`
           : 'linear-gradient(180deg, #0a0a0a 0%, #000 100%)',
@@ -3660,7 +3660,7 @@ export default function GamerWorld() {
         overflow: 'hidden',
         clipPath: isMobile ? 'none' : 'polygon(0 8%, 100% 0, 100% 92%, 0 100%)',
         marginTop: isMobile ? '0' : '-5%',
-        marginBottom: isMobile ? '0' : '-5%',
+        marginBottom: isMobile ? '0' : '0',
       }}>
         {isMobile && (
           <>
@@ -4111,13 +4111,14 @@ export default function GamerWorld() {
         </div>
       </section>
 
+
       {/* Nova seção para download do app - visível apenas em mobile */}
       {isMobile && (
         <section style={{
-          padding: '40px 20px',
+          padding: '20px 20px 40px 20px',
           background: 'linear-gradient(135deg, #0a0a2a 0%, #1a0a2a 100%)',
           position: 'relative',
-          marginTop: '20px',
+          marginTop: '-20px',
           border: '1px solid rgba(0, 217, 255, 0.2)',
           borderRadius: '12px',
         }}>
