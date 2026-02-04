@@ -442,28 +442,26 @@ export default function GamerWorld() {
     const timer = setInterval(() => {
       setCurrent((prev) => (prev + 1) % images.length);
     }, 6000);
-    
-    // Só iniciar timer se houver mais de 1 evento
-    let eventTimer;
-    if (displayEventImages.length > 1) {
-      eventTimer = setInterval(() => {
-        setCurrentEvent((prev) => (prev + 1) % displayEventImages.length);
-      }, 4000);
-    }
-    
+
+    // Timer para carrossel de eventos (funciona para ambos: desktop e mobile)
+    // Temos 3 tipos fixos de eventos: Corujões, Torneios e Rush Play
+    const eventTimer = setInterval(() => {
+      setCurrentEvent((prev) => (prev + 1) % 3);
+    }, 4000);
+
     const gameTimer = setInterval(() => {
       setCurrentGame((prev) => (prev + 1) % totalGames);
     }, 5000);
-    
+
     // Animação de entrada do texto
     setTimeout(() => setTextVisible(true), 300);
     
     return () => {
       clearInterval(timer);
-      if (eventTimer) clearInterval(eventTimer);
+      clearInterval(eventTimer);
       clearInterval(gameTimer);
     };
-  }, [images.length, totalGames, displayEventImages.length]);
+  }, [images.length, totalGames]);
 
   // Auto-fechar menu após 5 segundos
   useEffect(() => {
@@ -1914,7 +1912,8 @@ export default function GamerWorld() {
             Experiências <span style={{color: '#ff00ea', fontWeight: 700}}>exclusivas</span> para gamers de <span style={{color: '#00d9ff', fontWeight: 700}}>verdade</span>
           </p>
           
-          {/* Carrossel Próximos Eventos */}
+          {/* Carrossel Próximos Eventos - Ocultar em dispositivos móveis */}
+          {isMobile ? null : (
           <div style={{
             marginBottom: '80px',
             position: 'relative',
@@ -1922,29 +1921,27 @@ export default function GamerWorld() {
           }}>
             <h3 style={{
               fontFamily: 'Rajdhani, sans-serif',
-              fontSize: isMobile ? '1.5rem' : '2rem',
+              fontSize: '2rem',
               fontWeight: 700,
               color: '#ff00ea',
               textAlign: 'center',
-              marginBottom: isMobile ? '20px' : '30px',
-              letterSpacing: isMobile ? '2px' : '3px',
+              marginBottom: '30px',
+              letterSpacing: '3px',
               textTransform: 'uppercase',
               textShadow: '0 0 20px rgba(255, 0, 234, 0.6)',
               animation: 'glowPulse 3s ease-in-out infinite, slideRight 1s ease-out',
             }}>Próximos Eventos</h3>
-            
+
             <div style={{
               position: 'relative',
-              maxWidth: isMobile ? '100%' : '1100px',
+              maxWidth: '1100px',
               margin: '0 auto',
-              height: isMobile ? '450px' : '500px',  /* Aumentei a altura para mobile */
-              borderRadius: isMobile ? '12px' : '20px',
+              height: '500px',
+              borderRadius: '20px',
               overflow: 'hidden',
-              border: isMobile ? '2px solid #00d9ff' : '3px solid #00d9ff',
-              boxShadow: isMobile
-                ? '0 0 15px rgba(0, 217, 255, 0.2)'
-                : '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
-              animation: isMobile ? 'none' : 'borderPulseCarousel 3s ease-in-out infinite',
+              border: '3px solid #00d9ff',
+              boxShadow: '0 0 30px rgba(0, 217, 255, 0.4), inset 0 0 30px rgba(0, 0, 0, 0.3)',
+              animation: 'borderPulseCarousel 3s ease-in-out infinite',
             }}>
               {/* Brilho animado nas bordas - removido para mobile */}
               {!isMobile && (
@@ -2410,7 +2407,296 @@ export default function GamerWorld() {
               )}
             </div>
           </div>
-          
+          )}
+
+          {/* Carrossel para dispositivos móveis - Mais espaço e fontes maiores */}
+          {isMobile && (
+            <div style={{
+              position: 'relative',
+              maxWidth: '100%',
+              height: '280px',
+              borderRadius: '15px',
+              overflow: 'hidden',
+              border: '2px solid rgba(0, 217, 255, 0.5)',
+              boxShadow: '0 0 15px rgba(0, 217, 255, 0.2), inset 0 0 15px rgba(0, 0, 0, 0.2)',
+              margin: '20px auto',
+            }}>
+              {/* Cards do carrossel para mobile - Mais espaço e fontes maiores */}
+              {[
+                {
+                  icon: '🦉',
+                  title: 'Corujões',
+                  description: 'Faça reuniões com amigos e jogue a noite toda!',
+                  details: 'Sextas e Sábados • 22h às 6h',
+                  color: '#ff00ea',
+                  gradient: 'linear-gradient(135deg, rgba(255, 0, 234, 0.15) 0%, rgba(255, 0, 234, 0.05) 100%)',
+                  slug: 'corujoes',
+                },
+                {
+                  icon: '🏆',
+                  title: 'Torneios',
+                  description: 'Jogue, compita e ganhe prêmios incríveis!',
+                  details: 'Quinzenalmente • Premiação de até R$ 5.000',
+                  color: '#00d9ff',
+                  gradient: 'linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(0, 217, 255, 0.05) 100%)',
+                  slug: 'torneios',
+                },
+                {
+                  icon: '⚡',
+                  title: 'Rush Play',
+                  description: 'A jogatina só acaba quando o jogo terminar!',
+                  details: 'Domingos • 14h - Game até zerar',
+                  color: '#ffea00',
+                  gradient: 'linear-gradient(135deg, rgba(255, 234, 0, 0.15) 0%, rgba(255, 234, 0, 0.05) 100%)',
+                  slug: 'rush-play',
+                },
+              ].map((event, index) => (
+                <div
+                  key={index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: event.gradient,
+                    border: `2px solid ${event.color}`,
+                    borderRadius: '15px',
+                    padding: '25px',  /* Aumentado para mais espaço */
+                    transition: 'all 0.5s ease-in-out',
+                    opacity: index === currentEvent ? 1 : 0,
+                    transform: index === currentEvent ? 'scale(1)' : 'scale(0.95)',
+                    zIndex: index === currentEvent ? 10 : 1,
+                    display: index === currentEvent ? 'flex' : 'none',
+                    alignItems: 'center',
+                    cursor: 'default',
+                    boxSizing: 'border-box',
+                    wordWrap: 'break-word',
+                  }}
+                >
+                  {/* Conteúdo do card horizontal - Mais espaço e fontes maiores */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    width: '100%',
+                  }}>
+                    {/* Coluna de ícone - Mais destaque */}
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      marginRight: '25px',  /* Aumentado para mais espaço */
+                      minWidth: '100px',  /* Aumentado para mais espaço */
+                    }}>
+                      <div style={{
+                        fontSize: '3rem',  /* Aumentado significativamente */
+                        marginBottom: '10px',
+                        filter: `drop-shadow(0 0 15px ${event.color})`,
+                        position: 'relative',
+                        zIndex: 2,
+                      }}>{event.icon}</div>
+
+                      {/* Badge tipo de evento - Mais proeminente */}
+                      <div style={{
+                        background: event.color,
+                        color: '#000',
+                        padding: '6px 12px',  /* Aumentado */
+                        borderRadius: '15px',
+                        fontSize: '0.8rem',  /* Aumentado */
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        fontFamily: 'Rajdhani, sans-serif',
+                        letterSpacing: '1px',  /* Aumentado */
+                        zIndex: 2,
+                        boxShadow: `0 3px 10px ${event.color}60`,
+                      }}>
+                        {event.title.split(' ')[0]}
+                      </div>
+                    </div>
+
+                    {/* Coluna de conteúdo - Mais espaço e destaque */}
+                    <div style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                    }}>
+                      {/* Título mais proeminente */}
+                      <h3 style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontWeight: 800,  /* Aumentado significativamente */
+                        fontSize: '1.4rem',  /* Aumentado significativamente */
+                        color: event.color,
+                        marginBottom: '10px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '1.5px',
+                        textShadow: `0 0 20px ${event.color}80`,
+                        position: 'relative',
+                        zIndex: 2,
+                        wordWrap: 'break-word',
+                      }}>{event.title}</h3>
+
+                      {/* Descrição mais visível */}
+                      <p style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',  /* Aumentado significativamente */
+                        color: '#fff',
+                        lineHeight: '1.5',
+                        opacity: 0.98,  /* Aumentado para máxima visibilidade */
+                        marginBottom: '18px',
+                        position: 'relative',
+                        zIndex: 2,
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                      }}>{event.description}</p>
+
+                      {/* Botão de ação - Mais proeminente */}
+                      <div style={{
+                        position: 'relative',
+                        zIndex: 2,
+                        alignSelf: 'flex-start',
+                      }}>
+                        <Link to={`/atividade/${event.slug}`} style={{ textDecoration: 'none' }}>
+                          <button style={{
+                            fontFamily: 'Rajdhani, sans-serif',
+                            fontSize: '0.9rem',  /* Aumentado */
+                            fontWeight: 700,
+                            color: '#000',
+                            background: event.color,
+                            border: 'none',
+                            padding: '8px 20px',  /* Aumentado */
+                            borderRadius: '8px',  /* Aumentado */
+                            cursor: 'pointer',
+                            letterSpacing: '1px',
+                            textTransform: 'uppercase',
+                            boxShadow: `0 5px 20px ${event.color}60`,
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.1)';
+                            e.currentTarget.style.boxShadow = `0 7px 25px ${event.color}80`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = `0 5px 20px ${event.color}60`;
+                          }}>
+                            Saiba Mais
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Botões de navegação para mobile - mais discretos */}
+              <button
+                onClick={() => setCurrentEvent((prev) => (prev - 1 + 3) % 3)}
+                style={{
+                  position: 'absolute',
+                  left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: '#fff',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: 300,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 20,
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                }}
+              >&lt;</button>
+
+              <button
+                onClick={() => setCurrentEvent((prev) => (prev + 1) % 3)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: '#fff',
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  fontWeight: 300,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 20,
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                }}
+              >&gt;</button>
+
+              {/* Indicadores - mais discretos */}
+              <div style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '6px',
+                zIndex: 20,
+              }}>
+                {[0, 1, 2].map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentEvent(index)}
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      background: index === currentEvent ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#fff';
+                      e.currentTarget.style.transform = 'scale(1.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (index !== currentEvent) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Grid de cards para desktop */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(320px, 1fr))',
