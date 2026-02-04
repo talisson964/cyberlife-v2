@@ -453,11 +453,15 @@ export default function GamerWorld() {
       setCurrent((prev) => (prev + 1) % images.length);
     }, 6000);
 
-    // Timer para carrossel de eventos (funciona para ambos: desktop e mobile)
+    // Timer para carrossel de eventos
     // Temos 3 tipos fixos de eventos: Corujões, Torneios e Rush Play
-    const eventTimer = setInterval(() => {
-      setCurrentEvent((prev) => (prev + 1) % 3);
-    }, 4000);
+    // No mobile, a rotação deve ser manual (sem timer)
+    let eventTimer;
+    if (!isMobile) {
+      eventTimer = setInterval(() => {
+        setCurrentEvent((prev) => (prev + 1) % 3);
+      }, 4000);
+    }
 
     const gameTimer = setInterval(() => {
       setCurrentGame((prev) => (prev + 1) % totalGames);
@@ -468,10 +472,10 @@ export default function GamerWorld() {
 
     return () => {
       clearInterval(timer);
-      clearInterval(eventTimer);
+      if (eventTimer) clearInterval(eventTimer);
       clearInterval(gameTimer);
     };
-  }, [images.length, totalGames]);
+  }, [images.length, totalGames, isMobile]);
 
   // Auto-fechar menu após 5 segundos
   useEffect(() => {
@@ -4178,6 +4182,7 @@ export default function GamerWorld() {
           marginTop: '-20px',
           border: '1px solid rgba(0, 217, 255, 0.2)',
           borderRadius: '12px',
+          boxShadow: '0 0 15px rgba(0, 217, 255, 0.1)', // Sombra estática leve
         }}>
           <div style={{
             maxWidth: '100%',
