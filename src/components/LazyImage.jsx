@@ -31,6 +31,16 @@ const LazyImage = ({ src, alt, className, style, placeholder = '/placeholder.jpg
     setIsLoaded(true);
   };
 
+  useEffect(() => {
+    if (asBackground && isInView && src) {
+      const img = new Image();
+      img.src = src;
+      img.onload = handleLoad;
+      // Opcional: lidar com erro
+      img.onerror = () => console.error(`Failed to load background image: ${src}`);
+    }
+  }, [src, asBackground, isInView]);
+
   if (asBackground) {
     // Modo para background-image
     return (
@@ -39,7 +49,7 @@ const LazyImage = ({ src, alt, className, style, placeholder = '/placeholder.jpg
         style={{
           position: 'relative',
           overflow: 'hidden',
-          backgroundImage: isInView ? `url(${src})` : `url(${placeholder})`,
+          backgroundImage: (isInView && isLoaded) ? `url(${src})` : `url(${placeholder})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -48,9 +58,9 @@ const LazyImage = ({ src, alt, className, style, placeholder = '/placeholder.jpg
           ...style
         }}
         className={className}
-        onLoad={handleLoad}
         {...props}
       >
+
         {!isLoaded && !isInView && (
           <div
             style={{

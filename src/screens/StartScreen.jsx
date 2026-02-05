@@ -2,10 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Calendar } from 'lucide-react'
 import { supabase } from '../supabaseClient'
 import LazyImage from '../components/LazyImage'
-import img1 from '../imagens/mexendo-pc.png'
-import img2 from '../imagens/mascarado-com-controle.png'
-import img3 from '../imagens/um-homem-em-um-terno-de-neon-esta-sentado-em-uma-cadeira-com-um-letreiro-de-neon-que-diz-palavra.jpg'
-import img4 from '../imagens/maos-jogador-no-controlador.jpg'
 import emailjs from '@emailjs/browser'
 import { playRandomAudio } from '../utils/audioPlayer'
 import AudioVisualizer from '../components/AudioVisualizer'
@@ -13,9 +9,14 @@ import AudioVisualizer from '../components/AudioVisualizer'
 // Inicializar EmailJS
 emailjs.init('SxPIIDojWJxViW_q_')
 
-const images = [img1,img2, img3, img4]
+const images = [
+  'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/intro/mexendo-pc.png',
+  'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/intro/um-homem-em-um-terno-de-neon-esta-sentado-em-uma-cadeira-com-um-letreiro-de-neon-que-diz-palavra.jpg',
+  'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/intro/mascarado-com-controle.png',
+  'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/intro/dois-amigos-adolescentes-em-fones-de-ouvido-estao-jogando-um-console-de-videogame-usando-gamepads-e-sorrindo.jpg'
+]
 
-export default function StartScreen({ onStart, autoStart = false }){
+export default function StartScreen({ onStart, autoStart = false }) {
   const [index, setIndex] = useState(0)
   const [fade, setFade] = useState(true)
   const [showLogin, setShowLogin] = useState(false)
@@ -106,17 +107,11 @@ export default function StartScreen({ onStart, autoStart = false }){
   }, [autoStart, showLoading, showWelcome, showLogin, onStart])
 
   // Background image carousel - com transições mais suaves
+  // Background image carousel - alteração automática do índice
   useEffect(() => {
     const t = setInterval(() => {
-      setFade(false)
-      setTimeout(() => {
-        setIndex(i => (i + 1) % images.length)
-        // Pequeno delay antes de iniciar a transição de fadeIn para garantir que a nova imagem esteja carregada
-        setTimeout(() => {
-          setFade(true)
-        }, 100) // Aumentei o delay para garantir que a imagem esteja completamente carregada
-      }, 1200) // Aumentei o tempo para completar a transição de fade-out
-    }, 7000) // Ajustei o intervalo total para dar tempo suficiente para as transições
+      setIndex(prev => (prev + 1) % images.length)
+    }, 6000) // Troca a cada 6 segundos
     return () => clearInterval(t)
   }, [])
 
@@ -124,14 +119,14 @@ export default function StartScreen({ onStart, autoStart = false }){
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔔 Auth event:', event, 'Mode:', mode)
-      
+
       // Quando o usuário confirma o email, ele é redirecionado de volta
       if (event === 'SIGNED_IN' && mode === 'awaiting-confirmation' && session?.user) {
         console.log('✅ Email confirmado! Buscando perfil...')
-        
+
         // Aguardar 2 segundos para dar tempo do trigger criar o perfil
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
+
         // Tentar buscar perfil com retry (3 tentativas)
         let profile = null
         for (let i = 0; i < 3; i++) {
@@ -140,13 +135,13 @@ export default function StartScreen({ onStart, autoStart = false }){
             .select('*')
             .eq('id', session.user.id)
             .maybeSingle()
-          
+
           if (data) {
             profile = data
             console.log('📋 Perfil encontrado:', profile)
             break
           }
-          
+
           console.log(`⏳ Tentativa ${i + 1}/3: Perfil ainda não criado, aguardando...`)
           await new Promise(resolve => setTimeout(resolve, 1500))
         }
@@ -162,14 +157,14 @@ export default function StartScreen({ onStart, autoStart = false }){
           setFormData({ ...formData, email: registeredEmail })
         }, 2500)
       }
-      
+
       // Se o token de confirmação está na URL
       if (event === 'TOKEN_REFRESHED' && mode === 'awaiting-confirmation' && session?.user) {
         console.log('🔄 Token atualizado! Buscando perfil...')
-        
+
         // Aguardar 2 segundos para dar tempo do trigger criar o perfil
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
+
         // Tentar buscar perfil com retry (3 tentativas)
         let profile = null
         for (let i = 0; i < 3; i++) {
@@ -178,13 +173,13 @@ export default function StartScreen({ onStart, autoStart = false }){
             .select('*')
             .eq('id', session.user.id)
             .maybeSingle()
-          
+
           if (data) {
             profile = data
             console.log('📋 Perfil encontrado:', profile)
             break
           }
-          
+
           console.log(`⏳ Tentativa ${i + 1}/3: Perfil ainda não criado, aguardando...`)
           await new Promise(resolve => setTimeout(resolve, 1500))
         }
@@ -266,10 +261,10 @@ export default function StartScreen({ onStart, autoStart = false }){
       console.log('📧 Iniciando envio de notificação...')
       console.log('👤 User:', user)
       console.log('📋 Profile:', profile)
-      
+
       // Se não houver perfil, usar user_metadata como fallback
       const userData = profile || user.user_metadata || {}
-      
+
       // Preparar parâmetros do template do EmailJS
       const templateParams = {
         to_email: 'cyberlife964@gmail.com',
@@ -314,7 +309,7 @@ export default function StartScreen({ onStart, autoStart = false }){
   const handleGuestLogin = () => {
     // Mostrar modal de aviso
     setShowGuestModal(true)
-    
+
     // Após 3 segundos, fazer transição
     setTimeout(() => {
       setShowGuestModal(false)
@@ -527,11 +522,11 @@ export default function StartScreen({ onStart, autoStart = false }){
 
       if (error) throw error
 
-      setMessage({ 
-        type: 'success', 
-        text: 'Email de recuperação enviado! Verifique sua caixa de entrada.' 
+      setMessage({
+        type: 'success',
+        text: 'Email de recuperação enviado! Verifique sua caixa de entrada.'
       })
-      
+
       setTimeout(() => setMode('login'), 2000)
     } catch (error) {
       setMessage({ type: 'error', text: error.message || 'Erro ao enviar email' })
@@ -541,8 +536,8 @@ export default function StartScreen({ onStart, autoStart = false }){
   }
 
   const estados = [
-    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
-    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+    'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
     'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
   ]
 
@@ -550,24 +545,24 @@ export default function StartScreen({ onStart, autoStart = false }){
     <div className="start-screen">
       {/* Container de fundo permanente para evitar flashes brancos */}
       <div className="background-container">
-        {/* Carregamento otimizado para mobile - apenas uma imagem visível por vez */}
-        <LazyImage
-          src={images[index]}
-          alt="Fundo CyberLife"
-          asBackground={true}
-          className={`background-image ${fade ? 'fade-in' : 'fade-out'}`}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            opacity: fade ? 1 : 0,
-            transition: 'opacity 0.5s ease-in-out', // Mantendo a transição suave
-            zIndex: -1,
-            filter: 'blur(1px) brightness(0.9)',
-          }}
-        />
+        {/* Carregamento otimizado - Cross fade de imagens */}
+        {images.map((imgSrc, i) => (
+          <LazyImage
+            key={i}
+            src={imgSrc}
+            alt="Fundo CyberLife"
+            asBackground={true}
+            className={`background-image ${i === index ? 'active' : ''}`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              zIndex: i === index ? 1 : 0
+            }}
+          />
+        ))}
       </div>
       {!showLogin ? (
         <>
@@ -789,397 +784,397 @@ export default function StartScreen({ onStart, autoStart = false }){
             )}
 
             {mode === 'login' && (
-            <form onSubmit={handleLogin} className="login-form">
-              <div className="form-group">
-                <label>
-                  <Mail size={18} />
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <Lock size={18} />
-                  Senha
-                </label>
-                <div className="password-input">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="remember-me-group">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                <label htmlFor="rememberMe">Mantenha-me conectado</label>
-              </div>
-
-              <button type="button" className="forgot-link" onClick={() => setMode('forgot')}>
-                Esqueci minha senha
-              </button>
-
-              <button type="submit" className="submit-button" disabled={loading}>
-                {loading ? 'Entrando...' : 'Entrar'}
-              </button>
-
-              <button 
-                type="button" 
-                className="guest-button" 
-                onClick={handleGuestLogin}
-                disabled={loading}
-              >
-                Entrar como Convidado
-              </button>
-
-              <div className="switch-mode">
-                Não tem conta?{' '}
-                <button type="button" onClick={() => setMode('register')}>
-                  Criar conta
-                </button>
-              </div>
-            </form>
-          )}
-
-          {mode === 'register' && (
-            <form onSubmit={handleRegister} className="login-form register-form">
-              <div className="form-group">
-                <label>
-                  <User size={18} />
-                  Nome Completo
-                </label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  placeholder="João Silva"
-                  required
-                />
-              </div>
-
-              <div className="form-row">
+              <form onSubmit={handleLogin} className="login-form">
                 <div className="form-group">
                   <label>
-                    <Calendar size={18} />
-                    Data de Nascimento
+                    <Mail size={18} />
+                    Email
                   </label>
-                  <div className="date-input-wrapper">
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <Lock size={18} />
+                    Senha
+                  </label>
+                  <div className="password-input">
                     <input
-                      type="date"
-                      name="birthDateCalendar"
-                      value={formData.internalBirthDate}
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
                       onChange={handleChange}
-                      max={new Date().toISOString().split('T')[0]}
-                      min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]} // Limite mínimo de 120 anos atrás
+                      placeholder="••••••••"
                       required
-                      className="date-input-calendar"
-                      style={{ display: 'none' }} // Esconder o campo de data padrão em favor do campo de texto
                     />
-                    <input
-                      type="text"
-                      inputMode="numeric"  // Força teclado numérico em dispositivos móveis
-                      name="birthDate"
-                      value={formData.birthDate || ''}
-                      onChange={(e) => {
-                        // Handle manual input - convert DD/MM/YYYY to YYYY-MM-DD format for internal storage
-                        const value = e.target.value;
-                        if (/^\d{0,2}\/?\d{0,2}\/?\d{0,4}$/.test(value)) {
-                          // Format the input as DD/MM/YYYY as the user types
-                          let formattedValue = value.replace(/\D/g, '');
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
 
-                          if (formattedValue.length > 2) {
-                            formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
-                          }
+                <div className="remember-me-group">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <label htmlFor="rememberMe">Mantenha-me conectado</label>
+                </div>
 
-                          if (formattedValue.length > 5) {
-                            formattedValue = formattedValue.substring(0, 5) + '/' + formattedValue.substring(5, 10);
-                          }
+                <button type="button" className="forgot-link" onClick={() => setMode('forgot')}>
+                  Esqueci minha senha
+                </button>
 
-                          // Update the displayed value
-                          e.target.value = formattedValue;
+                <button type="submit" className="submit-button" disabled={loading}>
+                  {loading ? 'Entrando...' : 'Entrar'}
+                </button>
 
-                          // Convert to YYYY-MM-DD format for internal storage if complete
-                          if (formattedValue.length === 10) {
-                            const [day, month, year] = formattedValue.split('/');
-                            if (day.length === 2 && month.length === 2 && year.length === 4) {
-                              // More robust validation of the date
-                              const dayInt = parseInt(day, 10);
-                              const monthInt = parseInt(month, 10);
-                              const yearInt = parseInt(year, 10);
+                <button
+                  type="button"
+                  className="guest-button"
+                  onClick={handleGuestLogin}
+                  disabled={loading}
+                >
+                  Entrar como Convidado
+                </button>
 
-                              // Basic range checks
-                              if (dayInt >= 1 && dayInt <= 31 && monthInt >= 1 && monthInt <= 12 && yearInt >= 1900 && yearInt <= new Date().getFullYear()) {
-                                // Create date object to validate if the date actually exists
-                                const dateObj = new Date(yearInt, monthInt - 1, dayInt); // month is 0-indexed in JS
+                <div className="switch-mode">
+                  Não tem conta?{' '}
+                  <button type="button" onClick={() => setMode('register')}>
+                    Criar conta
+                  </button>
+                </div>
+              </form>
+            )}
 
-                                // Check if the date is valid by comparing the original input values with the created date object
-                                // This validates real dates like Feb 30 (which would create a different date object)
-                                // Create a reference date to compare against
-                                const referenceDate = new Date(yearInt, monthInt - 1, dayInt);
+            {mode === 'register' && (
+              <form onSubmit={handleRegister} className="login-form register-form">
+                <div className="form-group">
+                  <label>
+                    <User size={18} />
+                    Nome Completo
+                  </label>
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="João Silva"
+                    required
+                  />
+                </div>
 
-                                if (dateObj.getDate() === referenceDate.getDate() &&
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>
+                      <Calendar size={18} />
+                      Data de Nascimento
+                    </label>
+                    <div className="date-input-wrapper">
+                      <input
+                        type="date"
+                        name="birthDateCalendar"
+                        value={formData.internalBirthDate}
+                        onChange={handleChange}
+                        max={new Date().toISOString().split('T')[0]}
+                        min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]} // Limite mínimo de 120 anos atrás
+                        required
+                        className="date-input-calendar"
+                        style={{ display: 'none' }} // Esconder o campo de data padrão em favor do campo de texto
+                      />
+                      <input
+                        type="text"
+                        inputMode="numeric"  // Força teclado numérico em dispositivos móveis
+                        name="birthDate"
+                        value={formData.birthDate || ''}
+                        onChange={(e) => {
+                          // Handle manual input - convert DD/MM/YYYY to YYYY-MM-DD format for internal storage
+                          const value = e.target.value;
+                          if (/^\d{0,2}\/?\d{0,2}\/?\d{0,4}$/.test(value)) {
+                            // Format the input as DD/MM/YYYY as the user types
+                            let formattedValue = value.replace(/\D/g, '');
+
+                            if (formattedValue.length > 2) {
+                              formattedValue = formattedValue.substring(0, 2) + '/' + formattedValue.substring(2);
+                            }
+
+                            if (formattedValue.length > 5) {
+                              formattedValue = formattedValue.substring(0, 5) + '/' + formattedValue.substring(5, 10);
+                            }
+
+                            // Update the displayed value
+                            e.target.value = formattedValue;
+
+                            // Convert to YYYY-MM-DD format for internal storage if complete
+                            if (formattedValue.length === 10) {
+                              const [day, month, year] = formattedValue.split('/');
+                              if (day.length === 2 && month.length === 2 && year.length === 4) {
+                                // More robust validation of the date
+                                const dayInt = parseInt(day, 10);
+                                const monthInt = parseInt(month, 10);
+                                const yearInt = parseInt(year, 10);
+
+                                // Basic range checks
+                                if (dayInt >= 1 && dayInt <= 31 && monthInt >= 1 && monthInt <= 12 && yearInt >= 1900 && yearInt <= new Date().getFullYear()) {
+                                  // Create date object to validate if the date actually exists
+                                  const dateObj = new Date(yearInt, monthInt - 1, dayInt); // month is 0-indexed in JS
+
+                                  // Check if the date is valid by comparing the original input values with the created date object
+                                  // This validates real dates like Feb 30 (which would create a different date object)
+                                  // Create a reference date to compare against
+                                  const referenceDate = new Date(yearInt, monthInt - 1, dayInt);
+
+                                  if (dateObj.getDate() === referenceDate.getDate() &&
                                     dateObj.getMonth() === referenceDate.getMonth() &&
                                     dateObj.getFullYear() === referenceDate.getFullYear()) {
 
-                                  // Additional validation to ensure the date is not in the future
-                                  const today = new Date();
-                                  today.setHours(0, 0, 0, 0);
-                                  if (dateObj <= today) {
-                                    // Verifica se o usuário tem pelo menos 13 anos
-                                    const todayForAge = new Date();
-                                    let age = todayForAge.getFullYear() - dateObj.getFullYear();
-                                    const monthDiff = todayForAge.getMonth() - dateObj.getMonth();
+                                    // Additional validation to ensure the date is not in the future
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    if (dateObj <= today) {
+                                      // Verifica se o usuário tem pelo menos 13 anos
+                                      const todayForAge = new Date();
+                                      let age = todayForAge.getFullYear() - dateObj.getFullYear();
+                                      const monthDiff = todayForAge.getMonth() - dateObj.getMonth();
 
-                                    if (monthDiff < 0 || (monthDiff === 0 && todayForAge.getDate() < dateObj.getDate())) {
-                                      age--;
+                                      if (monthDiff < 0 || (monthDiff === 0 && todayForAge.getDate() < dateObj.getDate())) {
+                                        age--;
+                                      }
+
+                                      if (age < 13) {
+                                        setMessage({ type: 'error', text: 'Você deve ter pelo menos 13 anos para se cadastrar.' });
+                                        return; // Não atualiza o estado se a idade for menor que 13
+                                      } else {
+                                        setMessage({ type: '', text: '' }); // Limpa mensagem de erro
+                                      }
+
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        birthDate: formattedValue, // Armazena a data formatada para exibição
+                                        internalBirthDate: dateObj.toISOString().split('T')[0] // Armazena a data no formato interno
+                                      }));
                                     }
-
-                                    if (age < 13) {
-                                      setMessage({ type: 'error', text: 'Você deve ter pelo menos 13 anos para se cadastrar.' });
-                                      return; // Não atualiza o estado se a idade for menor que 13
-                                    } else {
-                                      setMessage({ type: '', text: '' }); // Limpa mensagem de erro
-                                    }
-
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      birthDate: formattedValue, // Armazena a data formatada para exibição
-                                      internalBirthDate: dateObj.toISOString().split('T')[0] // Armazena a data no formato interno
-                                    }));
                                   }
                                 }
                               }
+                            } else {
+                              // Atualiza apenas o valor formatado para exibição
+                              setFormData(prev => ({
+                                ...prev,
+                                birthDate: formattedValue
+                              }));
                             }
-                          } else {
-                            // Atualiza apenas o valor formatado para exibição
-                            setFormData(prev => ({
-                              ...prev,
-                              birthDate: formattedValue
-                            }));
                           }
-                        }
-                      }}
-                      placeholder="DD/MM/AAAA"
-                      className="date-input-text"
-                      maxLength="10"
-                    />
+                        }}
+                        placeholder="DD/MM/AAAA"
+                        className="date-input-text"
+                        maxLength="10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>
+                      <MapPin size={18} />
+                      Estado
+                    </label>
+                    <select
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">UF</option>
+                      {estados.map(uf => (
+                        <option key={uf} value={uf}>{uf}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label>
                     <MapPin size={18} />
-                    Estado
+                    Cidade
                   </label>
-                  <select
-                    name="state"
-                    value={formData.state}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">UF</option>
-                    {estados.map(uf => (
-                      <option key={uf} value={uf}>{uf}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <MapPin size={18} />
-                  Cidade
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="São Paulo"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <Phone size={18} />
-                  WhatsApp
-                </label>
-                <input
-                  type="tel"
-                  name="whatsapp"
-                  value={formData.whatsapp}
-                  onChange={handleChange}
-                  placeholder="(11) 99999-9999"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <Mail size={18} />
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <Lock size={18} />
-                  Senha
-                </label>
-                <div className="password-input">
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
+                    type="text"
+                    name="city"
+                    value={formData.city}
                     onChange={handleChange}
-                    placeholder="Mínimo 6 caracteres"
-                    minLength="6"
+                    placeholder="São Paulo"
                     required
                   />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <Phone size={18} />
+                    WhatsApp
+                  </label>
+                  <input
+                    type="tel"
+                    name="whatsapp"
+                    value={formData.whatsapp}
+                    onChange={handleChange}
+                    placeholder="(11) 99999-9999"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <Mail size={18} />
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <Lock size={18} />
+                    Senha
+                  </label>
+                  <div className="password-input">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Mínimo 6 caracteres"
+                      minLength="6"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" className="submit-button" disabled={loading}>
+                  {loading ? 'Criando...' : 'Criar Conta'}
+                </button>
+
+                <div className="switch-mode">
+                  Já tem conta?{' '}
+                  <button type="button" onClick={() => setMode('login')}>
+                    Entrar
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {mode === 'forgot' && (
+              <form onSubmit={handleForgotPassword} className="login-form">
+                <p className="forgot-description">
+                  Digite seu email para receber um link de recuperação de senha.
+                </p>
+
+                <div className="form-group">
+                  <label>
+                    <Mail size={18} />
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+
+                <button type="submit" className="submit-button" disabled={loading}>
+                  {loading ? 'Enviando...' : 'Enviar Link'}
+                </button>
+
+                <div className="switch-mode">
+                  Lembrou a senha?{' '}
+                  <button type="button" onClick={() => setMode('login')}>
+                    Fazer login
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {mode === 'awaiting-confirmation' && (
+              <div className="confirmation-screen">
+                <div className="confirmation-icon">
+                  <Mail size={64} />
+                </div>
+                <h2 className="confirmation-title">Confirme seu Email</h2>
+                <p className="confirmation-text">
+                  Enviamos um email de confirmação para:
+                </p>
+                <p className="confirmation-email">{registeredEmail}</p>
+                <p className="confirmation-instructions">
+                  Por favor, verifique sua caixa de entrada (e também o spam) e clique no link de confirmação para ativar sua conta.
+                </p>
+                <div className="confirmation-info">
+                  <p>⏰ O link expira em 24 horas</p>
+                  <p>📧 Após confirmar, você será redirecionado automaticamente para o login</p>
+                  <p>🔄 Aguardando confirmação...</p>
+                </div>
+                <button
+                  type="button"
+                  className="submit-button"
+                  onClick={() => {
+                    setMode('login')
+                    setFormData({ ...formData, email: registeredEmail })
+                  }}
+                >
+                  Ir para Login Agora
+                </button>
+                <div className="switch-mode">
+                  Não recebeu o email?{' '}
                   <button
                     type="button"
-                    className="toggle-password"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={async () => {
+                      setLoading(true)
+                      try {
+                        await supabase.auth.resend({
+                          type: 'signup',
+                          email: registeredEmail
+                        })
+                        setMessage({ type: 'success', text: 'Email reenviado!' })
+                      } catch (error) {
+                        setMessage({ type: 'error', text: 'Erro ao reenviar email' })
+                      } finally {
+                        setLoading(false)
+                      }
+                    }}
+                    disabled={loading}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    Reenviar email
                   </button>
                 </div>
               </div>
-
-              <button type="submit" className="submit-button" disabled={loading}>
-                {loading ? 'Criando...' : 'Criar Conta'}
-              </button>
-
-              <div className="switch-mode">
-                Já tem conta?{' '}
-                <button type="button" onClick={() => setMode('login')}>
-                  Entrar
-                </button>
-              </div>
-            </form>
-          )}
-
-          {mode === 'forgot' && (
-            <form onSubmit={handleForgotPassword} className="login-form">
-              <p className="forgot-description">
-                Digite seu email para receber um link de recuperação de senha.
-              </p>
-
-              <div className="form-group">
-                <label>
-                  <Mail size={18} />
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
-
-              <button type="submit" className="submit-button" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar Link'}
-              </button>
-
-              <div className="switch-mode">
-                Lembrou a senha?{' '}
-                <button type="button" onClick={() => setMode('login')}>
-                  Fazer login
-                </button>
-              </div>
-            </form>
-          )}
-
-          {mode === 'awaiting-confirmation' && (
-            <div className="confirmation-screen">
-              <div className="confirmation-icon">
-                <Mail size={64} />
-              </div>
-              <h2 className="confirmation-title">Confirme seu Email</h2>
-              <p className="confirmation-text">
-                Enviamos um email de confirmação para:
-              </p>
-              <p className="confirmation-email">{registeredEmail}</p>
-              <p className="confirmation-instructions">
-                Por favor, verifique sua caixa de entrada (e também o spam) e clique no link de confirmação para ativar sua conta.
-              </p>
-              <div className="confirmation-info">
-                <p>⏰ O link expira em 24 horas</p>
-                <p>📧 Após confirmar, você será redirecionado automaticamente para o login</p>
-                <p>🔄 Aguardando confirmação...</p>
-              </div>
-              <button 
-                type="button" 
-                className="submit-button" 
-                onClick={() => {
-                  setMode('login')
-                  setFormData({ ...formData, email: registeredEmail })
-                }}
-              >
-                Ir para Login Agora
-              </button>
-              <div className="switch-mode">
-                Não recebeu o email?{' '}
-                <button 
-                  type="button" 
-                  onClick={async () => {
-                    setLoading(true)
-                    try {
-                      await supabase.auth.resend({
-                        type: 'signup',
-                        email: registeredEmail
-                      })
-                      setMessage({ type: 'success', text: 'Email reenviado!' })
-                    } catch (error) {
-                      setMessage({ type: 'error', text: 'Erro ao reenviar email' })
-                    } finally {
-                      setLoading(false)
-                    }
-                  }}
-                  disabled={loading}
-                >
-                  Reenviar email
-                </button>
-              </div>
-            </div>
-          )}
+            )}
           </div>
         </div>
       )}
@@ -1191,7 +1186,7 @@ export default function StartScreen({ onStart, autoStart = false }){
             <div className="guest-modal-icon">⚠️</div>
             <h2 className="guest-modal-title">Modo Convidado</h2>
             <p className="guest-modal-text">
-              Para melhor experiência CyberLife, fazer compras e participar de eventos, 
+              Para melhor experiência CyberLife, fazer compras e participar de eventos,
               é necessário fazer login com uma conta.
             </p>
             <div className="guest-modal-loading">

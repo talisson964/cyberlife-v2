@@ -98,47 +98,25 @@ body{font-family:Inter,system-ui,Arial,Helvetica,sans-serif}
   height: 100%;
   background-size: cover;
   background-position: center;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out; /* Transição suave para mudanças diretas */
-  z-index: -1;
+  opacity: 0 !important;
+  transition: opacity 2.5s ease-in-out !important;
+  z-index: 0;
   filter: blur(1px) brightness(0.9);
+  transform-origin: center center;
 }
-.background-image.fade-in{
-  animation:parallaxIn 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+
+.background-image.active {
+  opacity: 1 !important;
+  z-index: 1;
+  animation: kenburns 20s linear infinite alternate;
 }
-.background-image.fade-out{
-  animation:parallaxOut 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-@keyframes parallaxIn{
-  0%{
-    opacity:0;
-    transform:translateY(10px) scale(0.98);
-    filter:grayscale(80%) brightness(0.85);
+
+@keyframes kenburns {
+  0% {
+    transform: scale(1) translate(0, 0);
   }
-  60%{
-    opacity:0.85;
-    filter:grayscale(20%) brightness(0.97);
-  }
-  100%{
-    opacity:1;
-    transform:translateY(0) scale(1);
-    filter:grayscale(0%) brightness(1);
-  }
-}
-@keyframes parallaxOut{
-  0%{
-    opacity:1;
-    transform:translateY(0) scale(1);
-    filter:grayscale(0%) brightness(1);
-  }
-  40%{
-    opacity:0.8;
-    filter:grayscale(20%) brightness(1.03);
-  }
-  100%{
-    opacity:0; /* Zerar completamente para que a próxima imagem entre limpa */
-    transform:translateY(-10px) scale(1.02);
-    filter:grayscale(80%) brightness(1.05);
+  100% {
+    transform: scale(1.1) translate(-2%, -2%);
   }
 }
 .start-button{
