@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import CommunityFab from '../components/CommunityFab';
 import PointsNotification from '../components/PointsNotification';
 import NotificationBell from '../components/NotificationBell';
+import PlayerLevel from '../components/PlayerLevel';
+import UserMissions from '../components/UserMissions';
 import { supabase } from '../supabaseClient';
 
 export default function PerfilPage() {
@@ -146,7 +148,7 @@ export default function PerfilPage() {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -158,7 +160,7 @@ export default function PerfilPage() {
   // Listener separado para mudanças nos pontos
   useEffect(() => {
     if (!user) return;
-    
+
     // Configurar listener para mudanças nos pontos em tempo real
     const channel = supabase
       .channel('points-changes')
@@ -172,16 +174,16 @@ export default function PerfilPage() {
         },
         (payload) => {
           console.log('🎮 Novo histórico de pontos:', payload);
-          
+
           const points = payload.new.points;
           const description = payload.new.description || 'Você ganhou pontos!';
-          
+
           // Mostrar notificação
           setNotification({
             points: points,
             message: description
           });
-          
+
           // Atualizar apenas os pontos sem recarregar tudo
           setProfile(prev => ({
             ...prev,
@@ -190,7 +192,7 @@ export default function PerfilPage() {
         }
       )
       .subscribe();
-    
+
     return () => {
       supabase.removeChannel(channel);
     };
@@ -232,50 +234,50 @@ export default function PerfilPage() {
   const loadUserProfile = async () => {
     try {
       setLoading(true);
-      
+
       // Obter sessão atual
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       console.log('🔍 Sessão:', session?.user?.id);
-      
+
       if (sessionError) {
         console.error('❌ Erro ao obter sessão:', sessionError);
         throw sessionError;
       }
-      
+
       if (!session) {
         // Mostrar popup personalizado em vez do confirm padrão
         showLoginPrompt();
         return;
       }
-      
+
       const user = session.user;
       setUser(user);
       console.log('👤 User ID:', user.id);
-      
+
       // Buscar perfil do usuário SEM RLS primeiro (usando service_role ou anon)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle();
-      
+
       console.log('📊 Profile Data:', profileData);
       console.log('⚠️ Profile Error:', profileError);
-      
+
       if (profileError) {
         console.error('❌ Erro ao buscar perfil:', profileError);
         alert(`Erro RLS: ${profileError.message}\n\nExecute o SQL fix-profiles-rls.sql no Supabase SQL Editor!`);
         throw profileError;
       }
-      
+
       // Se não encontrou perfil, mostrar mensagem
       if (!profileData) {
         alert('Perfil não encontrado. Entre em contato com o suporte.');
         console.error('⚠️ Perfil não existe para user_id:', user.id);
         return;
       }
-      
+
       // Perfil encontrado com sucesso
       console.log('✅ Perfil carregado:', profileData);
       setProfile(profileData);
@@ -451,9 +453,9 @@ export default function PerfilPage() {
           transition: 'transform 0.3s ease',
           cursor: 'pointer',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        onClick={() => window.location.href = '/'} // Navegar para a página inicial
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onClick={() => window.location.href = '/'} // Navegar para a página inicial
         >
           <img
             src="/cyberlife-icone2.png"
@@ -481,7 +483,7 @@ export default function PerfilPage() {
         }}>
           {/* Ícone de Notificações */}
           {user && <NotificationBell userId={user.id} />}
-          
+
           {/* Botão Menu Hambúrguer */}
           <button
             id="menu-toggle"
@@ -531,7 +533,7 @@ export default function PerfilPage() {
               boxShadow: `0 0 10px ${menuOpen ? '#ff00ea' : '#00d9ff'}`,
             }} />
           </button>
-          
+
           {!isMobile && ( // Ocultar botão "Início" em dispositivos móveis para economizar espaço
             <Link to="/menu">
               <button style={{
@@ -548,16 +550,16 @@ export default function PerfilPage() {
                 transition: 'all 0.3s ease',
                 boxShadow: '0 0 15px rgba(0, 217, 255, 0.3)',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
-                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.3) 0%, rgba(0, 217, 255, 0.15) 100%)';
+                  e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 217, 255, 0.6)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(0, 217, 255, 0.05) 100%)';
+                  e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 217, 255, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
                 Início
               </button>
@@ -565,7 +567,7 @@ export default function PerfilPage() {
           )}
         </nav>
       </header>
-      
+
       {/* Menu Bar Dropdown */}
       <nav style={{
         position: 'absolute',
@@ -656,7 +658,7 @@ export default function PerfilPage() {
         background: 'linear-gradient(180deg, #000 0%, #0a0a0a 100%)',
         minHeight: 'calc(100vh - 68px)',
       }}>
-        <div style={{maxWidth: '900px', margin: '0 auto'}}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h2 style={{
             fontFamily: 'Rajdhani, sans-serif',
             fontWeight: 700,
@@ -667,7 +669,7 @@ export default function PerfilPage() {
             letterSpacing: isMobile ? '1px' : '2px',
             textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
           }}>Meu Perfil</h2>
-          
+
           {loading ? (
             <div style={{
               textAlign: 'center',
@@ -736,7 +738,7 @@ export default function PerfilPage() {
                       profile.nickname?.charAt(0).toUpperCase() || '👤'
                     )}
                   </div>
-                  
+
                   {/* Informações */}
                   <div style={{
                     flex: 1,
@@ -781,27 +783,27 @@ export default function PerfilPage() {
                 }}>
                   {profile.age && (
                     <div>
-                      <p style={{color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px'}}>Idade</p>
-                      <p style={{color: '#fff', fontSize: '1rem', fontWeight: 600}}>{profile.age} anos</p>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px' }}>Idade</p>
+                      <p style={{ color: '#fff', fontSize: '1rem', fontWeight: 600 }}>{profile.age} anos</p>
                     </div>
                   )}
                   {profile.city && (
                     <div>
-                      <p style={{color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px'}}>Localização</p>
-                      <p style={{color: '#fff', fontSize: '1rem', fontWeight: 600}}>{profile.city} - {profile.state}</p>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px' }}>Localização</p>
+                      <p style={{ color: '#fff', fontSize: '1rem', fontWeight: 600 }}>{profile.city} - {profile.state}</p>
                     </div>
                   )}
                   {profile.whatsapp && (
                     <div>
-                      <p style={{color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px'}}>WhatsApp</p>
-                      <p style={{color: '#fff', fontSize: '1rem', fontWeight: 600}}>{profile.whatsapp}</p>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px' }}>WhatsApp</p>
+                      <p style={{ color: '#fff', fontSize: '1rem', fontWeight: 600 }}>{profile.whatsapp}</p>
                     </div>
                   )}
                   {profile.cyber_points !== undefined && (
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <p style={{color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px'}}>CyberPoints</p>
+                      <p style={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.85rem', marginBottom: '5px' }}>CyberPoints</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <p style={{color: '#00ff88', fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>🎮 {profile.cyber_points} pontos</p>
+                        <p style={{ color: '#00ff88', fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>🎮 {profile.cyber_points} pontos</p>
                         <button
                           onClick={() => window.location.href = '/comprar-cyberpoints'}
                           style={{
@@ -827,6 +829,16 @@ export default function PerfilPage() {
                         >
                           Comprar
                         </button>
+                      </div>
+
+                      {/* Nível e Missões */}
+                      <div style={{ marginBottom: '30px' }}>
+                        <PlayerLevel
+                          level={profile.level || 1}
+                          currentXp={profile.current_xp || 0}
+                          nextLevelXp={100}
+                        />
+                        <UserMissions userId={user.id} />
                       </div>
                     </div>
                   )}
@@ -950,169 +962,169 @@ export default function PerfilPage() {
                           gap: isMobile ? '15px' : '40px' /* Menor gap em mobile */
                         }}>
                           {filteredBadges.map((badge, index) => (
-                          <div
-                            key={index}
-                            style={{
-                              position: 'relative',
-                              width: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
-                              height: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: 'transparent',
-                              border: 'none',
-                              borderRadius: '0',
-                              cursor: 'pointer',
-                              transition: 'all 0.3s ease',
-                              overflow: 'visible',
-                              flex: '0 0 auto' /* Evitar que os itens cresçam */
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = 'scale(1.05)';
-                              // Remover sombra ao passar o mouse
+                            <div
+                              key={index}
+                              style={{
+                                position: 'relative',
+                                width: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
+                                height: isMobile ? '80px' : '160px', /* Tamanho reduzido em mobile */
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'transparent',
+                                border: 'none',
+                                borderRadius: '0',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                overflow: 'visible',
+                                flex: '0 0 auto' /* Evitar que os itens cresçam */
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'scale(1.05)';
+                                // Remover sombra ao passar o mouse
 
-                              // Mostrar tooltip
-                              const tooltip = e.currentTarget.querySelector('.badge-tooltip');
-                              if (tooltip) {
-                                tooltip.style.opacity = '1';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'scale(1)';
-                              // Remover sombra ao sair o mouse
+                                // Mostrar tooltip
+                                const tooltip = e.currentTarget.querySelector('.badge-tooltip');
+                                if (tooltip) {
+                                  tooltip.style.opacity = '1';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'scale(1)';
+                                // Remover sombra ao sair o mouse
 
-                              // Esconder tooltip
-                              const tooltip = e.currentTarget.querySelector('.badge-tooltip');
-                              if (tooltip) {
-                                tooltip.style.opacity = '0';
-                              }
-                            }}
-                            onClick={(e) => {
-                              e.currentTarget.style.transform = 'scale(0.95)'; // Efeito de pressionar
-                              setTimeout(() => {
-                                e.currentTarget.style.transform = 'scale(1.05)'; // Volta ao hover
-                              }, 100);
+                                // Esconder tooltip
+                                const tooltip = e.currentTarget.querySelector('.badge-tooltip');
+                                if (tooltip) {
+                                  tooltip.style.opacity = '0';
+                                }
+                              }}
+                              onClick={(e) => {
+                                e.currentTarget.style.transform = 'scale(0.95)'; // Efeito de pressionar
+                                setTimeout(() => {
+                                  e.currentTarget.style.transform = 'scale(1.05)'; // Volta ao hover
+                                }, 100);
 
-                              // Definir a insígnia ampliada ao clicar
-                              setEnlargedBadge(badge);
-                            }}
-                          >
-                          <div style={{
-                            width: isMobile ? '70px' : '120px',
-                            height: isMobile ? '70px' : '120px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '5px',
-                            position: 'relative',
-                            zIndex: '1'
-                          }}>
-                            {badge.image_url ? (
-                              <img
-                                src={badge.image_url}
-                                alt={badge.name}
-                                className="badge-image"
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'contain'
-                                }}
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                            ) : (
+                                // Definir a insígnia ampliada ao clicar
+                                setEnlargedBadge(badge);
+                              }}
+                            >
                               <div style={{
-                                fontSize: isMobile ? '2.5rem' : '4rem',
+                                width: isMobile ? '70px' : '120px',
+                                height: isMobile ? '70px' : '120px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                width: '100%',
-                                height: '100%'
+                                marginBottom: '5px',
+                                position: 'relative',
+                                zIndex: '1'
                               }}>
-                                <span className="badge-image">{badge.icon || '🎮'}</span>
+                                {badge.image_url ? (
+                                  <img
+                                    src={badge.image_url}
+                                    alt={badge.name}
+                                    className="badge-image"
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'contain'
+                                    }}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                  />
+                                ) : (
+                                  <div style={{
+                                    fontSize: isMobile ? '2.5rem' : '4rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: '100%',
+                                    height: '100%'
+                                  }}>
+                                    <span className="badge-image">{badge.icon || '🎮'}</span>
+                                  </div>
+                                )}
+                                <div style={{
+                                  display: 'none',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '100%',
+                                  height: '100%',
+                                  fontSize: isMobile ? '2rem' : '3.5rem'
+                                }}>
+                                  {badge.icon || '🎮'}
+                                </div>
                               </div>
-                            )}
-                            <div style={{
-                              display: 'none',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: '100%',
-                              height: '100%',
-                              fontSize: isMobile ? '2rem' : '3.5rem'
-                            }}>
-                              {badge.icon || '🎮'}
-                            </div>
-                          </div>
-                          <div style={{
-                            fontSize: isMobile ? '0.6rem' : '0.7rem', // Ajustar tamanho da fonte para mobile
-                            textAlign: 'center',
-                            color: (() => {
-                              switch(badge.rarity) {
-                                case 'common': return '#cccccc'; // Cinza claro
-                                case 'rare': return '#66ccff'; // Azul claro
-                                case 'epic': return '#bb66ff'; // Roxo claro
-                                case 'legendary': return '#ffdd66'; // Amarelo dourado claro
-                                default: return '#ffdd66'; // Amarelo dourado claro padrão
-                              }
-                            })(),
-                            fontWeight: 'bold',
-                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' // Reduzi o efeito de sombra para melhor legibilidade
-                          }}>
-                            {badge.name}
-                          </div>
-
-                          {/* Tooltip com data de aquisição */}
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '-30px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            background: 'rgba(0, 0, 0, 0.9)',
-                            color: '#fff',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            fontSize: '0.8rem',
-                            whiteSpace: 'nowrap',
-                            opacity: 0,
-                            transition: 'opacity 0.3s ease',
-                            pointerEvents: 'none',
-                            zIndex: 1000,
-                            border: '1px solid rgba(255, 217, 0, 0.5)',
-                            boxShadow: '0 5px 15px rgba(0, 0, 0, 0.5)'
-                          }} className="badge-tooltip">
-                            Adquirida em: {(() => {
-                              if (!badge.acquired_at) return 'Data desconhecida';
-                              const date = new Date(badge.acquired_at);
-                              if (isNaN(date.getTime())) {
-                                // Tentar diferentes formatos de data
-                                const dateFormats = [
-                                  /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
-                                  /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
-                                  /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
-                                ];
-
-                                for (const format of dateFormats) {
-                                  if (format.test(badge.acquired_at)) {
-                                    const parsedDate = new Date(badge.acquired_at);
-                                    if (!isNaN(parsedDate.getTime())) {
-                                      return parsedDate.toLocaleDateString('pt-BR');
-                                    }
+                              <div style={{
+                                fontSize: isMobile ? '0.6rem' : '0.7rem', // Ajustar tamanho da fonte para mobile
+                                textAlign: 'center',
+                                color: (() => {
+                                  switch (badge.rarity) {
+                                    case 'common': return '#cccccc'; // Cinza claro
+                                    case 'rare': return '#66ccff'; // Azul claro
+                                    case 'epic': return '#bb66ff'; // Roxo claro
+                                    case 'legendary': return '#ffdd66'; // Amarelo dourado claro
+                                    default: return '#ffdd66'; // Amarelo dourado claro padrão
                                   }
-                                }
-                                return 'Data desconhecida';
-                              }
-                              return date.toLocaleDateString('pt-BR');
-                            })()}
-                          </div>
+                                })(),
+                                fontWeight: 'bold',
+                                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' // Reduzi o efeito de sombra para melhor legibilidade
+                              }}>
+                                {badge.name}
+                              </div>
+
+                              {/* Tooltip com data de aquisição */}
+                              <div style={{
+                                position: 'absolute',
+                                bottom: '-30px',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                background: 'rgba(0, 0, 0, 0.9)',
+                                color: '#fff',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                fontSize: '0.8rem',
+                                whiteSpace: 'nowrap',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                                pointerEvents: 'none',
+                                zIndex: 1000,
+                                border: '1px solid rgba(255, 217, 0, 0.5)',
+                                boxShadow: '0 5px 15px rgba(0, 0, 0, 0.5)'
+                              }} className="badge-tooltip">
+                                Adquirida em: {(() => {
+                                  if (!badge.acquired_at) return 'Data desconhecida';
+                                  const date = new Date(badge.acquired_at);
+                                  if (isNaN(date.getTime())) {
+                                    // Tentar diferentes formatos de data
+                                    const dateFormats = [
+                                      /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
+                                      /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
+                                      /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
+                                    ];
+
+                                    for (const format of dateFormats) {
+                                      if (format.test(badge.acquired_at)) {
+                                        const parsedDate = new Date(badge.acquired_at);
+                                        if (!isNaN(parsedDate.getTime())) {
+                                          return parsedDate.toLocaleDateString('pt-BR');
+                                        }
+                                      }
+                                    }
+                                    return 'Data desconhecida';
+                                  }
+                                  return date.toLocaleDateString('pt-BR');
+                                })()}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  </div>
-                </div>
-                ) : (
+                  ) : (
                     <p style={{
                       color: 'rgba(255, 255, 255, 0.6)',
                       textAlign: 'center',
@@ -1130,7 +1142,7 @@ export default function PerfilPage() {
                   gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
                   gap: '15px',
                 }}>
-                  <button 
+                  <button
                     onClick={handleEditProfile}
                     style={{
                       padding: '15px',
@@ -1154,33 +1166,33 @@ export default function PerfilPage() {
                     }}>
                     ✏️ Editar Perfil
                   </button>
-              
-              <button
-                onClick={openSettingsModal}
-                style={{
-                  padding: '15px',
-                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
-                  border: '2px solid #00d9ff',
-                  borderRadius: '10px',
-                  color: '#00d9ff',
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 217, 255, 0.3)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}>
-                ⚙️ Configurações
-              </button>
-            </div>
-          </div>
+
+                  <button
+                    onClick={openSettingsModal}
+                    style={{
+                      padding: '15px',
+                      background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.1) 0%, rgba(255, 0, 234, 0.1) 100%)',
+                      border: '2px solid #00d9ff',
+                      borderRadius: '10px',
+                      color: '#00d9ff',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 'bold',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 217, 255, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}>
+                    ⚙️ Configurações
+                  </button>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -1237,7 +1249,7 @@ export default function PerfilPage() {
                 <input
                   type="text"
                   value={editForm.full_name}
-                  onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '12px 15px',
@@ -1263,7 +1275,7 @@ export default function PerfilPage() {
                 <input
                   type="text"
                   value={editForm.nickname}
-                  onChange={(e) => setEditForm({...editForm, nickname: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, nickname: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '12px 15px',
@@ -1300,9 +1312,9 @@ export default function PerfilPage() {
                         age--;
                       }
 
-                      setEditForm({...editForm, age: age.toString()});
+                      setEditForm({ ...editForm, age: age.toString() });
                     } else {
-                      setEditForm({...editForm, age: ''});
+                      setEditForm({ ...editForm, age: '' });
                     }
                   }}
                   style={{
@@ -1335,7 +1347,7 @@ export default function PerfilPage() {
                   <input
                     type="text"
                     value={editForm.city}
-                    onChange={(e) => setEditForm({...editForm, city: e.target.value})}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '12px 15px',
@@ -1362,7 +1374,7 @@ export default function PerfilPage() {
                     type="text"
                     maxLength="2"
                     value={editForm.state}
-                    onChange={(e) => setEditForm({...editForm, state: e.target.value.toUpperCase()})}
+                    onChange={(e) => setEditForm({ ...editForm, state: e.target.value.toUpperCase() })}
                     style={{
                       width: '100%',
                       padding: '12px 15px',
@@ -1390,7 +1402,7 @@ export default function PerfilPage() {
                   type="text"
                   placeholder="(XX) XXXXX-XXXX"
                   value={editForm.whatsapp}
-                  onChange={(e) => setEditForm({...editForm, whatsapp: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, whatsapp: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '12px 15px',
@@ -1429,7 +1441,7 @@ export default function PerfilPage() {
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#00d9ff rgba(0, 217, 255, 0.1)'
                 }}
-                className="avatar-gallery-scrollbar"
+                  className="avatar-gallery-scrollbar"
                 >
                   {avatarGalleryImages.map((img, index) => (
                     <div
@@ -1660,7 +1672,7 @@ export default function PerfilPage() {
               position: 'relative',
               zIndex: 2
             }}>
-              Você precisa estar logado para acessar seu perfil.<br/>
+              Você precisa estar logado para acessar seu perfil.<br />
               Faça login para continuar ou explore nosso site.
             </p>
 
@@ -2073,57 +2085,57 @@ export default function PerfilPage() {
                 borderRadius: '0', /* Remover bordas */
                 boxShadow: 'none' /* Remover sombra */
               }}
-              onMouseEnter={(e) => {
-                // Criar tooltip com descrição e data de aquisição
-                const tooltip = document.createElement('div');
-                tooltip.className = 'enlarged-badge-tooltip';
-                const dateText = (() => {
-                  if (!enlargedBadge.acquired_at) return 'Data desconhecida';
-                  const date = new Date(enlargedBadge.acquired_at);
-                  if (isNaN(date.getTime())) {
-                    // Tentar diferentes formatos de data
-                    const dateFormats = [
-                      /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
-                      /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
-                      /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
-                    ];
+                onMouseEnter={(e) => {
+                  // Criar tooltip com descrição e data de aquisição
+                  const tooltip = document.createElement('div');
+                  tooltip.className = 'enlarged-badge-tooltip';
+                  const dateText = (() => {
+                    if (!enlargedBadge.acquired_at) return 'Data desconhecida';
+                    const date = new Date(enlargedBadge.acquired_at);
+                    if (isNaN(date.getTime())) {
+                      // Tentar diferentes formatos de data
+                      const dateFormats = [
+                        /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, // ISO
+                        /\d{2}\/\d{2}\/\d{4}/, // DD/MM/YYYY
+                        /\d{4}-\d{2}-\d{2}/ // YYYY-MM-DD
+                      ];
 
-                    for (const format of dateFormats) {
-                      if (format.test(enlargedBadge.acquired_at)) {
-                        const parsedDate = new Date(enlargedBadge.acquired_at);
-                        if (!isNaN(parsedDate.getTime())) {
-                          return parsedDate.toLocaleDateString('pt-BR');
+                      for (const format of dateFormats) {
+                        if (format.test(enlargedBadge.acquired_at)) {
+                          const parsedDate = new Date(enlargedBadge.acquired_at);
+                          if (!isNaN(parsedDate.getTime())) {
+                            return parsedDate.toLocaleDateString('pt-BR');
+                          }
                         }
                       }
+                      return 'Data desconhecida';
                     }
-                    return 'Data desconhecida';
-                  }
-                  return date.toLocaleDateString('pt-BR');
-                })();
-                tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
-                tooltip.style.position = 'absolute';
-                tooltip.style.bottom = isMobile ? '5px' : '10px'; // Posição do tooltip mais próxima em mobile
-                tooltip.style.left = '50%';
-                tooltip.style.transform = 'translateX(-50%)';
-                tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
-                tooltip.style.color = '#fff';
-                tooltip.style.padding = isMobile ? '8px 12px' : '10px 15px'; // Menor padding em mobile
-                tooltip.style.borderRadius = '8px';
-                tooltip.style.fontSize = isMobile ? '12px' : '14px'; // Fonte menor em mobile
-                tooltip.style.zIndex = '10001';
-                tooltip.style.maxWidth = isMobile ? '90vw' : '300px'; // Largura máxima em mobile
-                tooltip.style.textAlign = 'center';
-                tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
+                    return date.toLocaleDateString('pt-BR');
+                  })();
+                  tooltip.textContent = `${enlargedBadge.description || 'Sem descrição'}\nAdquirida em: ${dateText}`;
+                  tooltip.style.position = 'absolute';
+                  tooltip.style.bottom = isMobile ? '5px' : '10px'; // Posição do tooltip mais próxima em mobile
+                  tooltip.style.left = '50%';
+                  tooltip.style.transform = 'translateX(-50%)';
+                  tooltip.style.background = 'rgba(0, 0, 0, 0.85)';
+                  tooltip.style.color = '#fff';
+                  tooltip.style.padding = isMobile ? '8px 12px' : '10px 15px'; // Menor padding em mobile
+                  tooltip.style.borderRadius = '8px';
+                  tooltip.style.fontSize = isMobile ? '12px' : '14px'; // Fonte menor em mobile
+                  tooltip.style.zIndex = '10001';
+                  tooltip.style.maxWidth = isMobile ? '90vw' : '300px'; // Largura máxima em mobile
+                  tooltip.style.textAlign = 'center';
+                  tooltip.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.5)';
 
-                e.currentTarget.parentElement.appendChild(tooltip);
-              }}
-              onMouseLeave={(e) => {
-                // Remover tooltip
-                const tooltip = e.currentTarget.parentElement.querySelector('.enlarged-badge-tooltip');
-                if (tooltip) {
-                  e.currentTarget.parentElement.removeChild(tooltip);
-                }
-              }}
+                  e.currentTarget.parentElement.appendChild(tooltip);
+                }}
+                onMouseLeave={(e) => {
+                  // Remover tooltip
+                  const tooltip = e.currentTarget.parentElement.querySelector('.enlarged-badge-tooltip');
+                  if (tooltip) {
+                    e.currentTarget.parentElement.removeChild(tooltip);
+                  }
+                }}
               >
                 {enlargedBadge.icon || '🎮'}
               </div>
@@ -2143,7 +2155,7 @@ export default function PerfilPage() {
               cursor: 'pointer',
               fontSize: isMobile ? '1rem' : '1.2rem' // Fonte menor em mobile
             }}
-            onClick={() => setEnlargedBadge(null)}
+              onClick={() => setEnlargedBadge(null)}
             >
               ×
             </div>

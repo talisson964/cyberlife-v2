@@ -1,0 +1,243 @@
+/* Estilo Cyberpunk para o Gerenciador de Missões */
+.missions-manager-container {
+  padding: 2rem;
+  color: #e0e0e0;
+  background-color: rgba(10, 10, 20, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  font-family: 'Orbitron', 'Roboto', sans-serif;
+  min-height: 80vh;
+}
+
+.missions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #00ffcc;
+  padding-bottom: 1rem;
+}
+
+.missions-header h2 {
+  color: #00ffcc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+.btn-add-mission {
+  background: linear-gradient(45deg, #00ffcc, #00aa88);
+  border: none;
+  padding: 10px 20px;
+  color: #000;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+}
+
+.btn-add-mission:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+}
+
+.loading-spinner {
+  text-align: center;
+  font-size: 1.5rem;
+  color: #00ffcc;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 0.5; }
+  to { opacity: 1; text-shadow: 0 0 10px #00ffcc; }
+}
+
+.missions-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+}
+
+.missions-table th {
+  text-align: left;
+  padding: 1rem;
+  color: #888;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.missions-table td {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 255, 204, 0.1);
+  border-bottom: 1px solid rgba(0, 255, 204, 0.1);
+}
+
+.missions-table tr:hover td {
+  background: rgba(0, 255, 204, 0.1);
+  border-color: #00ffcc;
+}
+
+.mission-title-cell strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.mission-title-cell small {
+  color: #aaa;
+}
+
+.xp-badge {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background: rgba(0, 255, 100, 0.2);
+  color: #00ff66;
+  border: 1px solid #00ff66;
+}
+
+.status-badge.inactive {
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff3333;
+  border: 1px solid #ff3333;
+}
+
+.btn-edit, .btn-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  margin-right: 10px;
+  transition: transform 0.2s;
+}
+
+.btn-edit:hover { transform: scale(1.2); color: #00ffcc; }
+.btn-delete:hover { transform: scale(1.2); color: #ff3333; }
+
+/* Modal Form */
+.mission-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.mission-form-container {
+  background: #1a1a2e;
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid #00ffcc;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
+}
+
+.mission-form-container h3 {
+  color: #00ffcc;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #aaa;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #333;
+  color: #fff;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #00ffcc;
+  outline: none;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: #00ffcc;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid #ff3333;
+  color: #ff3333;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 50, 50, 0.1);
+}
+
+.btn-save {
+  background: #00ffcc;
+  border: none;
+  color: #000;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+  transition: all 0.3s;
+}
+
+.btn-save:hover {
+  background: #00eebb;
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+}

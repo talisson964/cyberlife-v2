@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import AccessLogsView from '../components/AccessLogsView';
 import ProductImageUploader from '../components/ProductImageUploader';
 import Model3DUploader from '../components/Model3DUploader';
+import MissionsManager from '../components/MissionsManager';
 import { stopAudio } from '../utils/audioPlayer';
 import { allProducts } from '../data/lojaData';
 import './AdminPanel3.css';
@@ -93,14 +94,14 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [customersForAssignment, setCustomersForAssignment] = useState([]);
   const [selectedCustomerForAssignment, setSelectedCustomerForAssignment] = useState('');
   const [searchCustomerForAssignment, setSearchCustomerForAssignment] = useState('');
-  
+
   // Dashboard Stats
   const [dashboardStats, setDashboardStats] = useState(null);
   const [recentOrders, setRecentOrders] = useState([]);
   const [topCustomers, setTopCustomers] = useState([]);
   const [salesByCategory, setSalesByCategory] = useState([]);
   const [lowStock, setLowStock] = useState([]);
-  
+
   // Produtos
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -133,7 +134,7 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [productImages, setProductImages] = useState([]); // Estado separado para gerenciar upload
   const [product3DModel, setProduct3DModel] = useState(null); // Estado para modelo 3D
   const [useModelAsCover, setUseModelAsCover] = useState(true); // Usar modelo 3D como capa
-  
+
   // Banners
   const [banners, setBanners] = useState([]);
   const [editingBanner, setEditingBanner] = useState(null);
@@ -353,7 +354,7 @@ const AdminPanel3 = ({ onNavigate }) => {
   // Recarregar dados quando muda de aba
   useEffect(() => {
     if (isAuthenticated) {
-      switch(activeTab) {
+      switch (activeTab) {
         case 'products':
           loadProducts();
           break;
@@ -590,7 +591,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         console.error('Erro ao buscar produtos:', error);
         throw error;
       }
-      
+
       console.log('Produtos carregados:', data?.length || 0);
       setProducts(data || []);
     } catch (error) {
@@ -632,7 +633,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         .select();
 
       if (error) throw error;
-      
+
       await loadProducts(); // Recarregar lista
       alert(`${data.length} produtos importados com sucesso do lojaData.js!`);
     } catch (error) {
@@ -644,14 +645,14 @@ const AdminPanel3 = ({ onNavigate }) => {
   // Função auxiliar para fazer upload de imagens para o Supabase Storage
   const uploadImagesToStorage = async (images, productId) => {
     const uploadedUrls = [];
-    
+
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
       if (!image.file) continue; // Pular se já foi feito upload
-      
+
       const fileExt = image.file.name.split('.').pop();
       const fileName = `products/${productId}/image_${i + 1}_${Date.now()}.${fileExt}`;
-      
+
       try {
         const { data, error } = await supabase.storage
           .from('product-images')
@@ -659,14 +660,14 @@ const AdminPanel3 = ({ onNavigate }) => {
             cacheControl: '3600',
             upsert: false
           });
-        
+
         if (error) throw error;
-        
+
         // Obter URL pública
         const { data: { publicUrl } } = supabase.storage
           .from('product-images')
           .getPublicUrl(fileName);
-        
+
         uploadedUrls.push({
           url: publicUrl,
           order: i + 1
@@ -675,16 +676,16 @@ const AdminPanel3 = ({ onNavigate }) => {
         console.error(`Erro ao fazer upload da imagem ${i + 1}:`, error);
       }
     }
-    
+
     return uploadedUrls;
   };
 
   // Função para fazer upload de modelo 3D para o Supabase Storage
   const upload3DModelToStorage = async (modelFile, productId) => {
     if (!modelFile) return null;
-    
+
     const fileName = `products/${productId}/model_${Date.now()}.glb`;
-    
+
     try {
       const { data, error } = await supabase.storage
         .from('product-3d-models')
@@ -693,14 +694,14 @@ const AdminPanel3 = ({ onNavigate }) => {
           upsert: false,
           contentType: 'model/gltf-binary'
         });
-      
+
       if (error) throw error;
-      
+
       // Obter URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('product-3d-models')
         .getPublicUrl(fileName);
-      
+
       return publicUrl;
     } catch (error) {
       console.error('Erro ao fazer upload do modelo 3D:', error);
@@ -717,7 +718,7 @@ const AdminPanel3 = ({ onNavigate }) => {
       let finalImageUrl = productForm.image_url;
       let finalHoverImageUrl = productForm.hover_image_url;
       let model3DUrl = null;
-      
+
       // Inserir produto temporariamente para obter ID
       const { data, error } = await supabase
         .from('products')
@@ -732,24 +733,24 @@ const AdminPanel3 = ({ onNavigate }) => {
         .select();
 
       if (error) throw error;
-      
+
       const newProductId = data[0].id;
-      
+
       // Fazer upload do modelo 3D se houver
       if (product3DModel) {
         model3DUrl = await upload3DModelToStorage(product3DModel, newProductId);
       }
-      
+
       // Fazer upload das imagens se houver
       if (productImages.length > 0) {
         uploadedUrls = await uploadImagesToStorage(productImages, newProductId);
       }
-      
+
       // LÓGICA DE PRIORIDADE PARA IMAGEM DE CAPA:
       // 1ª Prioridade: Modelo 3D (se marcado para usar como capa)
       // 2ª Prioridade: Links manuais (image_url e hover_image_url)
       // 3ª Prioridade: Primeira e segunda imagens do array
-      
+
       if (model3DUrl && useModelAsCover) {
         // Usar modelo 3D como capa
         finalImageUrl = model3DUrl;
@@ -766,22 +767,22 @@ const AdminPanel3 = ({ onNavigate }) => {
           finalHoverImageUrl = uploadedUrls[1].url;
         }
       }
-      
+
       // Atualizar produto com todas as informações
       const { error: updateError } = await supabase
         .from('products')
-        .update({ 
+        .update({
           images: uploadedUrls,
           image_url: finalImageUrl,
           hover_image_url: finalHoverImageUrl,
           model_3d: model3DUrl
         })
         .eq('id', newProductId);
-      
+
       if (updateError) {
         console.error('Erro ao salvar informações do produto:', updateError);
       }
-      
+
       await loadProducts(); // Recarregar lista do banco
       setShowProductForm(false); // Fechar formulário
       resetProductForm();
@@ -803,7 +804,7 @@ const AdminPanel3 = ({ onNavigate }) => {
     try {
       // Obter todas as imagens na ordem atual (existentes + novas)
       let updatedImages = [];
-      
+
       // Processar todas as imagens na ordem atual do estado productImages
       for (let i = 0; i < productImages.length; i++) {
         const img = productImages[i];
@@ -818,7 +819,7 @@ const AdminPanel3 = ({ onNavigate }) => {
           }
         }
       }
-      
+
       // Fazer upload do modelo 3D se houver um novo
       let model3DUrl = productForm.model_3d; // Manter URL existente
       if (product3DModel) {
@@ -827,15 +828,15 @@ const AdminPanel3 = ({ onNavigate }) => {
           model3DUrl = newModel3DUrl;
         }
       }
-      
+
       // LÓGICA DE PRIORIDADE PARA IMAGEM DE CAPA:
       // 1ª Prioridade: Modelo 3D (se marcado para usar como capa)
       // 2ª Prioridade: Links manuais (image_url e hover_image_url)
       // 3ª Prioridade: Primeira e segunda imagens do array
-      
+
       let finalImageUrl = productForm.image_url;
       let finalHoverImageUrl = productForm.hover_image_url;
-      
+
       if (model3DUrl && useModelAsCover) {
         // Usar modelo 3D como capa
         finalImageUrl = model3DUrl;
@@ -852,7 +853,7 @@ const AdminPanel3 = ({ onNavigate }) => {
           finalHoverImageUrl = updatedImages[1].url;
         }
       }
-      
+
       const { error } = await supabase
         .from('products')
         .update({
@@ -935,12 +936,12 @@ const AdminPanel3 = ({ onNavigate }) => {
     // Remove tudo exceto números
     const numbers = value.replace(/\D/g, '');
     if (!numbers) return '';
-    
+
     // Converte para número e formata
     const numberValue = parseInt(numbers) / 100;
-    return numberValue.toLocaleString('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
+    return numberValue.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
     });
   };
 
@@ -955,13 +956,13 @@ const AdminPanel3 = ({ onNavigate }) => {
     // Remove tudo exceto números e x
     const cleaned = value.replace(/[^\d]/g, '');
     if (!cleaned) return '';
-    
+
     // Divide em partes (até 3 números)
     const parts = [];
     for (let i = 0; i < cleaned.length && parts.length < 3; i += 2) {
       parts.push(cleaned.substr(i, 2));
     }
-    
+
     return parts.join(' x ');
   };
 
@@ -969,25 +970,25 @@ const AdminPanel3 = ({ onNavigate }) => {
     // Remove tudo exceto números
     const numbers = value.replace(/\D/g, '');
     if (!numbers) return '';
-    
+
     return numbers + 'g';
   };
 
   const handlePriceChange = (value) => {
     const formatted = formatPrice(value);
-    setProductForm({...productForm, price: formatted});
+    setProductForm({ ...productForm, price: formatted });
   };
 
   const handleDimensionsChange = (value) => {
     // Permite apenas números e x, depois formata
     const clean = value.replace(/[^\d]/g, '');
-    setProductForm({...productForm, dimensions: clean});
+    setProductForm({ ...productForm, dimensions: clean });
   };
 
   const handleWeightChange = (value) => {
     // Remove tudo exceto números
     const numbers = value.replace(/\D/g, '');
-    setProductForm({...productForm, weight: numbers});
+    setProductForm({ ...productForm, weight: numbers });
   };
 
   // DRAG AND DROP FUNCTIONS
@@ -1005,7 +1006,7 @@ const AdminPanel3 = ({ onNavigate }) => {
     if (isDragging) {
       const newX = Math.max(0, Math.min(window.innerWidth - 420, e.clientX - dragOffset.x));
       const newY = Math.max(0, Math.min(window.innerHeight - 100, e.clientY - dragOffset.y));
-      
+
       if (isDragging === 'product') {
         setProductFormPosition({ x: newX, y: newY });
       } else if (isDragging === 'banner') {
@@ -1025,7 +1026,7 @@ const AdminPanel3 = ({ onNavigate }) => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -1046,7 +1047,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         console.error('Erro ao buscar banners:', error);
         throw error;
       }
-      
+
       console.log('Banners carregados:', data?.length || 0);
       setBanners(data || []);
     } catch (error) {
@@ -1078,7 +1079,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         .select();
 
       if (error) throw error;
-      
+
       await loadBanners(); // Recarregar lista do banco
       setShowBannerForm(false); // Fechar formulário
       resetBannerForm();
@@ -1170,7 +1171,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         console.error('Erro ao buscar eventos:', error);
         throw error;
       }
-      
+
       console.log('Eventos carregados:', data?.length || 0);
       setEvents(data || []);
     } catch (error) {
@@ -1426,7 +1427,7 @@ const AdminPanel3 = ({ onNavigate }) => {
         console.error('Erro ao buscar pedidos:', error);
         throw error;
       }
-      
+
       console.log('Pedidos carregados:', data?.length || 0);
       setOrders(data || []);
     } catch (error) {
@@ -1453,7 +1454,7 @@ const AdminPanel3 = ({ onNavigate }) => {
   };
 
   const getStatusColor = (status) => {
-    switch(status) {
+    switch (status) {
       case 'pending': return '#ffd700';
       case 'processing': return '#00d9ff';
       case 'shipped': return '#ff6600';
@@ -1464,7 +1465,7 @@ const AdminPanel3 = ({ onNavigate }) => {
   };
 
   const getStatusText = (status) => {
-    switch(status) {
+    switch (status) {
       case 'pending': return 'Pendente';
       case 'processing': return 'Processando';
       case 'shipped': return 'Enviado';
@@ -1879,7 +1880,8 @@ const AdminPanel3 = ({ onNavigate }) => {
             { id: 'orders', icon: '🛒', label: 'Pedidos', color: '#ff6600' },
             { id: 'customers', icon: '👥', label: 'Clientes', color: '#9400d3' },
             { id: 'badges', icon: '🎖️', label: 'Insígnias', color: '#ffd700' },
-            { id: 'logs', icon: '📋', label: 'Logs', color: '#ff4444' }
+            { id: 'logs', icon: '📋', label: 'Logs', color: '#ff4444' },
+            { id: 'missions', icon: '🎯', label: 'Missões', color: '#00ffcc' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -1906,7 +1908,7 @@ const AdminPanel3 = ({ onNavigate }) => {
               </div>
             </div>
           )}
-          
+
           {/* Dashboard refatorado será aqui */}
           {activeTab === 'dashboard' && (
             <div className="dashboard-modern">
@@ -1926,7 +1928,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     <span>Vendas realizadas</span>
                   </div>
                 </div>
-                
+
                 <div className="stat-card orders">
                   <div className="stat-header">
                     <span className="stat-icon">🛒</span>
@@ -1937,7 +1939,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     <span>{dashboardStats?.pending_orders || 0} pendentes</span>
                   </div>
                 </div>
-                
+
                 <div className="stat-card products">
                   <div className="stat-header">
                     <span className="stat-icon">📦</span>
@@ -1948,7 +1950,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     <span>{dashboardStats?.low_stock_products || 0} estoque baixo</span>
                   </div>
                 </div>
-                
+
                 <div className="stat-card customers">
                   <div className="stat-header">
                     <span className="stat-icon">👥</span>
@@ -2048,361 +2050,361 @@ const AdminPanel3 = ({ onNavigate }) => {
               <div className="products-layout">
                 {/* Form Panel */}
                 {showProductForm && (
-                <div 
-                  className="form-panel draggable"
-                  style={{
-                    left: `${productFormPosition.x}px`,
-                    top: `${productFormPosition.y}px`,
-                    cursor: isDragging === 'product' ? 'grabbing' : 'auto'
-                  }}
-                >
-                  <div 
-                    className="panel-header draggable-header"
-                    onMouseDown={(e) => handleMouseDown(e, 'product')}
-                    style={{ cursor: 'grab' }}
+                  <div
+                    className="form-panel draggable"
+                    style={{
+                      left: `${productFormPosition.x}px`,
+                      top: `${productFormPosition.y}px`,
+                      cursor: isDragging === 'product' ? 'grabbing' : 'auto'
+                    }}
                   >
-                    <h3>{editingProduct ? '✏️ Editar Produto' : '➕ Novo Produto'}</h3>
-                    <div className="header-buttons">
-                      <button 
-                        type="button" 
-                        onClick={() => setShowProductForm(false)}
-                        className="btn-close-float"
-                        title="Fechar formulário"
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  </div>
-                  <form onSubmit={editingProduct ? handleUpdateProduct : handleAddProduct} className="modern-form">
-                    <div className="form-group">
-                      <label>Nome do Produto</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Funko Pop Batman"
-                        value={productForm.name}
-                        onChange={(e) => setProductForm({...productForm, name: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Categoria</label>
-                        <select
-                          value={productForm.category}
-                          onChange={(e) => setProductForm({...productForm, category: e.target.value})}
-                          required
+                    <div
+                      className="panel-header draggable-header"
+                      onMouseDown={(e) => handleMouseDown(e, 'product')}
+                      style={{ cursor: 'grab' }}
+                    >
+                      <h3>{editingProduct ? '✏️ Editar Produto' : '➕ Novo Produto'}</h3>
+                      <div className="header-buttons">
+                        <button
+                          type="button"
+                          onClick={() => setShowProductForm(false)}
+                          className="btn-close-float"
+                          title="Fechar formulário"
                         >
-                          <option value="geek">🎭 Geek</option>
-                          <option value="gamer">🎮 Gamer</option>
-                          <option value="smarthome">🏠 Smart Home</option>
-                        </select>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Tipo</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: Action Figures"
-                          value={productForm.type}
-                          onChange={(e) => setProductForm({...productForm, type: e.target.value})}
-                        />
+                          ❌
+                        </button>
                       </div>
                     </div>
-                    
-                    <div className="form-row">
+                    <form onSubmit={editingProduct ? handleUpdateProduct : handleAddProduct} className="modern-form">
                       <div className="form-group">
-                        <label>💰 Preço</label>
+                        <label>Nome do Produto</label>
                         <input
                           type="text"
-                          placeholder="R$ 0,00"
-                          value={productForm.price}
-                          onChange={(e) => handlePriceChange(e.target.value)}
+                          placeholder="Ex: Funko Pop Batman"
+                          value={productForm.name}
+                          onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                           required
                         />
-                        <small style={{color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem'}}>
-                          Digite apenas números (ex: 15000 = R$ 150,00)
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Categoria</label>
+                          <select
+                            value={productForm.category}
+                            onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                            required
+                          >
+                            <option value="geek">🎭 Geek</option>
+                            <option value="gamer">🎮 Gamer</option>
+                            <option value="smarthome">🏠 Smart Home</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Tipo</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Action Figures"
+                            value={productForm.type}
+                            onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>💰 Preço</label>
+                          <input
+                            type="text"
+                            placeholder="R$ 0,00"
+                            value={productForm.price}
+                            onChange={(e) => handlePriceChange(e.target.value)}
+                            required
+                          />
+                          <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
+                            Digite apenas números (ex: 15000 = R$ 150,00)
+                          </small>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Estoque</label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={productForm.stock}
+                            onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>🖼️ URL da Imagem de Capa (Opcional)</label>
+                        <input
+                          type="url"
+                          placeholder="https://exemplo.com/imagem.jpg"
+                          value={productForm.image_url}
+                          onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
+                        />
+                        <small style={{ color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>
+                          💡 Se não preencher, a 1ª imagem do upload será usada como capa
+                        </small>
+                        {productForm.image_url && (
+                          <div className="image-preview">
+                            <img
+                              src={productForm.image_url}
+                              alt="Preview"
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextElementSibling.style.display = 'block';
+                              }}
+                              onLoad={(e) => {
+                                e.target.style.display = 'block';
+                                if (e.target.nextElementSibling) {
+                                  e.target.nextElementSibling.style.display = 'none';
+                                }
+                              }}
+                            />
+                            <div className="preview-error" style={{ display: 'none' }}>
+                              ❌ Não foi possível carregar a imagem
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>✨ URL da Imagem Hover (Opcional)</label>
+                        <input
+                          type="url"
+                          placeholder="https://exemplo.com/imagem-hover.jpg"
+                          value={productForm.hover_image_url}
+                          onChange={(e) => setProductForm({ ...productForm, hover_image_url: e.target.value })}
+                        />
+                        <small style={{ color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>
+                          💡 Se não preencher, a 2ª imagem do upload será usada no hover
                         </small>
                       </div>
-                      
-                      <div className="form-group">
-                        <label>Estoque</label>
-                        <input
-                          type="number"
-                          placeholder="0"
-                          value={productForm.stock}
-                          onChange={(e) => setProductForm({...productForm, stock: e.target.value})}
-                          required
-                        />
+
+                      {/* Componente de Upload de Múltiplas Imagens */}
+                      <div style={{ background: 'rgba(0, 255, 157, 0.05)', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid rgba(0, 255, 157, 0.2)' }}>
+                        <p style={{ margin: '0 0 10px 0', color: '#00ff9d', fontWeight: '600', fontSize: '0.9rem' }}>
+                          📌 IMPORTANTE - Ordem das Imagens:
+                        </p>
+                        <ul style={{ margin: 0, paddingLeft: '20px', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>
+                          <li>Arraste as imagens para reordená-las</li>
+                          <li><strong>1ª imagem</strong> = Imagem de Capa (se URL não preenchida)</li>
+                          <li><strong>2ª imagem</strong> = Imagem de Hover (se URL não preenchida)</li>
+                          <li><strong>Demais imagens</strong> = Galeria na página de detalhes</li>
+                        </ul>
                       </div>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>🖼️ URL da Imagem de Capa (Opcional)</label>
-                      <input
-                        type="url"
-                        placeholder="https://exemplo.com/imagem.jpg"
-                        value={productForm.image_url}
-                        onChange={(e) => setProductForm({...productForm, image_url: e.target.value})}
+                      <ProductImageUploader
+                        images={productImages}
+                        onChange={setProductImages}
+                        maxImages={9}
                       />
-                      <small style={{color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block'}}>
-                        💡 Se não preencher, a 1ª imagem do upload será usada como capa
-                      </small>
-                      {productForm.image_url && (
-                        <div className="image-preview">
-                          <img
-                            src={productForm.image_url}
-                            alt="Preview"
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextElementSibling.style.display = 'block';
-                            }}
-                            onLoad={(e) => {
-                              e.target.style.display = 'block';
-                              if (e.target.nextElementSibling) {
-                                e.target.nextElementSibling.style.display = 'none';
-                              }
-                            }}
-                          />
-                          <div className="preview-error" style={{display: 'none'}}>
-                            ❌ Não foi possível carregar a imagem
-                          </div>
+
+                      <Model3DUploader
+                        onModelChange={setProduct3DModel}
+                        currentModel={productForm.model_3d ? { url: productForm.model_3d } : null}
+                        maxSizeMB={20}
+                      />
+
+                      {(product3DModel || productForm.model_3d) && (
+                        <div className="form-group" style={{
+                          background: 'rgba(0, 217, 255, 0.1)',
+                          border: '2px solid rgba(0, 217, 255, 0.3)',
+                          borderRadius: '10px',
+                          padding: '15px',
+                          marginTop: '15px'
+                        }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                            <input
+                              type="checkbox"
+                              checked={useModelAsCover}
+                              onChange={(e) => setUseModelAsCover(e.target.checked)}
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                cursor: 'pointer',
+                                accentColor: '#00d9ff'
+                              }}
+                            />
+                            <span style={{ fontSize: '1rem', fontWeight: '600', color: '#00d9ff' }}>
+                              🎯 Usar Modelo 3D como Imagem de Capa
+                            </span>
+                          </label>
+                          <p style={{
+                            margin: '10px 0 0 30px',
+                            fontSize: '0.9rem',
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            lineHeight: '1.5'
+                          }}>
+                            <strong>Prioridade de Capa:</strong><br />
+                            1️⃣ Modelo 3D (se marcado)<br />
+                            2️⃣ Links manuais de imagem<br />
+                            3️⃣ Primeira imagem do array
+                          </p>
                         </div>
                       )}
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>✨ URL da Imagem Hover (Opcional)</label>
-                      <input
-                        type="url"
-                        placeholder="https://exemplo.com/imagem-hover.jpg"
-                        value={productForm.hover_image_url}
-                        onChange={(e) => setProductForm({...productForm, hover_image_url: e.target.value})}
-                      />
-                      <small style={{color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block'}}>
-                        💡 Se não preencher, a 2ª imagem do upload será usada no hover
-                      </small>
-                    </div>
-                    
-                    {/* Componente de Upload de Múltiplas Imagens */}
-                    <div style={{background: 'rgba(0, 255, 157, 0.05)', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid rgba(0, 255, 157, 0.2)'}}>
-                      <p style={{margin: '0 0 10px 0', color: '#00ff9d', fontWeight: '600', fontSize: '0.9rem'}}>
-                        📌 IMPORTANTE - Ordem das Imagens:
-                      </p>
-                      <ul style={{margin: 0, paddingLeft: '20px', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem'}}>
-                        <li>Arraste as imagens para reordená-las</li>
-                        <li><strong>1ª imagem</strong> = Imagem de Capa (se URL não preenchida)</li>
-                        <li><strong>2ª imagem</strong> = Imagem de Hover (se URL não preenchida)</li>
-                        <li><strong>Demais imagens</strong> = Galeria na página de detalhes</li>
-                      </ul>
-                    </div>
-                    <ProductImageUploader
-                      images={productImages}
-                      onChange={setProductImages}
-                      maxImages={9}
-                    />
-                    
-                    <Model3DUploader
-                      onModelChange={setProduct3DModel}
-                      currentModel={productForm.model_3d ? { url: productForm.model_3d } : null}
-                      maxSizeMB={20}
-                    />
-                    
-                    {(product3DModel || productForm.model_3d) && (
-                      <div className="form-group" style={{
-                        background: 'rgba(0, 217, 255, 0.1)',
-                        border: '2px solid rgba(0, 217, 255, 0.3)',
-                        borderRadius: '10px',
-                        padding: '15px',
-                        marginTop: '15px'
-                      }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={useModelAsCover}
-                            onChange={(e) => setUseModelAsCover(e.target.checked)}
-                            style={{ 
-                              width: '20px', 
-                              height: '20px', 
-                              cursor: 'pointer',
-                              accentColor: '#00d9ff'
-                            }}
-                          />
-                          <span style={{ fontSize: '1rem', fontWeight: '600', color: '#00d9ff' }}>
-                            🎯 Usar Modelo 3D como Imagem de Capa
-                          </span>
-                        </label>
-                        <p style={{ 
-                          margin: '10px 0 0 30px', 
-                          fontSize: '0.9rem', 
-                          color: 'rgba(255, 255, 255, 0.7)',
-                          lineHeight: '1.5'
-                        }}>
-                          <strong>Prioridade de Capa:</strong><br/>
-                          1️⃣ Modelo 3D (se marcado)<br/>
-                          2️⃣ Links manuais de imagem<br/>
-                          3️⃣ Primeira imagem do array
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div className="form-group">
-                      <label>Descrição Curta</label>
-                      <textarea
-                        placeholder="Descrição breve do produto (exibida nos cards)..."
-                        value={productForm.description}
-                        onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-                        rows="3"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>📝 Descrição Detalhada</label>
-                      <textarea
-                        placeholder="Descrição completa com todos os detalhes do produto..."
-                        value={productForm.detailed_description}
-                        onChange={(e) => setProductForm({...productForm, detailed_description: e.target.value})}
-                        rows="6"
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>✨ Características (separe por linha)</label>
-                      <textarea
-                        placeholder="Exemplo:\nMaterial premium\nEdição limitada\nArticulações móveis\nColecionável autêntico"
-                        value={productForm.features}
-                        onChange={(e) => setProductForm({...productForm, features: e.target.value})}
-                        rows="5"
-                      />
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>📏 Dimensões (A x L x P em cm)</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: 20 x 15 x 10"
-                          value={productForm.dimensions ? productForm.dimensions.match(/.{1,2}/g)?.join(' x ') || productForm.dimensions : ''}
-                          onChange={(e) => handleDimensionsChange(e.target.value)}
-                        />
-                        <small style={{color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem'}}>
-                          Digite apenas números (ex: 201510 = 20 x 15 x 10)
-                        </small>
-                      </div>
-                      <div className="form-group">
-                        <label>⚖️ Peso (gramas)</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: 500"
-                          value={productForm.weight ? productForm.weight + 'g' : ''}
-                          onChange={(e) => handleWeightChange(e.target.value)}
-                        />
-                        <small style={{color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem'}}>
-                          Digite apenas números (ex: 500 = 500g)
-                        </small>
-                      </div>
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>🏷️ Marca</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: Hot Toys, Funko, etc."
-                          value={productForm.brand}
-                          onChange={(e) => setProductForm({...productForm, brand: e.target.value})}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>🧱 Material</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: Plástico ABS, PVC, Resina"
-                          value={productForm.material}
-                          onChange={(e) => setProductForm({...productForm, material: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>🛡️ Garantia</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: 90 dias, 1 ano"
-                        value={productForm.warranty}
-                        onChange={(e) => setProductForm({...productForm, warranty: e.target.value})}
-                      />
-                    </div>
 
-                    {/* CyberPoints Field */}
-                    <div className="form-group" style={{
-                      background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
-                      border: '2px solid rgba(102, 126, 234, 0.4)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      marginTop: '20px'
-                    }}>
-                      <label style={{
-                        color: '#667eea',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
+                      <div className="form-group">
+                        <label>Descrição Curta</label>
+                        <textarea
+                          placeholder="Descrição breve do produto (exibida nos cards)..."
+                          value={productForm.description}
+                          onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                          rows="3"
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>📝 Descrição Detalhada</label>
+                        <textarea
+                          placeholder="Descrição completa com todos os detalhes do produto..."
+                          value={productForm.detailed_description}
+                          onChange={(e) => setProductForm({ ...productForm, detailed_description: e.target.value })}
+                          rows="6"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>✨ Características (separe por linha)</label>
+                        <textarea
+                          placeholder="Exemplo:\nMaterial premium\nEdição limitada\nArticulações móveis\nColecionável autêntico"
+                          value={productForm.features}
+                          onChange={(e) => setProductForm({ ...productForm, features: e.target.value })}
+                          rows="5"
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>📏 Dimensões (A x L x P em cm)</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: 20 x 15 x 10"
+                            value={productForm.dimensions ? productForm.dimensions.match(/.{1,2}/g)?.join(' x ') || productForm.dimensions : ''}
+                            onChange={(e) => handleDimensionsChange(e.target.value)}
+                          />
+                          <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
+                            Digite apenas números (ex: 201510 = 20 x 15 x 10)
+                          </small>
+                        </div>
+                        <div className="form-group">
+                          <label>⚖️ Peso (gramas)</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: 500"
+                            value={productForm.weight ? productForm.weight + 'g' : ''}
+                            onChange={(e) => handleWeightChange(e.target.value)}
+                          />
+                          <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
+                            Digite apenas números (ex: 500 = 500g)
+                          </small>
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>🏷️ Marca</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Hot Toys, Funko, etc."
+                            value={productForm.brand}
+                            onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>🧱 Material</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Plástico ABS, PVC, Resina"
+                            value={productForm.material}
+                            onChange={(e) => setProductForm({ ...productForm, material: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>🛡️ Garantia</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: 90 dias, 1 ano"
+                          value={productForm.warranty}
+                          onChange={(e) => setProductForm({ ...productForm, warranty: e.target.value })}
+                        />
+                      </div>
+
+                      {/* CyberPoints Field */}
+                      <div className="form-group" style={{
+                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
+                        border: '2px solid rgba(102, 126, 234, 0.4)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        marginTop: '20px'
                       }}>
-                        🎮 CyberPoints (Opcional)
-                      </label>
-                      <small style={{
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        fontSize: '0.85rem',
-                        display: 'block',
-                        marginTop: '5px',
-                        marginBottom: '10px'
-                      }}>
-                        Deixe vazio para usar regra padrão (R$ 50 = 2 pontos)
-                      </small>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="Ex: 100 pontos"
-                        value={productForm.reward_points}
-                        onChange={(e) => setProductForm({...productForm, reward_points: e.target.value})}
-                        style={{
-                          background: 'rgba(0, 0, 0, 0.3)',
-                          border: '2px solid rgba(102, 126, 234, 0.5)',
-                          borderRadius: '8px'
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="form-actions">
-                      <button type="submit" className="btn-primary">
-                        {editingProduct ? '✅ ATUALIZAR' : '➕ ADICIONAR'}
-                      </button>
-                      {editingProduct && (
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            setEditingProduct(null);
-                            setShowProductForm(false);
-                            resetProductForm();
+                        <label style={{
+                          color: '#667eea',
+                          fontWeight: 'bold',
+                          fontSize: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          🎮 CyberPoints (Opcional)
+                        </label>
+                        <small style={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          fontSize: '0.85rem',
+                          display: 'block',
+                          marginTop: '5px',
+                          marginBottom: '10px'
+                        }}>
+                          Deixe vazio para usar regra padrão (R$ 50 = 2 pontos)
+                        </small>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Ex: 100 pontos"
+                          value={productForm.reward_points}
+                          onChange={(e) => setProductForm({ ...productForm, reward_points: e.target.value })}
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            border: '2px solid rgba(102, 126, 234, 0.5)',
+                            borderRadius: '8px'
                           }}
-                          className="btn-secondary"
-                        >
-                          ❌ CANCELAR
+                        />
+                      </div>
+
+                      <div className="form-actions">
+                        <button type="submit" className="btn-primary">
+                          {editingProduct ? '✅ ATUALIZAR' : '➕ ADICIONAR'}
                         </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
+                        {editingProduct && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingProduct(null);
+                              setShowProductForm(false);
+                              resetProductForm();
+                            }}
+                            className="btn-secondary"
+                          >
+                            ❌ CANCELAR
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </div>
                 )}
 
                 {/* Botão para mostrar form quando escondido */}
                 {!showProductForm && (
-                  <button 
+                  <button
                     onClick={() => {
                       setShowProductForm(true);
                       setProductFormPosition({ x: 30, y: 120 });
@@ -2429,23 +2431,23 @@ const AdminPanel3 = ({ onNavigate }) => {
                       className="search-input"
                     />
                   </div>
-                  
+
                   <div className="products-grid-modern">
                     {(() => {
-                      const filteredProducts = products.filter(p => 
+                      const filteredProducts = products.filter(p =>
                         searchProduct === '' ||
                         p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
                         p.category.toLowerCase().includes(searchProduct.toLowerCase()) ||
                         p.type?.toLowerCase().includes(searchProduct.toLowerCase())
                       );
-                      
+
                       if (filteredProducts.length === 0) {
                         return (
                           <div className="empty-state-modern">
                             <div className="empty-icon">📦</div>
                             <h4>Nenhum produto encontrado</h4>
                             <p>
-                              {products.length === 0 
+                              {products.length === 0
                                 ? 'Comece adicionando produtos ou importe os dados.'
                                 : 'Nenhum produto corresponde à sua busca.'
                               }
@@ -2453,11 +2455,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                           </div>
                         );
                       }
-                      
+
                       const itemsPerPage = 12;
                       const startIndex = (currentPage - 1) * itemsPerPage;
                       const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-                      
+
                       return currentProducts.map(product => (
                         <div key={product.id} className="product-card-modern">
                           <div className="product-images">
@@ -2483,12 +2485,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                                   style={{ display: 'block' }}
                                 />
                               ) : null}
-                              <div className="no-image" style={{display: product.image_url ? 'none' : 'flex'}}>
+                              <div className="no-image" style={{ display: product.image_url ? 'none' : 'flex' }}>
                                 📷
                               </div>
                               <div className="image-label">Principal</div>
                             </div>
-                            
+
                             <div className="image-container hover-image">
                               {product.hover_image_url ? (
                                 <img
@@ -2511,7 +2513,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                                   style={{ display: 'block' }}
                                 />
                               ) : null}
-                              <div className="no-image" style={{display: product.hover_image_url ? 'none' : 'flex'}}>
+                              <div className="no-image" style={{ display: product.hover_image_url ? 'none' : 'flex' }}>
                                 📷
                               </div>
                               <div className="image-label">Hover</div>
@@ -2531,14 +2533,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                             </div>
                           </div>
                           <div className="product-actions">
-                            <button 
+                            <button
                               onClick={() => openPreview('product', product)}
                               className="btn-preview-modern"
                               title="Visualizar"
                             >
                               👁️
                             </button>
-                            <button 
+                            <button
                               onClick={() => {
                                 setEditingProduct(product.id);
                                 // Formatar price para exibição
@@ -2549,7 +2551,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                                   model_3d: product.model_3d || ''
                                 };
                                 setProductForm(formattedProduct);
-                                
+
                                 // Carregar imagens existentes para o uploader
                                 if (product.images && Array.isArray(product.images)) {
                                   const existingImages = product.images.map((img, index) => ({
@@ -2561,14 +2563,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                                 } else {
                                   setProductImages([]);
                                 }
-                                
+
                                 // Resetar modelo 3D (usuário pode fazer novo upload se quiser)
                                 setProduct3DModel(null);
-                                
+
                                 // Verificar se modelo 3D está sendo usado como capa
                                 const isUsingModelAsCover = product.model_3d && product.image_url === product.model_3d;
                                 setUseModelAsCover(isUsingModelAsCover);
-                                
+
                                 setShowProductForm(true);
                                 setProductFormPosition({ x: 30, y: 120 });
                               }}
@@ -2577,7 +2579,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                             >
                               ✏️
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteProduct(product.id)}
                               className="btn-delete-modern"
                               title="Excluir"
@@ -2589,36 +2591,36 @@ const AdminPanel3 = ({ onNavigate }) => {
                       ));
                     })()}
                   </div>
-                  
+
                   {/* Pagination */}
                   {(() => {
-                    const filteredProducts = products.filter(p => 
+                    const filteredProducts = products.filter(p =>
                       searchProduct === '' ||
                       p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||
                       p.category.toLowerCase().includes(searchProduct.toLowerCase()) ||
                       p.type?.toLowerCase().includes(searchProduct.toLowerCase())
                     );
-                    
+
                     const itemsPerPage = 12;
                     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-                    
+
                     if (totalPages <= 1) return null;
-                    
+
                     return (
                       <div className="pagination-modern">
-                        <button 
+                        <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
                           className="btn-pagination-modern"
                         >
                           ← Anterior
                         </button>
-                        
+
                         <span className="pagination-info">
                           Página {currentPage} de {totalPages}
                         </span>
-                        
-                        <button 
+
+                        <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
                           className="btn-pagination-modern"
@@ -2646,194 +2648,194 @@ const AdminPanel3 = ({ onNavigate }) => {
               <div className="banners-layout">
                 {/* Form Panel */}
                 {showBannerForm && (
-                <div 
-                  className="form-panel draggable"
-                  style={{
-                    left: `${bannerFormPosition.x}px`,
-                    top: `${bannerFormPosition.y}px`,
-                    cursor: isDragging === 'banner' ? 'grabbing' : 'auto'
-                  }}
-                >
-                  <div 
-                    className="panel-header draggable-header"
-                    onMouseDown={(e) => handleMouseDown(e, 'banner')}
-                    style={{ cursor: 'grab' }}
+                  <div
+                    className="form-panel draggable"
+                    style={{
+                      left: `${bannerFormPosition.x}px`,
+                      top: `${bannerFormPosition.y}px`,
+                      cursor: isDragging === 'banner' ? 'grabbing' : 'auto'
+                    }}
                   >
-                    <h3>{editingBanner ? '✏️ Editar Banner' : '➕ Novo Banner'}</h3>
-                    <div className="header-buttons">
-                      <button 
-                        type="button" 
-                        onClick={() => setShowBannerForm(false)}
-                        className="btn-close-float"
-                        title="Fechar formulário"
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  </div>
-                  <form onSubmit={editingBanner ? handleUpdateBanner : handleAddBanner} className="modern-form">
-                    <div className="form-group">
-                      <label>Título</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Super Promoção!"
-                        value={bannerForm.title}
-                        onChange={(e) => setBannerForm({...bannerForm, title: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Desconto (%)</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: 20% OFF"
-                          value={bannerForm.discount}
-                          onChange={(e) => setBannerForm({...bannerForm, discount: e.target.value})}
-                        />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Ordem</label>
-                        <input
-                          type="number"
-                          placeholder="1"
-                          value={bannerForm.order}
-                          onChange={(e) => setBannerForm({...bannerForm, order: parseInt(e.target.value) || 0})}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>💰 De: (Preço Original)</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: R$ 299,99"
-                          value={bannerForm.original_price}
-                          onChange={(e) => setBannerForm({...bannerForm, original_price: e.target.value})}
-                        />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>✨ Por apenas: (Preço Final)</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: R$ 199,99"
-                          value={bannerForm.final_price}
-                          onChange={(e) => setBannerForm({...bannerForm, final_price: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Descrição</label>
-                      <textarea
-                        placeholder="Descrição do banner..."
-                        value={bannerForm.description}
-                        onChange={(e) => setBannerForm({...bannerForm, description: e.target.value})}
-                        rows={3}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>URL da Imagem</label>
-                      <input
-                        type="url"
-                        placeholder="https://exemplo.com/banner.jpg"
-                        value={bannerForm.image_url}
-                        onChange={(e) => setBannerForm({...bannerForm, image_url: e.target.value})}
-                      />
-                      {bannerForm.image_url && (
-                        <div className="image-preview">
-                          <img
-                            src={bannerForm.image_url}
-                            alt="Preview"
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => e.target.style.display = 'none'}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>URL de Destino</label>
-                      <input
-                        type="url"
-                        placeholder="https://exemplo.com/pagina"
-                        value={bannerForm.link_url}
-                        onChange={(e) => setBannerForm({...bannerForm, link_url: e.target.value})}
-                      />
-                    </div>
-
-                    {/* CyberPoints Field */}
-                    <div className="form-group" style={{
-                      background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
-                      border: '2px solid rgba(102, 126, 234, 0.4)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      marginTop: '20px'
-                    }}>
-                      <label style={{
-                        color: '#667eea',
-                        fontWeight: 'bold',
-                        fontSize: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        🎮 CyberPoints (Opcional)
-                      </label>
-                      <small style={{
-                        color: 'rgba(255, 255, 255, 0.6)',
-                        fontSize: '0.85rem',
-                        display: 'block',
-                        marginTop: '5px',
-                        marginBottom: '10px'
-                      }}>
-                        Pontos promocionais especiais deste banner
-                      </small>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="Ex: 500 pontos de bônus"
-                        value={bannerForm.reward_points}
-                        onChange={(e) => setBannerForm({...bannerForm, reward_points: e.target.value})}
-                        style={{
-                          background: 'rgba(0, 0, 0, 0.3)',
-                          border: '2px solid rgba(102, 126, 234, 0.5)',
-                          borderRadius: '8px'
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="form-actions">
-                      <button type="submit" className="btn-save-modern">
-                        {editingBanner ? '💾 ATUALIZAR' : '➕ ADICIONAR'}
-                      </button>
-                      {editingBanner && (
+                    <div
+                      className="panel-header draggable-header"
+                      onMouseDown={(e) => handleMouseDown(e, 'banner')}
+                      style={{ cursor: 'grab' }}
+                    >
+                      <h3>{editingBanner ? '✏️ Editar Banner' : '➕ Novo Banner'}</h3>
+                      <div className="header-buttons">
                         <button
                           type="button"
-                          onClick={() => {
-                            setEditingBanner(null);
-                            setShowBannerForm(false);
-                            resetBannerForm();
-                          }}
-                          className="btn-cancel-modern"
+                          onClick={() => setShowBannerForm(false)}
+                          className="btn-close-float"
+                          title="Fechar formulário"
                         >
-                          ❌ CANCELAR
+                          ❌
                         </button>
-                      )}
+                      </div>
                     </div>
-                  </form>
-                </div>
+                    <form onSubmit={editingBanner ? handleUpdateBanner : handleAddBanner} className="modern-form">
+                      <div className="form-group">
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Super Promoção!"
+                          value={bannerForm.title}
+                          onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Desconto (%)</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: 20% OFF"
+                            value={bannerForm.discount}
+                            onChange={(e) => setBannerForm({ ...bannerForm, discount: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Ordem</label>
+                          <input
+                            type="number"
+                            placeholder="1"
+                            value={bannerForm.order}
+                            onChange={(e) => setBannerForm({ ...bannerForm, order: parseInt(e.target.value) || 0 })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>💰 De: (Preço Original)</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: R$ 299,99"
+                            value={bannerForm.original_price}
+                            onChange={(e) => setBannerForm({ ...bannerForm, original_price: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>✨ Por apenas: (Preço Final)</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: R$ 199,99"
+                            value={bannerForm.final_price}
+                            onChange={(e) => setBannerForm({ ...bannerForm, final_price: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Descrição</label>
+                        <textarea
+                          placeholder="Descrição do banner..."
+                          value={bannerForm.description}
+                          onChange={(e) => setBannerForm({ ...bannerForm, description: e.target.value })}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>URL da Imagem</label>
+                        <input
+                          type="url"
+                          placeholder="https://exemplo.com/banner.jpg"
+                          value={bannerForm.image_url}
+                          onChange={(e) => setBannerForm({ ...bannerForm, image_url: e.target.value })}
+                        />
+                        {bannerForm.image_url && (
+                          <div className="image-preview">
+                            <img
+                              src={bannerForm.image_url}
+                              alt="Preview"
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>URL de Destino</label>
+                        <input
+                          type="url"
+                          placeholder="https://exemplo.com/pagina"
+                          value={bannerForm.link_url}
+                          onChange={(e) => setBannerForm({ ...bannerForm, link_url: e.target.value })}
+                        />
+                      </div>
+
+                      {/* CyberPoints Field */}
+                      <div className="form-group" style={{
+                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
+                        border: '2px solid rgba(102, 126, 234, 0.4)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        marginTop: '20px'
+                      }}>
+                        <label style={{
+                          color: '#667eea',
+                          fontWeight: 'bold',
+                          fontSize: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          🎮 CyberPoints (Opcional)
+                        </label>
+                        <small style={{
+                          color: 'rgba(255, 255, 255, 0.6)',
+                          fontSize: '0.85rem',
+                          display: 'block',
+                          marginTop: '5px',
+                          marginBottom: '10px'
+                        }}>
+                          Pontos promocionais especiais deste banner
+                        </small>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Ex: 500 pontos de bônus"
+                          value={bannerForm.reward_points}
+                          onChange={(e) => setBannerForm({ ...bannerForm, reward_points: e.target.value })}
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.3)',
+                            border: '2px solid rgba(102, 126, 234, 0.5)',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </div>
+
+                      <div className="form-actions">
+                        <button type="submit" className="btn-save-modern">
+                          {editingBanner ? '💾 ATUALIZAR' : '➕ ADICIONAR'}
+                        </button>
+                        {editingBanner && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingBanner(null);
+                              setShowBannerForm(false);
+                              resetBannerForm();
+                            }}
+                            className="btn-cancel-modern"
+                          >
+                            ❌ CANCELAR
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </div>
                 )}
 
                 {/* Botão para mostrar form quando escondido */}
                 {!showBannerForm && (
-                  <button 
+                  <button
                     onClick={() => {
                       setShowBannerForm(true);
                       setBannerFormPosition({ x: 30, y: 120 });
@@ -2844,7 +2846,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     ➕ Novo Banner
                   </button>
                 )}
-                
+
                 <div className="content-panel">
                   <div className="panel-header">
                     <h3>📋 Lista de Banners ({banners.length})</h3>
@@ -2858,10 +2860,10 @@ const AdminPanel3 = ({ onNavigate }) => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="banners-grid">
                     {banners
-                      .filter(banner => 
+                      .filter(banner =>
                         searchBanner === '' ||
                         banner.title.toLowerCase().includes(searchBanner.toLowerCase()) ||
                         banner.description?.toLowerCase().includes(searchBanner.toLowerCase())
@@ -2881,7 +2883,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                             )}
                             <div className="banner-order">#{banner.order}</div>
                           </div>
-                          
+
                           <div className="banner-info">
                             <h4>{banner.title}</h4>
                             {banner.discount && (
@@ -2896,16 +2898,16 @@ const AdminPanel3 = ({ onNavigate }) => {
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="banner-actions">
-                            <button 
+                            <button
                               onClick={() => openPreview('banner', banner)}
                               className="btn-preview-modern"
                               title="Visualizar"
                             >
                               👁️
                             </button>
-                            <button 
+                            <button
                               onClick={() => {
                                 setEditingBanner(banner.id);
                                 setBannerForm({
@@ -2926,7 +2928,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                             >
                               ✏️
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteBanner(banner.id)}
                               className="btn-delete-modern"
                               title="Excluir"
@@ -2956,476 +2958,476 @@ const AdminPanel3 = ({ onNavigate }) => {
               <div className="events-layout">
                 {/* Form Panel */}
                 {showEventForm && (
-                <div 
-                  className="form-panel draggable"
-                  style={{
-                    left: `${eventFormPosition.x}px`,
-                    top: `${eventFormPosition.y}px`,
-                    cursor: isDragging === 'event' ? 'grabbing' : 'auto'
-                  }}
-                >
-                  <div 
-                    className="panel-header draggable-header"
-                    onMouseDown={(e) => handleMouseDown(e, 'event')}
-                    style={{ cursor: 'grab' }}
+                  <div
+                    className="form-panel draggable"
+                    style={{
+                      left: `${eventFormPosition.x}px`,
+                      top: `${eventFormPosition.y}px`,
+                      cursor: isDragging === 'event' ? 'grabbing' : 'auto'
+                    }}
                   >
-                    <h3>{editingEvent ? '✏️ Editar Evento' : '➕ Novo Evento'}</h3>
-                    <div className="header-buttons">
-                      <button 
-                        type="button" 
-                        onClick={() => setShowEventForm(false)}
-                        className="btn-close-float"
-                        title="Fechar formulário"
-                      >
-                        ❌
-                      </button>
-                    </div>
-                  </div>
-                  <form onSubmit={editingEvent ? handleUpdateEvent : handleAddEvent} className="modern-form">
-                    <div className="form-group">
-                      <label>Título do Evento</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Torneio de FIFA 25"
-                        value={eventForm.title}
-                        onChange={(e) => setEventForm({...eventForm, title: e.target.value})}
-                        required
-                      />
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Data (opcional)</label>
-                        <input
-                          type="date"
-                          value={eventForm.date}
-                          onChange={(e) => setEventForm({...eventForm, date: e.target.value})}
-                        />
-                        <small style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'}}>Deixe em branco se a data ainda não estiver definida</small>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Horário (opcional)</label>
-                        <input
-                          type="time"
-                          value={eventForm.time}
-                          onChange={(e) => setEventForm({...eventForm, time: e.target.value})}
-                        />
-                        <small style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'}}>Deixe em branco se o horário ainda não estiver definido</small>
-                      </div>
-                    </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Tipo</label>
-                        <select
-                          value={eventForm.type}
-                          onChange={(e) => setEventForm({...eventForm, type: e.target.value})}
+                    <div
+                      className="panel-header draggable-header"
+                      onMouseDown={(e) => handleMouseDown(e, 'event')}
+                      style={{ cursor: 'grab' }}
+                    >
+                      <h3>{editingEvent ? '✏️ Editar Evento' : '➕ Novo Evento'}</h3>
+                      <div className="header-buttons">
+                        <button
+                          type="button"
+                          onClick={() => setShowEventForm(false)}
+                          className="btn-close-float"
+                          title="Fechar formulário"
                         >
-                          <option value="Torneio">🏆 Torneio</option>
-                          <option value="Corujão">🦉 Corujão</option>
-                          <option value="Rush Play">⚡ Rush Play</option>
-                          <option value="Campeonato">🏅 Campeonato</option>
-                          <option value="Outro">🎮 Outro</option>
-                        </select>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Max Participantes</label>
-                        <input
-                          type="number"
-                          placeholder="16"
-                          value={eventForm.max_participants}
-                          onChange={(e) => setEventForm({...eventForm, max_participants: e.target.value})}
-                        />
+                          ❌
+                        </button>
                       </div>
                     </div>
-                    
-                    <div className="form-group">
-                      <label>Prêmio</label>
-                      <input
-                        type="text"
-                        placeholder="Ex: Produto da loja + troféu"
-                        value={eventForm.prize}
-                        onChange={(e) => setEventForm({...eventForm, prize: e.target.value})}
-                      />
-                    </div>
-                    
-                    <div className="form-row">
+                    <form onSubmit={editingEvent ? handleUpdateEvent : handleAddEvent} className="modern-form">
                       <div className="form-group">
-                        <label>Informações de Inscrição</label>
+                        <label>Título do Evento</label>
                         <input
                           type="text"
-                          placeholder="Ex: Inscrições abertas até 15/01"
-                          value={eventForm.inscription_info}
-                          onChange={(e) => setEventForm({...eventForm, inscription_info: e.target.value})}
+                          placeholder="Ex: Torneio de FIFA 25"
+                          value={eventForm.title}
+                          onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+                          required
                         />
                       </div>
-                      
-                      <div className="form-group">
-                        <label>Valor da Inscrição</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: R$ 50,00 ou Gratuito"
-                          value={eventForm.inscription_price}
-                          onChange={(e) => setEventForm({...eventForm, inscription_price: e.target.value})}
-                        />
-                      </div>
-                    </div>
 
-                    <div className="form-group">
-                      <label>Valor da Inscrição em CyberPoints</label>
-                      <input
-                        type="number"
-                        placeholder="Ex: 100 (deixe em branco para gratuito em CyberPoints)"
-                        value={eventForm.inscription_price_cyberpoints}
-                        onChange={(e) => setEventForm({...eventForm, inscription_price_cyberpoints: e.target.value})}
-                      />
-                    </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Data (opcional)</label>
+                          <input
+                            type="date"
+                            value={eventForm.date}
+                            onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                          />
+                          <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Deixe em branco se a data ainda não estiver definida</small>
+                        </div>
 
-                    <div className="form-group">
-                      <label>Regras (uma por linha)</label>
-                      <textarea
-                        placeholder="Equipes de 5 jogadores&#10;Formato de eliminatórias duplas&#10;Idade mínima: 16 anos"
-                        value={eventForm.rules}
-                        onChange={(e) => setEventForm({...eventForm, rules: e.target.value})}
-                        rows={5}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Cronograma (um item por linha)</label>
-                      <textarea
-                        placeholder="Fase de Grupos: 20/01 - 10:00&#10;Quartas de Final: 20/01 - 14:00&#10;Semifinais: 20/01 - 17:00"
-                        value={eventForm.schedule}
-                        onChange={(e) => setEventForm({...eventForm, schedule: e.target.value})}
-                        rows={5}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Imagem do Evento</label>
-                      <div className="image-upload-area" style={{
-                        border: '2px dashed rgba(255, 215, 0, 0.5)',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        textAlign: 'center',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        marginBottom: '15px',
-                        transition: 'border-color 0.3s ease'
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.borderColor = '#ffd700';
-                      }}
-                      onDragLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
-                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                          handleEventImageUpload(e.dataTransfer.files[0]);
-                        }
-                      }}
-                      >
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              handleEventImageUpload(e.target.files[0]);
-                            }
-                          }}
-                          style={{ display: 'none' }}
-                          id="event-image-upload"
-                        />
-                        <label htmlFor="event-image-upload" style={{
-                          cursor: 'pointer',
-                          color: '#ffd700',
-                          fontSize: '1rem'
-                        }}>
-                          {eventImagePreview ? (
-                            <div>
-                              <img
-                                src={eventImagePreview}
-                                alt="Prévia da imagem do evento"
-                                style={{
-                                  maxWidth: '100px',
-                                  maxHeight: '100px',
-                                  borderRadius: '8px',
-                                  marginBottom: '10px',
-                                  display: 'block',
-                                  margin: '0 auto 10px'
-                                }}
-                              />
-                              <p>Clique ou arraste para substituir</p>
-                            </div>
-                          ) : (
-                            <div>
-                              <p>📁 Clique ou arraste uma imagem aqui</p>
-                              <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>PNG, JPG, GIF até 5MB</p>
-                            </div>
-                          )}
-                        </label>
+                        <div className="form-group">
+                          <label>Horário (opcional)</label>
+                          <input
+                            type="time"
+                            value={eventForm.time}
+                            onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
+                          />
+                          <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Deixe em branco se o horário ainda não estiver definido</small>
+                        </div>
                       </div>
-                      <input
-                        type="url"
-                        placeholder="Ou insira URL da imagem..."
-                        value={eventForm.image_url}
-                        onChange={(e) => setEventForm({...eventForm, image_url: e.target.value})}
-                      />
-                      {!eventImagePreview && eventForm.image_url && (
-                        <div className="image-preview">
-                          <img
-                            src={eventForm.image_url}
-                            alt="Preview"
-                            loading="lazy"
-                            decoding="async"
-                            onError={(e) => e.target.style.display = 'none'}
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Tipo</label>
+                          <select
+                            value={eventForm.type}
+                            onChange={(e) => setEventForm({ ...eventForm, type: e.target.value })}
+                          >
+                            <option value="Torneio">🏆 Torneio</option>
+                            <option value="Corujão">🦉 Corujão</option>
+                            <option value="Rush Play">⚡ Rush Play</option>
+                            <option value="Campeonato">🏅 Campeonato</option>
+                            <option value="Outro">🎮 Outro</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Max Participantes</label>
+                          <input
+                            type="number"
+                            placeholder="16"
+                            value={eventForm.max_participants}
+                            onChange={(e) => setEventForm({ ...eventForm, max_participants: e.target.value })}
                           />
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="form-group">
-                      <label>Descrição</label>
-                      <textarea
-                        placeholder="Descrição detalhada do evento..."
-                        value={eventForm.description}
-                        onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
-                        rows={4}
-                        required
-                      />
-                    </div>
+                      </div>
 
-                    {/* Campo CyberPoints */}
-                    <div style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)'
-                    }}>
-                      <label style={{ 
-                        color: '#fff', 
-                        fontWeight: 'bold', 
-                        display: 'block', 
-                        marginBottom: '8px',
-                        fontSize: '14px',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                      }}>
-                        🎁 CyberPoints (Pontos de Recompensa)
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="Ex: 100 pontos (opcional)"
-                        value={eventForm.reward_points}
-                        onChange={(e) => setEventForm({...eventForm, reward_points: e.target.value})}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: '2px solid rgba(255, 255, 255, 0.3)',
-                          fontSize: '14px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          color: '#333'
+                      <div className="form-group">
+                        <label>Prêmio</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: Produto da loja + troféu"
+                          value={eventForm.prize}
+                          onChange={(e) => setEventForm({ ...eventForm, prize: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Informações de Inscrição</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Inscrições abertas até 15/01"
+                            value={eventForm.inscription_info}
+                            onChange={(e) => setEventForm({ ...eventForm, inscription_info: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Valor da Inscrição</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: R$ 50,00 ou Gratuito"
+                            value={eventForm.inscription_price}
+                            onChange={(e) => setEventForm({ ...eventForm, inscription_price: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Valor da Inscrição em CyberPoints</label>
+                        <input
+                          type="number"
+                          placeholder="Ex: 100 (deixe em branco para gratuito em CyberPoints)"
+                          value={eventForm.inscription_price_cyberpoints}
+                          onChange={(e) => setEventForm({ ...eventForm, inscription_price_cyberpoints: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Regras (uma por linha)</label>
+                        <textarea
+                          placeholder="Equipes de 5 jogadores&#10;Formato de eliminatórias duplas&#10;Idade mínima: 16 anos"
+                          value={eventForm.rules}
+                          onChange={(e) => setEventForm({ ...eventForm, rules: e.target.value })}
+                          rows={5}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Cronograma (um item por linha)</label>
+                        <textarea
+                          placeholder="Fase de Grupos: 20/01 - 10:00&#10;Quartas de Final: 20/01 - 14:00&#10;Semifinais: 20/01 - 17:00"
+                          value={eventForm.schedule}
+                          onChange={(e) => setEventForm({ ...eventForm, schedule: e.target.value })}
+                          rows={5}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Imagem do Evento</label>
+                        <div className="image-upload-area" style={{
+                          border: '2px dashed rgba(255, 215, 0, 0.5)',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          textAlign: 'center',
+                          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                          marginBottom: '15px',
+                          transition: 'border-color 0.3s ease'
                         }}
-                      />
-                      <small style={{ 
-                        color: '#fff', 
-                        display: 'block', 
-                        marginTop: '6px', 
-                        fontSize: '12px',
-                        opacity: '0.9'
-                      }}>
-                        Deixe em branco para usar o padrão (R$ 50 = 2 pontos)
-                      </small>
-                    </div>
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = '#ffd700';
+                          }}
+                          onDragLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              handleEventImageUpload(e.dataTransfer.files[0]);
+                            }
+                          }}
+                        >
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleEventImageUpload(e.target.files[0]);
+                              }
+                            }}
+                            style={{ display: 'none' }}
+                            id="event-image-upload"
+                          />
+                          <label htmlFor="event-image-upload" style={{
+                            cursor: 'pointer',
+                            color: '#ffd700',
+                            fontSize: '1rem'
+                          }}>
+                            {eventImagePreview ? (
+                              <div>
+                                <img
+                                  src={eventImagePreview}
+                                  alt="Prévia da imagem do evento"
+                                  style={{
+                                    maxWidth: '100px',
+                                    maxHeight: '100px',
+                                    borderRadius: '8px',
+                                    marginBottom: '10px',
+                                    display: 'block',
+                                    margin: '0 auto 10px'
+                                  }}
+                                />
+                                <p>Clique ou arraste para substituir</p>
+                              </div>
+                            ) : (
+                              <div>
+                                <p>📁 Clique ou arraste uma imagem aqui</p>
+                                <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>PNG, JPG, GIF até 5MB</p>
+                              </div>
+                            )}
+                          </label>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="Ou insira URL da imagem..."
+                          value={eventForm.image_url}
+                          onChange={(e) => setEventForm({ ...eventForm, image_url: e.target.value })}
+                        />
+                        {!eventImagePreview && eventForm.image_url && (
+                          <div className="image-preview">
+                            <img
+                              src={eventForm.image_url}
+                              alt="Preview"
+                              loading="lazy"
+                              decoding="async"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Seção Torneio Ao Vivo */}
-                    <div style={{
-                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
-                      border: '2px solid rgba(255, 255, 255, 0.1)',
-                      marginTop: '20px'
-                    }}>
-                      <div style={{ marginBottom: '15px' }}>
-                        <label style={{ 
-                          color: '#fff', 
-                          fontWeight: 'bold', 
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          fontSize: '16px',
+                      <div className="form-group">
+                        <label>Descrição</label>
+                        <textarea
+                          placeholder="Descrição detalhada do evento..."
+                          value={eventForm.description}
+                          onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                          rows={4}
+                          required
+                        />
+                      </div>
+
+                      {/* Campo CyberPoints */}
+                      <div style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+                        border: '2px solid rgba(255, 255, 255, 0.1)'
+                      }}>
+                        <label style={{
+                          color: '#fff',
+                          fontWeight: 'bold',
+                          display: 'block',
+                          marginBottom: '8px',
+                          fontSize: '14px',
                           textShadow: '0 2px 4px rgba(0,0,0,0.2)'
                         }}>
-                          <input
-                            type="checkbox"
-                            checked={eventForm.is_live}
-                            onChange={(e) => setEventForm({...eventForm, is_live: e.target.checked})}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                          />
-                          🔴 Torneio Acontecendo Agora (Ao Vivo)
+                          🎁 CyberPoints (Pontos de Recompensa)
                         </label>
-                        <small style={{ 
-                          color: '#fff', 
-                          display: 'block', 
-                          marginTop: '6px', 
+                        <input
+                          type="number"
+                          placeholder="Ex: 100 pontos (opcional)"
+                          value={eventForm.reward_points}
+                          onChange={(e) => setEventForm({ ...eventForm, reward_points: e.target.value })}
+                          style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(255, 255, 255, 0.3)',
+                            fontSize: '14px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            color: '#333'
+                          }}
+                        />
+                        <small style={{
+                          color: '#fff',
+                          display: 'block',
+                          marginTop: '6px',
                           fontSize: '12px',
-                          opacity: '0.9',
-                          marginLeft: '26px'
+                          opacity: '0.9'
                         }}>
-                          Marque para exibir este torneio na seção "Torneio Atual"
+                          Deixe em branco para usar o padrão (R$ 50 = 2 pontos)
                         </small>
                       </div>
 
-                      {eventForm.is_live && (
-                        <>
-                          <div className="form-group" style={{ marginBottom: '12px' }}>
-                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🎮 Nome do Jogo</label>
+                      {/* Seção Torneio Ao Vivo */}
+                      <div style={{
+                        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
+                        border: '2px solid rgba(255, 255, 255, 0.1)',
+                        marginTop: '20px'
+                      }}>
+                        <div style={{ marginBottom: '15px' }}>
+                          <label style={{
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            fontSize: '16px',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}>
                             <input
-                              type="text"
-                              placeholder="Ex: League of Legends, CS:GO, FIFA 25"
-                              value={eventForm.game_name}
-                              onChange={(e) => setEventForm({...eventForm, game_name: e.target.value})}
-                              style={{
-                                width: '100%',
-                                padding: '10px',
-                                borderRadius: '8px',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                fontSize: '14px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                color: '#333'
-                              }}
+                              type="checkbox"
+                              checked={eventForm.is_live}
+                              onChange={(e) => setEventForm({ ...eventForm, is_live: e.target.checked })}
+                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                             />
-                          </div>
+                            🔴 Torneio Acontecendo Agora (Ao Vivo)
+                          </label>
+                          <small style={{
+                            color: '#fff',
+                            display: 'block',
+                            marginTop: '6px',
+                            fontSize: '12px',
+                            opacity: '0.9',
+                            marginLeft: '26px'
+                          }}>
+                            Marque para exibir este torneio na seção "Torneio Atual"
+                          </small>
+                        </div>
 
-                          <div className="form-group" style={{ marginBottom: '12px' }}>
-                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📺 Link de Transmissão</label>
-                            <input
-                              type="url"
-                              placeholder="https://youtube.com/... ou https://twitch.tv/..."
-                              value={eventForm.stream_link}
-                              onChange={(e) => setEventForm({...eventForm, stream_link: e.target.value})}
-                              style={{
-                                width: '100%',
-                                padding: '10px',
-                                borderRadius: '8px',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                fontSize: '14px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                color: '#333'
-                              }}
-                            />
-                          </div>
+                        {eventForm.is_live && (
+                          <>
+                            <div className="form-group" style={{ marginBottom: '12px' }}>
+                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🎮 Nome do Jogo</label>
+                              <input
+                                type="text"
+                                placeholder="Ex: League of Legends, CS:GO, FIFA 25"
+                                value={eventForm.game_name}
+                                onChange={(e) => setEventForm({ ...eventForm, game_name: e.target.value })}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  fontSize: '14px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                  color: '#333'
+                                }}
+                              />
+                            </div>
 
-                          <div className="form-group" style={{ marginBottom: '12px' }}>
-                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📊 Placar Atual (um por linha)</label>
-                            <textarea
-                              placeholder="Time A 2 x 1 Time B&#10;Time C 3 x 0 Time D"
-                              value={eventForm.current_scores}
-                              onChange={(e) => setEventForm({...eventForm, current_scores: e.target.value})}
-                              rows={3}
-                              style={{
-                                width: '100%',
-                                padding: '10px',
-                                borderRadius: '8px',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                fontSize: '14px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                color: '#333'
-                              }}
-                            />
-                          </div>
+                            <div className="form-group" style={{ marginBottom: '12px' }}>
+                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📺 Link de Transmissão</label>
+                              <input
+                                type="url"
+                                placeholder="https://youtube.com/... ou https://twitch.tv/..."
+                                value={eventForm.stream_link}
+                                onChange={(e) => setEventForm({ ...eventForm, stream_link: e.target.value })}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  fontSize: '14px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                  color: '#333'
+                                }}
+                              />
+                            </div>
 
-                          <div className="form-group" style={{ marginBottom: '12px' }}>
-                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🏆 Ranking (um por linha)</label>
-                            <textarea
-                              placeholder="1º - Time A (15 pontos)&#10;2º - Time B (12 pontos)&#10;3º - Time C (10 pontos)"
-                              value={eventForm.ranking}
-                              onChange={(e) => setEventForm({...eventForm, ranking: e.target.value})}
-                              rows={4}
-                              style={{
-                                width: '100%',
-                                padding: '10px',
-                                borderRadius: '8px',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                fontSize: '14px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                color: '#333'
-                              }}
-                            />
-                          </div>
+                            <div className="form-group" style={{ marginBottom: '12px' }}>
+                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📊 Placar Atual (um por linha)</label>
+                              <textarea
+                                placeholder="Time A 2 x 1 Time B&#10;Time C 3 x 0 Time D"
+                                value={eventForm.current_scores}
+                                onChange={(e) => setEventForm({ ...eventForm, current_scores: e.target.value })}
+                                rows={3}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  fontSize: '14px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                  color: '#333'
+                                }}
+                              />
+                            </div>
 
-                          <div className="form-group" style={{ marginBottom: '12px' }}>
-                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>👥 Participantes (um por linha)</label>
-                            <textarea
-                              placeholder="Time A&#10;Time B&#10;Time C&#10;Jogador Solo 1"
-                              value={eventForm.participants}
-                              onChange={(e) => setEventForm({...eventForm, participants: e.target.value})}
-                              rows={4}
-                              style={{
-                                width: '100%',
-                                padding: '10px',
-                                borderRadius: '8px',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                fontSize: '14px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                color: '#333'
-                              }}
-                            />
-                          </div>
+                            <div className="form-group" style={{ marginBottom: '12px' }}>
+                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🏆 Ranking (um por linha)</label>
+                              <textarea
+                                placeholder="1º - Time A (15 pontos)&#10;2º - Time B (12 pontos)&#10;3º - Time C (10 pontos)"
+                                value={eventForm.ranking}
+                                onChange={(e) => setEventForm({ ...eventForm, ranking: e.target.value })}
+                                rows={4}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  fontSize: '14px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                  color: '#333'
+                                }}
+                              />
+                            </div>
 
-                          <div className="form-group">
-                            <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>💬 Comentários</label>
-                            <textarea
-                              placeholder="Atualizações sobre o andamento do torneio..."
-                              value={eventForm.live_comments}
-                              onChange={(e) => setEventForm({...eventForm, live_comments: e.target.value})}
-                              rows={3}
-                              style={{
-                                width: '100%',
-                                padding: '10px',
-                                borderRadius: '8px',
-                                border: '2px solid rgba(255, 255, 255, 0.3)',
-                                fontSize: '14px',
-                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                color: '#333'
-                              }}
-                            />
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    
-                    <div className="form-actions">
-                      <button type="submit" className="btn-save-modern">
-                        {editingEvent ? '💾 ATUALIZAR' : '➕ ADICIONAR'}
-                      </button>
-                      {editingEvent && (
-                        <button
-                          type="button" 
-                          onClick={() => {
-                            setEditingEvent(null);
-                            setShowEventForm(false);
-                            resetEventForm();
-                          }}
-                          className="btn-cancel-modern"
-                        >
-                          ❌ CANCELAR
+                            <div className="form-group" style={{ marginBottom: '12px' }}>
+                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>👥 Participantes (um por linha)</label>
+                              <textarea
+                                placeholder="Time A&#10;Time B&#10;Time C&#10;Jogador Solo 1"
+                                value={eventForm.participants}
+                                onChange={(e) => setEventForm({ ...eventForm, participants: e.target.value })}
+                                rows={4}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  fontSize: '14px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                  color: '#333'
+                                }}
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>💬 Comentários</label>
+                              <textarea
+                                placeholder="Atualizações sobre o andamento do torneio..."
+                                value={eventForm.live_comments}
+                                onChange={(e) => setEventForm({ ...eventForm, live_comments: e.target.value })}
+                                rows={3}
+                                style={{
+                                  width: '100%',
+                                  padding: '10px',
+                                  borderRadius: '8px',
+                                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                                  fontSize: '14px',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                  color: '#333'
+                                }}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="form-actions">
+                        <button type="submit" className="btn-save-modern">
+                          {editingEvent ? '💾 ATUALIZAR' : '➕ ADICIONAR'}
                         </button>
-                      )}
-                    </div>
-                  </form>
-                </div>
+                        {editingEvent && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingEvent(null);
+                              setShowEventForm(false);
+                              resetEventForm();
+                            }}
+                            className="btn-cancel-modern"
+                          >
+                            ❌ CANCELAR
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </div>
                 )}
 
                 {/* Botão para mostrar form quando escondido */}
                 {!showEventForm && (
-                  <button 
+                  <button
                     onClick={() => {
                       setShowEventForm(true);
                       setEventFormPosition({ x: 30, y: 120 });
@@ -3436,7 +3438,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     ➕ Novo Evento
                   </button>
                 )}
-                
+
                 <div className="content-panel">
                   <div className="panel-header">
                     <h3>📋 Lista de Eventos ({events.length})</h3>
@@ -3450,10 +3452,10 @@ const AdminPanel3 = ({ onNavigate }) => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="events-grid">
                     {events
-                      .filter(event => 
+                      .filter(event =>
                         searchEvent === '' ||
                         event.title.toLowerCase().includes(searchEvent.toLowerCase()) ||
                         event.description?.toLowerCase().includes(searchEvent.toLowerCase()) ||
@@ -3478,7 +3480,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                               </div>
                             )}
                           </div>
-                          
+
                           <div className="event-content">
                             <div className="event-header">
                               <div className="event-type">
@@ -3489,37 +3491,37 @@ const AdminPanel3 = ({ onNavigate }) => {
                               </div>
                               <h4>{event.title}</h4>
                             </div>
-                            
+
                             <div className="event-datetime">
                               <span className="date">📅 {new Date(event.date).toLocaleDateString('pt-BR')}</span>
                               <span className="time">⏰ {event.time}</span>
                             </div>
-                            
+
                             {event.max_participants && (
                               <div className="event-participants">
                                 👥 Máx: {event.max_participants} participantes
                               </div>
                             )}
-                            
+
                             {event.prize && (
                               <div className="event-prize">
                                 🎁 {event.prize}
                               </div>
                             )}
-                            
+
                             <div className="event-description">
                               {event.description}
                             </div>
-                            
+
                             <div className="event-actions">
-                              <button 
+                              <button
                                 onClick={() => openPreview('event', event)}
                                 className="btn-preview-modern"
                                 title="Visualizar"
                               >
                                 👁️
                               </button>
-                              <button 
+                              <button
                                 onClick={() => {
                                   setEditingEvent(event.id);
                                   setEventForm({
@@ -3553,7 +3555,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                               >
                                 ✏️
                               </button>
-                              <button 
+                              <button
                                 onClick={() => handleDeleteEvent(event.id)}
                                 className="btn-delete-modern"
                                 title="Excluir"
@@ -3594,7 +3596,7 @@ const AdminPanel3 = ({ onNavigate }) => {
 
               <div className="orders-grid">
                 {orders
-                  .filter(order => 
+                  .filter(order =>
                     searchOrder === '' ||
                     order.order_number?.toString().includes(searchOrder) ||
                     order.user_name?.toLowerCase().includes(searchOrder.toLowerCase()) ||
@@ -3609,14 +3611,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                             {new Date(order.created_at).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
-                        <div 
+                        <div
                           className="order-status"
                           style={{ backgroundColor: getStatusColor(order.status) }}
                         >
                           {getStatusText(order.status)}
                         </div>
                       </div>
-                      
+
                       <div className="order-customer">
                         <span className="customer-name">
                           👤 {order.user_name || order.customer_name || 'Cliente não informado'}
@@ -3625,19 +3627,19 @@ const AdminPanel3 = ({ onNavigate }) => {
                           <span className="customer-email">📧 {order.customer_email}</span>
                         )}
                       </div>
-                      
+
                       <div className="order-total">
                         💰 R$ {parseFloat(order.total || 0).toFixed(2)}
                       </div>
-                      
+
                       {order.items_count && (
                         <div className="order-items">
                           📦 {order.items_count} itens
                         </div>
                       )}
-                      
+
                       <div className="order-actions">
-                        <select 
+                        <select
                           value={order.status}
                           onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
                           className="status-select"
@@ -3648,8 +3650,8 @@ const AdminPanel3 = ({ onNavigate }) => {
                           <option value="delivered">✅ Entregue</option>
                           <option value="cancelled">❌ Cancelado</option>
                         </select>
-                        
-                        <button 
+
+                        <button
                           onClick={() => {
                             setSelectedOrder(order);
                             setShowOrderModal(true);
@@ -3690,7 +3692,7 @@ const AdminPanel3 = ({ onNavigate }) => {
 
               <div className="customers-grid">
                 {customers
-                  .filter(customer => 
+                  .filter(customer =>
                     searchCustomer === '' ||
                     customer.full_name?.toLowerCase().includes(searchCustomer.toLowerCase()) ||
                     customer.nickname?.toLowerCase().includes(searchCustomer.toLowerCase()) ||
@@ -3710,7 +3712,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                           <div className="avatar-placeholder">👤</div>
                         )}
                       </div>
-                      
+
                       <div className="customer-info">
                         <h4>{customer.full_name || customer.nickname || 'Nome não informado'}</h4>
 
@@ -3744,12 +3746,29 @@ const AdminPanel3 = ({ onNavigate }) => {
 
                         {customer.cyber_points !== undefined && (
                           <div className="customer-cyberpoints">
-                            🎮 CyberPoints: {customer.cyber_points} <br/>
-                            <small style={{color: 'rgba(0, 255, 136, 0.8)', fontSize: '0.85rem'}}>Máximo: {customer.max_cyber_points || customer.cyber_points}</small> <br/>
-                            <small style={{color: 'rgba(255, 217, 0, 0.8)', fontSize: '0.85rem'}}>Total Obtido: {customer.total_earned_cyber_points || 0}</small> <br/>
-                            <small style={{color: 'rgba(255, 100, 100, 0.8)', fontSize: '0.85rem'}}>Total Gasto: {customer.total_spent_cyber_points || 0}</small>
+                            🎮 CyberPoints: {customer.cyber_points} <br />
+                            <small style={{ color: 'rgba(0, 255, 136, 0.8)', fontSize: '0.85rem' }}>Máximo: {customer.max_cyber_points || customer.cyber_points}</small> <br />
+                            <small style={{ color: 'rgba(255, 217, 0, 0.8)', fontSize: '0.85rem' }}>Total Obtido: {customer.total_earned_cyber_points || 0}</small> <br />
+                            <small style={{ color: 'rgba(255, 100, 100, 0.8)', fontSize: '0.85rem' }}>Total Gasto: {customer.total_spent_cyber_points || 0}</small>
                           </div>
                         )}
+
+                        <div className="customer-badges-count" style={{ marginTop: '10px', marginBottom: '10px' }}>
+                          <span style={{
+                            background: 'rgba(255, 215, 0, 0.15)',
+                            color: '#ffd700',
+                            fontWeight: 'bold',
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            fontSize: '0.9rem',
+                            border: '1px solid rgba(255, 215, 0, 0.3)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}>
+                            🎖️ Insígnias: <span style={{ fontSize: '1.1em' }}>{customer.badges_count || 0}</span>
+                          </span>
+                        </div>
 
                         {customer.total_orders && (
                           <div className="customer-stats">
@@ -3766,7 +3785,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="customer-actions">
                         <button
                           className="btn-view-modern"
@@ -3821,6 +3840,10 @@ const AdminPanel3 = ({ onNavigate }) => {
 
           {activeTab === 'logs' && (
             <AccessLogsView />
+          )}
+
+          {activeTab === 'missions' && (
+            <MissionsManager />
           )}
 
           {/* Badges Management */}
@@ -3882,14 +3905,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                               loading="lazy"
                               decoding="async"
                               onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }} />
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }} />
                           ) : (
-                            <div className="icon-placeholder" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
+                            <div className="icon-placeholder" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge.icon}</div>
                           )}
                           {!badge.image_url && (
-                            <div className="icon-placeholder" style={{display: 'none', alignItems: 'center', justifyContent: 'center'}}>{badge.icon}</div>
+                            <div className="icon-placeholder" style={{ display: 'none', alignItems: 'center', justifyContent: 'center' }}>{badge.icon}</div>
                           )}
                         </div>
 
@@ -4020,7 +4043,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                       // Criar insígnia temporária sem imagem para obter o ID
                       const { data, error } = await supabase
                         .from('badges')
-                        .insert([{...badgeForm, image_url: ''}])
+                        .insert([{ ...badgeForm, image_url: '' }])
                         .select()
                         .single();
 
@@ -4083,7 +4106,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     type="text"
                     placeholder="Ex: Aventureiro"
                     value={badgeForm.name}
-                    onChange={(e) => setBadgeForm({...badgeForm, name: e.target.value})}
+                    onChange={(e) => setBadgeForm({ ...badgeForm, name: e.target.value })}
                     required
                   />
                 </div>
@@ -4093,7 +4116,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                   <textarea
                     placeholder="Descrição da insígnia..."
                     value={badgeForm.description}
-                    onChange={(e) => setBadgeForm({...badgeForm, description: e.target.value})}
+                    onChange={(e) => setBadgeForm({ ...badgeForm, description: e.target.value })}
                     rows={3}
                   />
                 </div>
@@ -4102,7 +4125,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                   <label>Raridade</label>
                   <select
                     value={badgeForm.rarity}
-                    onChange={(e) => setBadgeForm({...badgeForm, rarity: e.target.value})}
+                    onChange={(e) => setBadgeForm({ ...badgeForm, rarity: e.target.value })}
                   >
                     <option value="common">Comum</option>
                     <option value="rare">Raro</option>
@@ -4122,20 +4145,20 @@ const AdminPanel3 = ({ onNavigate }) => {
                     marginBottom: '15px',
                     transition: 'border-color 0.3s ease'
                   }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.style.borderColor = '#ffd700';
-                  }}
-                  onDragLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      handleBadgeImageUpload(e.dataTransfer.files[0]);
-                    }
-                  }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = '#ffd700';
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.style.borderColor = 'rgba(255, 215, 0, 0.5)';
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleBadgeImageUpload(e.dataTransfer.files[0]);
+                      }
+                    }}
                   >
                     <input
                       type="file"
@@ -4183,7 +4206,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                     type="url"
                     placeholder="Ou insira URL da imagem..."
                     value={badgeForm.image_url}
-                    onChange={(e) => setBadgeForm({...badgeForm, image_url: e.target.value})}
+                    onChange={(e) => setBadgeForm({ ...badgeForm, image_url: e.target.value })}
                   />
                 </div>
 
@@ -4273,10 +4296,10 @@ const AdminPanel3 = ({ onNavigate }) => {
 
                         {customer.cyber_points !== undefined && (
                           <div className="customer-cyberpoints">
-                            🎮 CyberPoints: {customer.cyber_points} <br/>
-                            <small style={{color: 'rgba(0, 255, 136, 0.8)', fontSize: '0.85rem'}}>Máximo: {customer.max_cyber_points || customer.cyber_points}</small> <br/>
-                            <small style={{color: 'rgba(255, 217, 0, 0.8)', fontSize: '0.85rem'}}>Total Obtido: {customer.total_earned_cyber_points || 0}</small> <br/>
-                            <small style={{color: 'rgba(255, 100, 100, 0.8)', fontSize: '0.85rem'}}>Total Gasto: {customer.total_spent_cyber_points || 0}</small>
+                            🎮 CyberPoints: {customer.cyber_points} <br />
+                            <small style={{ color: 'rgba(0, 255, 136, 0.8)', fontSize: '0.85rem' }}>Máximo: {customer.max_cyber_points || customer.cyber_points}</small> <br />
+                            <small style={{ color: 'rgba(255, 217, 0, 0.8)', fontSize: '0.85rem' }}>Total Obtido: {customer.total_earned_cyber_points || 0}</small> <br />
+                            <small style={{ color: 'rgba(255, 100, 100, 0.8)', fontSize: '0.85rem' }}>Total Gasto: {customer.total_spent_cyber_points || 0}</small>
                           </div>
                         )}
 
@@ -4455,7 +4478,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                   type="number"
                   placeholder="Ex: 100"
                   value={cyberPointsChange.points}
-                  onChange={(e) => setCyberPointsChange({...cyberPointsChange, points: Math.abs(parseInt(e.target.value) || 0)})}
+                  onChange={(e) => setCyberPointsChange({ ...cyberPointsChange, points: Math.abs(parseInt(e.target.value) || 0) })}
                   className="cyberpoints-input"
                 />
               </div>
@@ -4467,7 +4490,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                   type="text"
                   placeholder="Ex: Bônus de fidelidade, Compra realizada, Penalidade, etc."
                   value={cyberPointsChange.reason}
-                  onChange={(e) => setCyberPointsChange({...cyberPointsChange, reason: e.target.value})}
+                  onChange={(e) => setCyberPointsChange({ ...cyberPointsChange, reason: e.target.value })}
                   className="cyberpoints-input"
                 />
               </div>
@@ -4634,11 +4657,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                         <div className="customer-avatar-small">
                           {customer.avatar_url ? (
                             <img
-                            src={customer.avatar_url}
-                            alt={customer.full_name}
-                            loading="lazy"
-                            decoding="async"
-                          />
+                              src={customer.avatar_url}
+                              alt={customer.full_name}
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
                             <div className="avatar-placeholder">👤</div>
                           )}

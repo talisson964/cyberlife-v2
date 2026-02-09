@@ -1,0 +1,135 @@
+.user-missions-container {
+    padding: 1.5rem;
+    font-family: 'Rubik', sans-serif;
+    color: #fff;
+    background: #000;
+    border-radius: 12px;
+    margin-top: 2rem;
+    border: 1px solid rgba(0, 255, 204, 0.2);
+}
+
+.section-title {
+    color: #00ffcc;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+    font-size: 1.5rem;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+}
+
+.missions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.mission-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 204, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.mission-card.pending:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0, 255, 204, 0.15);
+    border-color: #00ffcc;
+}
+
+.mission-card.completed {
+    opacity: 0.7;
+    border-color: #00ff66;
+    background: rgba(0, 255, 100, 0.05);
+}
+
+.mission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.mission-header h4 {
+    margin: 0;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.xp-tag {
+    background: linear-gradient(45deg, #ffd700, #ffa500);
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.8rem;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+}
+
+.mission-desc {
+    color: #aaa;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.mission-action {
+    margin-top: auto;
+}
+
+.btn-claim-reward {
+    width: 100%;
+    background: transparent;
+    border: 1px solid #00ffcc;
+    color: #00ffcc;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-claim-reward:hover:not(:disabled) {
+    background: rgba(0, 255, 204, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+}
+
+.btn-claim-reward:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-completed {
+    width: 100%;
+    background: rgba(0, 255, 100, 0.1);
+    border: 1px solid #00ff66;
+    color: #00ff66;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: default;
+    text-transform: uppercase;
+}
+
+.mission-status-badge {
+    position: absolute;
+    top: -10px;
+    right: -30px;
+    background: #00ff66;
+    color: #000;
+    font-weight: bold;
+    font-size: 0.7rem;
+    padding: 20px 40px 5px 40px;
+    transform: rotate(45deg);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
