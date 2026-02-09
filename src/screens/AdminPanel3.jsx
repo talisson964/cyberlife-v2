@@ -275,6 +275,20 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [allBadges, setAllBadges] = useState([]);
   const [loadingBadges, setLoadingBadges] = useState(false);
 
+  // Estados para gerenciamento de lives
+  const [lives, setLives] = useState([]);
+  const [editingLive, setEditingLive] = useState(null);
+  const [searchLive, setSearchLive] = useState('');
+  const [showLiveForm, setShowLiveForm] = useState(false);
+  const [liveFormPosition, setLiveFormPosition] = useState({ x: 30, y: 120 });
+  const [liveForm, setLiveForm] = useState({
+    titulo: '',
+    descricao: '',
+    link_live: '',
+    evento_id: '',
+    status: 'draft' // Mudança importante: padrão agora é 'draft' para não aparecer imediatamente
+  });
+
   // Preview Modal
   const [showPreview, setShowPreview] = useState(false);
   const [previewType, setPreviewType] = useState(null); // 'product', 'banner', 'event'
@@ -376,6 +390,9 @@ const AdminPanel3 = ({ onNavigate }) => {
         case 'badges':
           loadBadges();
           loadCustomersForAssignment(); // Carregar clientes para atribuição de insígnias
+          break;
+        case 'lives':
+          loadLives();
           break;
         case 'dashboard':
           loadDashboardData();
@@ -1013,6 +1030,8 @@ const AdminPanel3 = ({ onNavigate }) => {
         setBannerFormPosition({ x: newX, y: newY });
       } else if (isDragging === 'event') {
         setEventFormPosition({ x: newX, y: newY });
+      } else if (isDragging === 'live') {
+        setLiveFormPosition({ x: newX, y: newY });
       }
     }
   };
@@ -1628,6 +1647,158 @@ const AdminPanel3 = ({ onNavigate }) => {
     }
   };
 
+  // FUNÇÕES PARA GERENCIAMENTO DE LIVES
+  const loadLives = async () => {
+    try {
+      console.log('Carregando lives...');
+      const { data, error } = await supabase
+        .from('lives')
+        .select(`
+          *,
+          events (title, image_url)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar lives:', error);
+        throw error;
+      }
+
+      console.log('Lives carregadas:', data?.length || 0);
+      setLives(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar lives:', error);
+      setLives([]); // Garantir que sempre seja um array
+    }
+  };
+
+  const handleAddLive = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Preparar dados da live
+      const liveData = {
+        titulo: liveForm.titulo,
+        descricao: liveForm.descricao,
+        link_live: liveForm.link_live,
+        evento_id: liveForm.evento_id ? parseInt(liveForm.evento_id) : null,
+        status: liveForm.status
+      };
+
+      // Se um evento foi selecionado, pegar a imagem do evento
+      if (liveForm.evento_id) {
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('image_url')
+          .eq('id', liveForm.evento_id)
+          .single();
+
+        if (eventError) {
+          console.error('Erro ao buscar imagem do evento:', eventError);
+        } else if (eventData && eventData.image_url) {
+          liveData.imagem_evento = eventData.image_url;
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('lives')
+        .insert([liveData])
+        .select();
+
+      if (error) throw error;
+
+      await loadLives(); // Recarregar lista do banco
+      setShowLiveForm(false); // Fechar formulário
+      resetLiveForm();
+      alert('Live adicionada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao adicionar live:', error);
+      alert('Erro ao adicionar live: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateLive = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Preparar dados da live
+      const liveData = {
+        titulo: liveForm.titulo,
+        descricao: liveForm.descricao,
+        link_live: liveForm.link_live,
+        evento_id: liveForm.evento_id ? parseInt(liveForm.evento_id) : null,
+        status: liveForm.status
+      };
+
+      // Se um evento foi selecionado, pegar a imagem do evento
+      if (liveForm.evento_id) {
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('image_url')
+          .eq('id', liveForm.evento_id)
+          .single();
+
+        if (eventError) {
+          console.error('Erro ao buscar imagem do evento:', eventError);
+        } else if (eventData && eventData.image_url) {
+          liveData.imagem_evento = eventData.image_url;
+        }
+      } else {
+        // Se nenhum evento for selecionado, limpar a imagem
+        liveData.imagem_evento = null;
+      }
+
+      const { error } = await supabase
+        .from('lives')
+        .update(liveData)
+        .eq('id', editingLive);
+
+      if (error) throw error;
+
+      await loadLives(); // Recarregar lista do banco
+      setEditingLive(null);
+      setShowLiveForm(false); // Fechar formulário
+      resetLiveForm();
+      alert('Live atualizada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar live:', error);
+      alert('Erro ao atualizar live: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteLive = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir esta live?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('lives')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadLives(); // Recarregar lista do banco
+      alert('Live excluída com sucesso!');
+    } catch (error) {
+      console.error('Erro ao excluir live:', error);
+      alert('Erro ao excluir live: ' + error.message);
+    }
+  };
+
+  const resetLiveForm = () => {
+    setLiveForm({
+      titulo: '',
+      descricao: '',
+      link_live: '',
+      evento_id: '',
+      status: 'draft'
+    });
+  };
+
   // Função para carregar clientes com cyberpoints
   const loadCyberPointsCustomers = async () => {
     try {
@@ -1877,6 +2048,7 @@ const AdminPanel3 = ({ onNavigate }) => {
             { id: 'products', icon: '📦', label: 'Produtos', color: '#00ff00' },
             { id: 'banners', icon: '🖼️', label: 'Banners', color: '#ff00ea' },
             { id: 'events', icon: '🏆', label: 'Eventos', color: '#ffd700' },
+            { id: 'lives', icon: '📺', label: 'Lives', color: '#ff4500' },
             { id: 'orders', icon: '🛒', label: 'Pedidos', color: '#ff6600' },
             { id: 'customers', icon: '👥', label: 'Clientes', color: '#9400d3' },
             { id: 'badges', icon: '🎖️', label: 'Insígnias', color: '#ffd700' },
@@ -3844,6 +4016,249 @@ const AdminPanel3 = ({ onNavigate }) => {
 
           {activeTab === 'missions' && (
             <MissionsManager />
+          )}
+
+          {/* Lives Management */}
+          {activeTab === 'lives' && (
+            <div className="lives-modern">
+              <div className="section-header">
+                <div className="section-title">
+                  <h2>📺 Gerenciamento de Lives</h2>
+                  <p>Cadastre e gerencie as transmissões ao vivo</p>
+                </div>
+              </div>
+
+              <div className="lives-layout">
+                {/* Form Panel */}
+                {showLiveForm && (
+                  <div
+                    className="form-panel draggable"
+                    style={{
+                      left: `${liveFormPosition.x}px`,
+                      top: `${liveFormPosition.y}px`,
+                      cursor: isDragging === 'live' ? 'grabbing' : 'auto'
+                    }}
+                  >
+                    <div
+                      className="panel-header draggable-header"
+                      onMouseDown={(e) => handleMouseDown(e, 'live')}
+                      style={{ cursor: 'grab' }}
+                    >
+                      <h3>{editingLive ? '✏️ Editar Live' : '➕ Nova Live'}</h3>
+                      <div className="header-buttons">
+                        <button
+                          type="button"
+                          onClick={() => setShowLiveForm(false)}
+                          className="btn-close-float"
+                          title="Fechar formulário"
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    </div>
+                    <form onSubmit={editingLive ? handleUpdateLive : handleAddLive} className="modern-form">
+                      <div className="form-group">
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          placeholder="Ex: GLOBAL TOURNAMENT 2026"
+                          value={liveForm.titulo}
+                          onChange={(e) => setLiveForm({ ...liveForm, titulo: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Descrição</label>
+                        <textarea
+                          placeholder="Subtítulo abaixo do título..."
+                          value={liveForm.descricao}
+                          onChange={(e) => setLiveForm({ ...liveForm, descricao: e.target.value })}
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Link da Live</label>
+                        <input
+                          type="url"
+                          placeholder="https://twitch.tv/usuario ou https://youtube.com/watch?v=..."
+                          value={liveForm.link_live}
+                          onChange={(e) => setLiveForm({ ...liveForm, link_live: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Status</label>
+                        <select
+                          value={liveForm.status}
+                          onChange={(e) => setLiveForm({ ...liveForm, status: e.target.value })}
+                        >
+                          <option value="active">Active (Visível)</option>
+                          <option value="draft">Draft (Oculto)</option>
+                          <option value="scheduled">Scheduled (Oculto)</option>
+                          <option value="completed">Completed (Oculto)</option>
+                          <option value="cancelled">Cancelled (Oculto)</option>
+                        </select>
+                        <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+                          Apenas "active" torna a live visível publicamente
+                        </small>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Atribuir Evento</label>
+                        <select
+                          value={liveForm.evento_id}
+                          onChange={(e) => setLiveForm({ ...liveForm, evento_id: e.target.value })}
+                        >
+                          <option value="">Selecione um evento (opcional)</option>
+                          {events.map(event => (
+                            <option key={event.id} value={event.id}>
+                              {event.title}
+                            </option>
+                          ))}
+                        </select>
+                        <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+                          Ao selecionar um evento, a imagem do evento será associada à live
+                        </small>
+                      </div>
+
+                      <div className="form-actions">
+                        <button type="submit" className="btn-save-modern">
+                          {editingLive ? '💾 ATUALIZAR' : '➕ ADICIONAR'}
+                        </button>
+                        {editingLive && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingLive(null);
+                              setShowLiveForm(false);
+                              resetLiveForm();
+                            }}
+                            className="btn-cancel-modern"
+                          >
+                            ❌ CANCELAR
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* Botão para mostrar form quando escondido */}
+                {!showLiveForm && (
+                  <button
+                    onClick={() => {
+                      setShowLiveForm(true);
+                      setLiveFormPosition({ x: 30, y: 120 });
+                    }}
+                    className="btn-show-form"
+                    title="Mostrar formulário de live"
+                  >
+                    ➕ Nova Live
+                  </button>
+                )}
+
+                <div className="content-panel">
+                  <div className="panel-header">
+                    <h3>📋 Lista de Lives ({lives.length})</h3>
+                    <div className="search-container">
+                      <input
+                        type="text"
+                        placeholder="🔍 Buscar lives..."
+                        value={searchLive}
+                        onChange={(e) => setSearchLive(e.target.value)}
+                        className="search-input-modern"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="lives-grid">
+                    {lives
+                      .filter(live =>
+                        searchLive === '' ||
+                        live.nome_jogo.toLowerCase().includes(searchLive.toLowerCase()) ||
+                        live.descricao?.toLowerCase().includes(searchLive.toLowerCase())
+                      )
+                      .map(live => (
+                        <div key={live.id} className="live-card">
+                          <div className="live-image">
+                            {live.imagem_evento ? (
+                              <img
+                                src={live.imagem_evento}
+                                alt={live.nome_jogo}
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="no-image">🎮</div>
+                            )}
+                          </div>
+
+                          <div className="live-info">
+                            <div className="live-header">
+                              <h4>{live.titulo}</h4>
+                              <span className={`status-badge status-${live.status}`}>
+                                {live.status === 'active' && '🟢 Ativo'}
+                                {live.status === 'draft' && '📝 Rascunho'}
+                                {live.status === 'scheduled' && '📅 Agendado'}
+                                {live.status === 'completed' && '✅ Concluído'}
+                                {live.status === 'cancelled' && '❌ Cancelado'}
+                              </span>
+                            </div>
+
+                            {live.descricao && (
+                              <div className="live-description">
+                                {live.descricao}
+                              </div>
+                            )}
+
+                            {live.events && live.events.title && (
+                              <div className="live-event">
+                                📅 Evento: {live.events.title}
+                              </div>
+                            )}
+
+                            <div className="live-link">
+                              <a href={live.link_live} target="_blank" rel="noopener noreferrer">📺 ASSISTIR AGORA</a>
+                            </div>
+                          </div>
+
+                          <div className="live-actions">
+                            <button
+                              onClick={() => {
+                                setEditingLive(live.id);
+                                setLiveForm({
+                                  titulo: live.titulo || '',
+                                  descricao: live.descricao || '',
+                                  link_live: live.link_live || '',
+                                  evento_id: live.evento_id || '',
+                                  status: live.status || 'draft'
+                                });
+                                setShowLiveForm(true);
+                                setLiveFormPosition({ x: 30, y: 120 });
+                              }}
+                              className="btn-edit-modern"
+                              title="Editar"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteLive(live.id)}
+                              className="btn-delete-modern"
+                              title="Excluir"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Badges Management */}

@@ -1001,6 +1001,228 @@
 }
 
 /* ============================================
+   LIVES MODERN
+   ============================================ */
+
+.lives-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.lives-layout {
+  display: block;
+  position: relative;
+}
+
+.lives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.live-card {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.live-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.live-image {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.live-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.live-image:hover img {
+  transform: scale(1.05);
+}
+
+.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 3rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.live-info {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.live-header h4 {
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.live-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  min-width: 80px;
+  text-align: center;
+}
+
+.status-draft {
+  background: rgba(128, 128, 128, 0.2);
+  color: #808080;
+  border: 1px solid #808080;
+}
+
+.status-scheduled {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+}
+
+.status-live {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+  border: 1px solid #ff4444;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.status-completed {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+  border: 1px solid #00ff88;
+}
+
+.status-cancelled {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border: 1px solid #ff4444;
+}
+
+.live-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  flex: 1;
+}
+
+.live-platform,
+.live-schedule,
+.live-event,
+.live-stats {
+  color: #00d9ff;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: rgba(0, 217, 255, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #00d9ff;
+}
+
+.live-event {
+  color: #ffd700;
+  border-left: 3px solid #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.live-stats {
+  color: #00ff88;
+  border-left: 3px solid #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+}
+
+.live-link {
+  margin-top: auto;
+}
+
+.live-link a {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff4500, #ff8c00);
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  text-align: center;
+  width: 100%;
+}
+
+.live-link a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 69, 0, 0.3);
+  background: linear-gradient(135deg, #ff5722, #ff9800);
+}
+
+.live-actions {
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Media queries para responsividade */
+@media (max-width: 768px) {
+  .lives-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-panel {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 100%;
+    margin-bottom: 30px;
+  }
+  
+  .btn-show-form {
+    position: static;
+    margin-bottom: 20px;
+  }
+}
+
+/* ============================================
    CYBERPOINTS MODAL MODERN
    ============================================ */
 
