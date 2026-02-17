@@ -1,0 +1,221 @@
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- DROP EXISTING TABLES (Order matters for foreign keys)
+DROP TABLE IF EXISTS public.user_badges CASCADE;
+DROP TABLE IF EXISTS public.user_missions CASCADE;
+DROP TABLE IF EXISTS public.event_registration CASCADE;
+DROP TABLE IF EXISTS public.event_participants CASCADE; -- In case it exists from previous attempts
+DROP TABLE IF EXISTS public.activities CASCADE;
+DROP TABLE IF EXISTS public.missions CASCADE;
+DROP TABLE IF EXISTS public.badges CASCADE;
+DROP TABLE IF EXISTS public.events CASCADE;
+DROP TABLE IF EXISTS public.lives CASCADE;
+DROP TABLE IF EXISTS public.products CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- 1. PROFILES
+CREATE TABLE public.profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT,
+    nickname TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    cyber_points INTEGER DEFAULT 100,
+    current_xp INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    badges_count INTEGER DEFAULT 0,
+    whatsapp TEXT,
+    city TEXT,
+    birth_date TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. EVENTS
+CREATE TABLE public.events (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    date TIMESTAMPTZ,
+    image_url TEXT,
+    inscription_price INTEGER DEFAULT 0,
+    max_participants INTEGER DEFAULT 100,
+    current_participants INTEGER DEFAULT 0,
+    active BOOLEAN DEFAULT TRUE,
+    game_name TEXT,
+    prize TEXT,
+    type TEXT,
+    status TEXT DEFAULT 'active', -- active, completed, cancelled
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. EVENT REGISTRATION
+CREATE TABLE public.event_registration (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(event_id, user_id)
+);
+
+-- 4. MISSIONS
+CREATE TABLE public.missions (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    xp_reward INTEGER DEFAULT 0,
+    cp_reward INTEGER DEFAULT 0,
+    icon TEXT, -- Lucide icon name
+    type TEXT DEFAULT 'daily', -- daily, weekly, achievement
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 5. USER MISSIONS (Tracking)
+CREATE TABLE public.user_missions (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    mission_id UUID REFERENCES public.missions(id) ON DELETE CASCADE,
+    completed BOOLEAN DEFAULT FALSE,
+    completed_at TIMESTAMPTZ,
+    progress INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, mission_id)
+);
+
+-- 6. BADGES
+CREATE TABLE public.badges (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    image_url TEXT,
+    icon_url TEXT,
+    rarity TEXT DEFAULT 'comum', -- comum, rara, epica, lendaria
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. USER BADGES
+CREATE TABLE public.user_badges (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    badge_id UUID REFERENCES public.badges(id) ON DELETE CASCADE,
+    obtained_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, badge_id)
+);
+
+-- 8. LIVES
+CREATE TABLE public.lives (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    thumbnail_url TEXT,
+    stream_url TEXT,
+    viewer_count INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'offline', -- live, offline
+    game_name TEXT,
+    started_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. ACTIVITIES (Notifications/History)
+CREATE TABLE public.activities (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    type TEXT, -- 'system', 'reward', 'event', 'security'
+    title TEXT,
+    message TEXT,
+    read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 10. PRODUCTS (Store)
+CREATE TABLE public.products (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2),
+    image_url TEXT,
+    category TEXT, -- 'hardware', 'perifericos', 'games', 'merch'
+    stock INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ROW LEVEL SECURITY (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.event_registration ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.missions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_missions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_badges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.lives ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+
+-- POLICIES
+
+-- Profiles: Public read, Self update
+CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Events: Public read, Admin insert/update (simplified to all for now or authenticated)
+CREATE POLICY "Events are viewable by everyone" ON public.events FOR SELECT USING (true);
+-- Assuming service role for admin updates, but for dev allow auth users? No, usually public read only.
+
+-- Event Registration: User can manage own
+CREATE POLICY "Users can view own registrations" ON public.event_registration FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can register themselves" ON public.event_registration FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own registration" ON public.event_registration FOR DELETE USING (auth.uid() = user_id);
+-- Also allow public to count registrations?
+CREATE POLICY "Public can view registrations for stats" ON public.event_registration FOR SELECT USING (true);
+
+-- Missions: Public read
+CREATE POLICY "Missions are viewable by everyone" ON public.missions FOR SELECT USING (true);
+
+-- User Missions: User own
+CREATE POLICY "Users can manage own mission progress" ON public.user_missions FOR ALL USING (auth.uid() = user_id);
+
+-- Badges: Public read
+CREATE POLICY "Badges are viewable by everyone" ON public.badges FOR SELECT USING (true);
+
+-- User Badges: Public read (to see others' badges), Self manage (or system only?)
+CREATE POLICY "User badges are viewable by everyone" ON public.user_badges FOR SELECT USING (true);
+
+-- Lives: Public read
+CREATE POLICY "Lives are viewable by everyone" ON public.lives FOR SELECT USING (true);
+
+-- Activities: User own
+CREATE POLICY "Users can manage own activities" ON public.activities FOR ALL USING (auth.uid() = user_id);
+
+-- Products: Public read
+CREATE POLICY "Products are viewable by everyone" ON public.products FOR SELECT USING (true);
+
+-- INSERT MOCK DATA
+
+-- Mock Events
+INSERT INTO public.events (title, description, date, image_url, inscription_price, max_participants, current_participants, active, game_name, prize, type)
+VALUES
+('Torneio Valorant Pro', 'Campeonato oficial da comunidade com premiação em CP.', NOW() + INTERVAL '2 days', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80', 500, 50, 12, true, 'Valorant', '5000 CP', 'tournament'),
+('Cyber League LoL', 'A liga mais disputada do servidor brasileiro.', NOW() + INTERVAL '5 days', 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=80', 1000, 100, 45, true, 'League of Legends', '10000 CP + Skin', 'league'),
+('CS2 Community Night', 'Jogos casuais e sorteios para a comunidade.', NOW() + INTERVAL '1 day', 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80', 0, 200, 89, true, 'CS2', 'Skins Raras', 'community');
+
+-- Mock Missions
+INSERT INTO public.missions (title, description, xp_reward, cp_reward, icon, type)
+VALUES
+('Login Diário', 'Entre no aplicativo hoje.', 50, 10, 'zap', 'daily'),
+('Jogar Evento', 'Participe de qualquer evento ativo.', 200, 50, 'gamepad-2', 'daily'),
+('Convidar Amigo', 'Traga um amigo para a plataforma.', 500, 100, 'users', 'achievement');
+
+-- Mock Badges
+INSERT INTO public.badges (name, description, rarity, icon_url)
+VALUES
+('Iniciante', 'Criou sua conta no CyberLife.', 'comum', 'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/badges/badge_iniciante.png'),
+('Veterano', 'Ativo há mais de 1 ano.', 'lendaria', 'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/badges/badge_veterano.png'),
+('Campeão', 'Venceu um torneio oficial.', 'mitica', 'https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/imagens-do-site/badges/badge_campeao.png');
+
+-- Mock Lives
+INSERT INTO public.lives (title, description, viewer_count, status, game_name, thumbnail_url, stream_url)
+VALUES
+('Campeonato Brasileiro de LoL', 'Transmissão oficial da final.', 15420, 'live', 'League of Legends', 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80', 'https://twitch.tv/cblol'),
+('Gameplay CS2 - Global Elite', 'Subindo de elo com a galera.', 0, 'offline', 'CS2', 'https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&q=80', null);

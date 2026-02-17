@@ -3,145 +3,17 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import CommunityFab from '../components/CommunityFab';
 import { supabase } from '../supabaseClient';
 
-const eventosData = {
-  'league-of-legends': {
-    title: 'Campeonato League of Legends',
-    date: '20 de Janeiro, 2025',
-    prize: 'R$ 15.000',
-    inscription: 'Inscrições abertas até 15/01',
-    description: 'O maior campeonato de League of Legends da região! Participe e mostre suas habilidades no Summoner\'s Rift. Equipes de 5 jogadores competirão pelo prêmio e pelo título de campeão.',
-    rules: [
-      'Equipes de 5 jogadores',
-      'Formato de eliminatórias duplas',
-      'Patch mais recente do jogo',
-      'Idade mínima: 16 anos',
-      'Inscrição online obrigatória'
-    ],
-    schedule: [
-      'Fase de Grupos: 20/01 - 10:00',
-      'Quartas de Final: 20/01 - 14:00',
-      'Semifinais: 20/01 - 17:00',
-      'Grande Final: 20/01 - 20:00'
-    ]
-  },
-  'csgo-masters': {
-    title: 'Torneio CS:GO Masters',
-    date: '05 de Fevereiro, 2025',
-    prize: 'R$ 20.000',
-    inscription: 'Inscrições abertas até 25/01',
-    description: 'O torneio definitivo de Counter-Strike: Global Offensive. Equipes profissionais e semi-profissionais competem pelo maior prêmio do ano.',
-    rules: [
-      'Equipes de 5 jogadores + 1 reserva',
-      'Formato de campeonato suíço',
-      'Mapas competitivos oficiais',
-      'Idade mínima: 18 anos',
-      'Registro de equipe obrigatório'
-    ],
-    schedule: [
-      'Fase Classificatória: 05/02 - 09:00',
-      'Playoffs: 05/02 - 14:00',
-      'Semifinais: 05/02 - 18:00',
-      'Grande Final: 05/02 - 21:00'
-    ]
-  },
-  'valorant-championship': {
-    title: 'Valorant Championship',
-    date: '15 de Fevereiro, 2025',
-    prize: 'R$ 12.000',
-    inscription: 'Inscrições abertas até 05/02',
-    description: 'Campeonato oficial de Valorant com as melhores equipes da região. Mostre suas habilidades táticas e conquiste o título.',
-    rules: [
-      'Equipes de 5 jogadores',
-      'Formato de bracket duplo',
-      'Patch oficial mais recente',
-      'Idade mínima: 16 anos',
-      'Conta Riot Games verificada'
-    ],
-    schedule: [
-      'Rodada de Abertura: 15/02 - 10:00',
-      'Upper Bracket: 15/02 - 13:00',
-      'Lower Bracket: 15/02 - 16:00',
-      'Grande Final: 15/02 - 19:00'
-    ]
-  },
-  'free-fire-battle': {
-    title: 'Free Fire Battle Royale',
-    date: '28 de Fevereiro, 2025',
-    prize: 'R$ 8.000',
-    inscription: 'Inscrições abertas até 20/02',
-    description: 'O maior torneio de Free Fire Battle Royale! Equipes de 4 jogadores lutam pela sobrevivência e pela vitória.',
-    rules: [
-      'Equipes de 4 jogadores',
-      'Sistema de pontos por partida',
-      'Versão oficial do jogo',
-      'Idade mínima: 14 anos',
-      'UID válido obrigatório'
-    ],
-    schedule: [
-      'Partidas Classificatórias: 28/02 - 10:00',
-      'Rodada Intermediária: 28/02 - 14:00',
-      'Finais: 28/02 - 17:00',
-      'Match Final: 28/02 - 19:00'
-    ]
-  },
-  'fortnite-arena': {
-    title: 'Fortnite Arena Cup',
-    date: '10 de Março, 2025',
-    prize: 'R$ 10.000',
-    inscription: 'Inscrições abertas até 01/03',
-    description: 'Fortnite Arena Cup reúne os melhores construtores e atiradores. Competição individual e por equipes.',
-    rules: [
-      'Modo Solo e Duo',
-      'Sistema de Arena Points',
-      'Construção permitida',
-      'Idade mínima: 13 anos',
-      'Conta Epic Games ativa'
-    ],
-    schedule: [
-      'Qualificatórias Solo: 10/03 - 10:00',
-      'Qualificatórias Duo: 10/03 - 13:00',
-      'Finais Solo: 10/03 - 16:00',
-      'Finais Duo: 10/03 - 19:00'
-    ]
-  },
-  'rocket-league': {
-    title: 'Rocket League Tournament',
-    date: '22 de Março, 2025',
-    prize: 'R$ 7.500',
-    inscription: 'Inscrições abertas até 15/03',
-    description: 'Futebol com carros! O torneio mais emocionante de Rocket League. Equipes de 3 jogadores competem em partidas intensas.',
-    rules: [
-      'Equipes de 3 jogadores',
-      'Formato 3v3',
-      'Regras competitivas oficiais',
-      'Idade mínima: 16 anos',
-      'Plataforma cruzada permitida'
-    ],
-    schedule: [
-      'Fase de Grupos: 22/03 - 11:00',
-      'Oitavas de Final: 22/03 - 14:00',
-      'Semifinais: 22/03 - 17:00',
-      'Grande Final: 22/03 - 20:00'
-    ]
-  }
-};
-
 export default function EventoPage() {
-  const { eventoId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const [evento, setEvento] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [menuOpen, setMenuOpen] = useState(false);
   const [registrationLoading, setRegistrationLoading] = useState(false);
-
-  // Estados para a funcionalidade de apostas
-  const [selectedBet, setSelectedBet] = useState(null);
-  const [betAmount] = useState(10); // Aposta fixa de 10 CyberPoints
-  const [userPoints, setUserPoints] = useState(100); // Isso viria do perfil do usuário
-  const [bets, setBets] = useState([]); // Armazena as apostas do usuário
+  const [userPoints, setUserPoints] = useState(0);
   const [popupMessage, setPopupMessage] = useState('');
-  const [popupType, setPopupType] = useState(''); // 'success', 'error', 'info'
+  const [popupType, setPopupType] = useState('');
   const [showPopup, setShowPopup] = useState(false);
   const [showBuyButton, setShowBuyButton] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -155,7 +27,6 @@ export default function EventoPage() {
     setShowPopup(true);
     setShowBuyButton(showBuyButton);
 
-    // Fechar o popup automaticamente após 5 segundos
     setTimeout(() => {
       setShowPopup(false);
     }, 5000);
@@ -184,15 +55,17 @@ export default function EventoPage() {
     setShowConfirmation(false);
   };
 
-  // Carregar evento do banco de dados
+  // Carregar evento do banco de dados por UUID
   useEffect(() => {
     const loadEvento = async () => {
       try {
         setLoading(true);
+        
+        // Buscar evento por UUID (não por slug)
         const { data, error } = await supabase
           .from('events')
           .select('*')
-          .eq('slug', eventoId)
+          .eq('id', id)
           .single();
 
         if (error) {
@@ -201,8 +74,8 @@ export default function EventoPage() {
           return;
         }
 
-        // Formatar a data se necessário
-        let formattedDate = data.date;
+        // Formatar a data para TIMESTAMPTZ
+        let formattedDate = 'Data ainda não determinada';
         if (data.date) {
           const dateObj = new Date(data.date);
           formattedDate = dateObj.toLocaleDateString('pt-BR', {
@@ -210,14 +83,22 @@ export default function EventoPage() {
             month: 'long',
             year: 'numeric'
           });
-        } else {
-          formattedDate = 'Data ainda não determinada';
+        }
+
+        // Formatar horário se existir
+        let formattedTime = null;
+        if (data.date) {
+          const dateObj = new Date(data.date);
+          formattedTime = dateObj.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
         }
 
         setEvento({
           ...data,
           date: formattedDate,
-          inscription: data.inscription_info || 'Informações em breve'
+          time: formattedTime
         });
       } catch (error) {
         console.error('Erro ao conectar com banco:', error);
@@ -228,7 +109,7 @@ export default function EventoPage() {
     };
 
     loadEvento();
-  }, [eventoId]);
+  }, [id]);
 
   // Carregar pontos do usuário
   useEffect(() => {
@@ -244,14 +125,14 @@ export default function EventoPage() {
 
           if (error) {
             console.error('Erro ao carregar perfil:', error);
-            setUserPoints(100); // Valor padrão
+            setUserPoints(0);
           } else {
-            setUserPoints(profile.cyber_points || 0);
+            setUserPoints(profile?.cyber_points || 0);
           }
         }
       } catch (error) {
         console.error('Erro ao obter usuário:', error);
-        setUserPoints(100); // Valor padrão
+        setUserPoints(0);
       }
     };
 
@@ -266,118 +147,6 @@ export default function EventoPage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Estado para armazenar os participantes do evento
-  const [eventParticipants, setEventParticipants] = useState([]);
-
-  // Carregar participantes do evento
-  useEffect(() => {
-    const loadEventParticipants = async () => {
-      if (evento && evento.id) {
-        try {
-          // Buscar inscrições confirmadas para este evento
-          const { data: registrations, error } = await supabase
-            .from('event_registrations')
-            .select('user_id, user_nickname')
-            .eq('event_id', evento.id)
-            .eq('status', 'confirmed');
-
-          if (error) {
-            console.error('Erro ao carregar participantes:', error);
-            // Se não houver registros no banco, usar dados do evento como fallback
-            if (evento.participants) {
-              setEventParticipants(evento.participants.map((p, idx) => ({ id: idx + 1, name: p, odds: (Math.random() * 3 + 1.5).toFixed(2) })));
-            } else {
-              setEventParticipants([]);
-            }
-            return;
-          }
-
-          // Transformar os dados para o formato esperado
-          const participants = registrations.map((reg, idx) => ({
-            id: reg.user_id,
-            name: reg.user_nickname,
-            odds: (Math.random() * 3 + 1.5).toFixed(2) // Odds aleatórias como exemplo
-          }));
-
-          setEventParticipants(participants);
-        } catch (error) {
-          console.error('Erro ao conectar com banco para participantes:', error);
-          setEventParticipants([]);
-        }
-      }
-    };
-
-    loadEventParticipants();
-  }, [evento]);
-
-  // Calcular potencial ganho baseado na regra: 75% do total apostado dividido pelos acertadores
-  const potentialWin = 0; // O valor real será calculado após o evento terminar
-
-  // Função para fazer a aposta
-  const placeBet = async () => {
-    if (!selectedBet || userPoints < 10) {
-      showCustomPopup('Por favor, selecione um jogador e tenha pelo menos 10 CyberPoints para apostar.', 'error', true);
-      return;
-    }
-
-    try {
-      // Verificar se o usuário tem pontos suficientes
-      if (userPoints < 10) {
-        showCustomPopup(`Você não tem CyberPoints suficientes para esta aposta (mínimo 10).\nSeu saldo: ${userPoints} CyberPoints`, 'error', true);
-        return;
-      }
-
-      // Obter usuário atual
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        showCustomPopup('Você precisa estar logado para fazer uma aposta.', 'error');
-        return;
-      }
-
-      // Criar a aposta no banco de dados
-      const betData = {
-        user_id: user.id,
-        event_id: evento.id,
-        selected_option: selectedBet,
-        amount: 10, // Aposta fixa de 10 CyberPoints
-        created_at: new Date().toISOString()
-      };
-
-      const { error: betError } = await supabase
-        .from('event_bets')
-        .insert([betData]);
-
-      if (betError) {
-        console.error('Erro ao salvar aposta:', betError);
-        showCustomPopup('Erro ao registrar sua aposta. Tente novamente.', 'error');
-        return;
-      }
-
-      // Atualizar pontos do usuário (subtrair valor da aposta)
-      const newPoints = userPoints - 10;
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ cyber_points: newPoints })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error('Erro ao atualizar pontos:', updateError);
-        showCustomPopup('Erro ao atualizar seus pontos. Tente novamente.', 'error');
-        return;
-      }
-
-      // Atualizar estado local
-      setUserPoints(newPoints);
-      setBets([...bets, betData]);
-      setSelectedBet(null);
-
-      showCustomPopup('Aposta registrada com sucesso! Boa sorte!', 'success');
-    } catch (error) {
-      console.error('Erro ao fazer aposta:', error);
-      showCustomPopup('Erro ao fazer sua aposta. Tente novamente.', 'error');
-    }
-  };
 
   // Função para inscrever-se no evento com verificação de cyberpoints
   const registerForEvent = async () => {
@@ -403,7 +172,7 @@ export default function EventoPage() {
         return;
       }
 
-      // Confirmar com o usuário o custo da inscrição usando confirmação personalizada
+      // Confirmar com o usuário o custo da inscrição
       showCustomConfirmation(
         `<!DOCTYPE html>
         <html>
@@ -422,14 +191,14 @@ export default function EventoPage() {
           </div>
         </body>
         </html>`,
-        (confirmed) => {
+        async (confirmed) => {
           if (confirmed) {
-            performRegistration();
+            await performRegistration(inscriptionCost);
           }
         }
       );
     } else {
-      // Confirmar inscrição gratuita com confirmação personalizada
+      // Confirmar inscrição gratuita
       showCustomConfirmation(
         `<!DOCTYPE html>
         <html>
@@ -447,9 +216,9 @@ export default function EventoPage() {
           </div>
         </body>
         </html>`,
-        (confirmed) => {
+        async (confirmed) => {
           if (confirmed) {
-            performRegistration();
+            await performRegistration(0);
           }
         }
       );
@@ -457,37 +226,75 @@ export default function EventoPage() {
   };
 
   // Função auxiliar para realizar a inscrição
-  const performRegistration = async () => {
+  const performRegistration = async (cost) => {
     setRegistrationLoading(true);
 
     try {
-      // Chamar a função RPC no banco de dados para inscrever o usuário
-      const { data, error } = await supabase
-        .rpc('register_for_event_with_cyberpoints', { p_event_id: evento.id });
-
-      if (error) {
-        console.error('Erro na inscrição:', error);
-        showCustomPopup(`Erro ao se inscrever no evento: ${error.message}`, 'error');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        showCustomPopup('Usuário não autenticado.', 'error');
         return;
       }
 
-      if (data && data.success) {
-        // Atualizar o saldo de pontos localmente
-        if (inscriptionCost > 0) {
-          setUserPoints(prev => prev - inscriptionCost);
-        }
+      // Verificar se já está inscrito
+      const { data: existingRegistration } = await supabase
+        .from('event_registrations')
+        .select('id')
+        .eq('event_id', evento.id)
+        .eq('user_id', user.id)
+        .single();
 
-        showCustomPopup(data.message, 'success');
-      } else if (data && !data.success) {
-        if (data.already_registered) {
-          showCustomPopup(data.message, 'info');
-        } else {
-          showCustomPopup(`Erro na inscrição: ${data.message}`, 'error');
+      if (existingRegistration) {
+        showCustomPopup('Você já está inscrito neste evento!', 'info');
+        setRegistrationLoading(false);
+        return;
+      }
+
+      // Se tiver custo, debitar os pontos primeiro
+      if (cost > 0) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ cyber_points: userPoints - cost })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Erro ao debitar pontos:', updateError);
+          showCustomPopup('Erro ao processar pagamento. Tente novamente.', 'error');
+          setRegistrationLoading(false);
+          return;
         }
       }
+
+      // Criar inscrição na tabela event_registrations
+      const { error: insertError } = await supabase
+        .from('event_registrations')
+        .insert([{
+          event_id: evento.id,
+          user_id: user.id
+        }]);
+
+      if (insertError) {
+        console.error('Erro ao criar inscrição:', insertError);
+        // Reembolsar pontos se houve erro
+        if (cost > 0) {
+          await supabase
+            .from('profiles')
+            .update({ cyber_points: userPoints })
+            .eq('id', user.id);
+        }
+        showCustomPopup(`Erro ao se inscrever no evento: ${insertError.message}`, 'error');
+        return;
+      }
+
+      // Atualizar estado local
+      if (cost > 0) {
+        setUserPoints(prev => prev - cost);
+      }
+
+      showCustomPopup('Inscrição realizada com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao se inscrever no evento:', error);
-      showCustomPopup(`Erro inesperado ao se inscrever no evento: ${error.message}`, 'error');
+      showCustomPopup('Erro inesperado ao se inscrever no evento.', 'error');
     } finally {
       setRegistrationLoading(false);
     }
@@ -555,9 +362,17 @@ export default function EventoPage() {
             opacity: 1;
           }
         }
+        @keyframes pulse-live {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes blink-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
       `}</style>
       <div className="evento-page" style={{ minHeight: '100vh', background: '#000', color: '#fff', margin: 0, padding: 0 }}>
-      {/* Header igual ao da Gamer World */}
+      {/* Header */}
       <header className="header" style={{
         display: 'flex',
         alignItems: 'center',
@@ -783,245 +598,233 @@ export default function EventoPage() {
 
           {/* Seção Evento Ao Vivo */}
           {evento.is_live && (
-            <>
-              <style>{`
-                @keyframes pulse-live {
-                  0%, 100% { transform: scale(1); }
-                  50% { transform: scale(1.05); }
-                }
-                @keyframes blink-dot {
-                  0%, 100% { opacity: 1; }
-                  50% { opacity: 0.3; }
-                }
-              `}</style>
-              <div style={{
-                background: 'linear-gradient(135deg, #ff6b6b15 0%, #ee5a6f15 100%)',
-                border: '3px solid #ff6b6b',
-                borderRadius: '20px',
-                padding: isMobile ? '25px' : '40px',
-                marginBottom: '40px',
-                boxShadow: '0 0 30px rgba(255, 107, 107, 0.4)',
-              }}>
-                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    background: '#ff6b6b',
-                    padding: '10px 25px',
-                    borderRadius: '30px',
-                    marginBottom: '15px',
-                    animation: 'pulse-live 2s ease-in-out infinite',
-                  }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      background: '#fff',
-                      borderRadius: '50%',
-                      animation: 'blink-dot 1s ease-in-out infinite',
-                    }}></div>
-                    <span style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1rem',
-                      fontWeight: 700,
-                      color: '#fff',
-                      letterSpacing: '2px',
-                    }}>EVENTO AO VIVO</span>
-                  </div>
-                  {evento.game_name && (
-                    <h3 style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: isMobile ? '1.3rem' : '1.8rem',
-                      color: '#00d9ff',
-                      fontWeight: 600,
-                      marginBottom: '10px',
-                    }}>🎮 {evento.game_name}</h3>
-                  )}
-                </div>
-
+            <div style={{
+              background: 'linear-gradient(135deg, #ff6b6b15 0%, #ee5a6f15 100%)',
+              border: '3px solid #ff6b6b',
+              borderRadius: '20px',
+              padding: isMobile ? '25px' : '40px',
+              marginBottom: '40px',
+              boxShadow: '0 0 30px rgba(255, 107, 107, 0.4)',
+            }}>
+              <div style={{ textAlign: 'center', marginBottom: '30px' }}>
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-                  gap: '20px',
-                  marginBottom: '25px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: '#ff6b6b',
+                  padding: '10px 25px',
+                  borderRadius: '30px',
+                  marginBottom: '15px',
+                  animation: 'pulse-live 2s ease-in-out infinite',
                 }}>
-                  {/* Placar */}
-                  {evento.current_scores && evento.current_scores.length > 0 && (
-                    <div style={{
-                      background: 'rgba(255, 107, 107, 0.1)',
-                      border: '2px solid rgba(255, 107, 107, 0.3)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                    }}>
-                      <h4 style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '1.3rem',
-                        fontWeight: 700,
-                        color: '#ff6b6b',
-                        marginBottom: '15px',
-                      }}>📊 Placar Atual</h4>
-                      <ul style={{
-                        listStyle: 'none',
-                        padding: 0,
-                        margin: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                      }}>
-                        {evento.current_scores.map((score, idx) => (
-                          <li key={idx} style={{
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontSize: '1rem',
-                            color: '#fff',
-                            padding: '8px 12px',
-                            background: 'rgba(255, 107, 107, 0.15)',
-                            borderRadius: '6px',
-                          }}>{score}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Ranking */}
-                  {evento.ranking && evento.ranking.length > 0 && (
-                    <div style={{
-                      background: 'rgba(255, 215, 0, 0.1)',
-                      border: '2px solid rgba(255, 215, 0, 0.3)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                    }}>
-                      <h4 style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '1.3rem',
-                        fontWeight: 700,
-                        color: '#ffd700',
-                        marginBottom: '15px',
-                      }}>🏆 Ranking</h4>
-                      <ul style={{
-                        listStyle: 'none',
-                        padding: 0,
-                        margin: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px',
-                      }}>
-                        {evento.ranking.map((rank, idx) => (
-                          <li key={idx} style={{
-                            fontFamily: 'Rajdhani, sans-serif',
-                            fontSize: '1rem',
-                            color: '#fff',
-                            padding: '8px 12px',
-                            background: 'rgba(255, 215, 0, 0.15)',
-                            borderRadius: '6px',
-                            fontWeight: idx === 0 ? 700 : 400,
-                          }}>{rank}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Participantes */}
-                {evento.participants && evento.participants.length > 0 && (
                   <div style={{
-                    background: 'rgba(138, 43, 226, 0.1)',
-                    border: '2px solid rgba(138, 43, 226, 0.3)',
+                    width: '12px',
+                    height: '12px',
+                    background: '#fff',
+                    borderRadius: '50%',
+                    animation: 'blink-dot 1s ease-in-out infinite',
+                  }}></div>
+                  <span style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    color: '#fff',
+                    letterSpacing: '2px',
+                  }}>EVENTO AO VIVO</span>
+                </div>
+                {evento.game_name && (
+                  <h3 style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: isMobile ? '1.3rem' : '1.8rem',
+                    color: '#00d9ff',
+                    fontWeight: 600,
+                    marginBottom: '10px',
+                  }}>🎮 {evento.game_name}</h3>
+                )}
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: '20px',
+                marginBottom: '25px',
+              }}>
+                {/* Placar */}
+                {evento.current_scores && evento.current_scores.length > 0 && (
+                  <div style={{
+                    background: 'rgba(255, 107, 107, 0.1)',
+                    border: '2px solid rgba(255, 107, 107, 0.3)',
                     borderRadius: '12px',
                     padding: '20px',
-                    marginBottom: '20px',
                   }}>
                     <h4 style={{
                       fontFamily: 'Rajdhani, sans-serif',
                       fontSize: '1.3rem',
                       fontWeight: 700,
-                      color: '#ba55d3',
+                      color: '#ff6b6b',
                       marginBottom: '15px',
-                    }}>👥 Participantes</h4>
+                    }}>📊 Placar Atual</h4>
                     <ul style={{
                       listStyle: 'none',
                       padding: 0,
                       margin: 0,
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                      gap: '10px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
                     }}>
-                      {evento.participants.map((participant, idx) => (
+                      {evento.current_scores.map((score, idx) => (
                         <li key={idx} style={{
                           fontFamily: 'Rajdhani, sans-serif',
                           fontSize: '1rem',
                           color: '#fff',
-                          padding: '10px 15px',
-                          background: 'rgba(138, 43, 226, 0.15)',
+                          padding: '8px 12px',
+                          background: 'rgba(255, 107, 107, 0.15)',
                           borderRadius: '6px',
-                        }}>{participant}</li>
+                        }}>{score}</li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {/* Comentários */}
-                {evento.live_comments && (
+                {/* Ranking */}
+                {evento.ranking && evento.ranking.length > 0 && (
                   <div style={{
-                    background: 'rgba(0, 217, 255, 0.1)',
-                    border: '2px solid rgba(0, 217, 255, 0.3)',
+                    background: 'rgba(255, 215, 0, 0.1)',
+                    border: '2px solid rgba(255, 215, 0, 0.3)',
                     borderRadius: '12px',
                     padding: '20px',
-                    marginBottom: '20px',
                   }}>
                     <h4 style={{
                       fontFamily: 'Rajdhani, sans-serif',
                       fontSize: '1.3rem',
                       fontWeight: 700,
-                      color: '#00d9ff',
+                      color: '#ffd700',
                       marginBottom: '15px',
-                    }}>💬 Comentários</h4>
-                    <p style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1rem',
-                      color: 'rgba(255, 255, 255, 0.9)',
-                      lineHeight: '1.6',
-                      whiteSpace: 'pre-wrap',
-                    }}>{evento.live_comments}</p>
-                  </div>
-                )}
-
-                {/* Link de Transmissão */}
-                {evento.stream_link && (
-                  <div style={{ textAlign: 'center' }}>
-                    <a
-                      href={evento.stream_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-block',
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '1.2rem',
-                        fontWeight: 700,
-                        color: '#000',
-                        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
-                        padding: '15px 40px',
-                        borderRadius: '10px',
-                        textDecoration: 'none',
-                        letterSpacing: '2px',
-                        textTransform: 'uppercase',
-                        boxShadow: '0 5px 20px rgba(255, 107, 107, 0.4)',
-                        transition: 'all 0.3s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-3px)';
-                        e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 107, 107, 0.6)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 107, 107, 0.4)';
-                      }}
-                    >
-                      📺 Assistir Ao Vivo
-                    </a>
+                    }}>🏆 Ranking</h4>
+                    <ul style={{
+                      listStyle: 'none',
+                      padding: 0,
+                      margin: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}>
+                      {evento.ranking.map((rank, idx) => (
+                        <li key={idx} style={{
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontSize: '1rem',
+                          color: '#fff',
+                          padding: '8px 12px',
+                          background: 'rgba(255, 215, 0, 0.15)',
+                          borderRadius: '6px',
+                          fontWeight: idx === 0 ? 700 : 400,
+                        }}>{rank}</li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
-            </>
+
+              {/* Participantes */}
+              {evento.participants && evento.participants.length > 0 && (
+                <div style={{
+                  background: 'rgba(138, 43, 226, 0.1)',
+                  border: '2px solid rgba(138, 43, 226, 0.3)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                }}>
+                  <h4 style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.3rem',
+                    fontWeight: 700,
+                    color: '#ba55d3',
+                    marginBottom: '15px',
+                  }}>👥 Participantes</h4>
+                  <ul style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    margin: 0,
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                    gap: '10px',
+                  }}>
+                    {evento.participants.map((participant, idx) => (
+                      <li key={idx} style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '1rem',
+                        color: '#fff',
+                        padding: '10px 15px',
+                        background: 'rgba(138, 43, 226, 0.15)',
+                        borderRadius: '6px',
+                      }}>{participant}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Comentários */}
+              {evento.live_comments && (
+                <div style={{
+                  background: 'rgba(0, 217, 255, 0.1)',
+                  border: '2px solid rgba(0, 217, 255, 0.3)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                }}>
+                  <h4 style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1.3rem',
+                    fontWeight: 700,
+                    color: '#00d9ff',
+                    marginBottom: '15px',
+                  }}>💬 Comentários</h4>
+                  <p style={{
+                    fontFamily: 'Rajdhani, sans-serif',
+                    fontSize: '1rem',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    lineHeight: '1.6',
+                    whiteSpace: 'pre-wrap',
+                  }}>{evento.live_comments}</p>
+                </div>
+              )}
+
+              {/* Link de Transmissão */}
+              {evento.stream_link && (
+                <div style={{ textAlign: 'center' }}>
+                  <a
+                    href={evento.stream_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-block',
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      fontWeight: 700,
+                      color: '#000',
+                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+                      padding: '15px 40px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      letterSpacing: '2px',
+                      textTransform: 'uppercase',
+                      boxShadow: '0 5px 20px rgba(255, 107, 107, 0.4)',
+                      transition: 'all 0.3s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-3px)';
+                      e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 107, 107, 0.6)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 107, 107, 0.4)';
+                    }}
+                  >
+                    📺 Assistir Ao Vivo
+                  </a>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Grid de Informações */}
@@ -1065,6 +868,24 @@ export default function EventoPage() {
                   </div>
                 )}
 
+                {/* Status do Evento */}
+                {evento.status && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>📊 Status</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      color: evento.status === 'ativo' ? '#00ff88' : '#aaa',
+                      fontWeight: 600,
+                    }}>{evento.status}</div>
+                  </div>
+                )}
+
                 <div>
                   <div style={{
                     fontFamily: 'Rajdhani, sans-serif',
@@ -1080,22 +901,22 @@ export default function EventoPage() {
                   }}>{evento.date}</div>
                 </div>
 
-                <div>
-                  <div style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '0.9rem',
-                    color: '#aaa',
-                    marginBottom: '5px',
-                  }}>🕐 Horário</div>
-                  <div style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1.2rem',
-                    color: evento.time ? '#00d9ff' : '#666',
-                    fontWeight: 600,
-                  }}>
-                    {evento.time ? evento.time : 'Horário ainda não determinado'}
+                {evento.time && (
+                  <div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '0.9rem',
+                      color: '#aaa',
+                      marginBottom: '5px',
+                    }}>🕐 Horário</div>
+                    <div style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontSize: '1.2rem',
+                      color: '#00d9ff',
+                      fontWeight: 600,
+                    }}>{evento.time}</div>
                   </div>
-                </div>
+                )}
 
                 {evento.prize && (
                   <div>
@@ -1112,23 +933,6 @@ export default function EventoPage() {
                       fontWeight: 700,
                       textShadow: '0 0 10px rgba(255, 234, 0, 0.6)',
                     }}>{evento.prize}</div>
-                  </div>
-                )}
-
-                {evento.inscription && (
-                  <div>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '0.9rem',
-                      color: '#aaa',
-                      marginBottom: '5px',
-                    }}>✍️ Inscrição</div>
-                    <div style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1.1rem',
-                      color: '#fff',
-                      fontWeight: 600,
-                    }}>{evento.inscription}</div>
                   </div>
                 )}
 
@@ -1150,7 +954,7 @@ export default function EventoPage() {
                   </div>
                 )}
 
-                {evento.inscription_price_cyberpoints && (
+                {evento.inscription_price_cyberpoints && evento.inscription_price_cyberpoints > 0 && (
                   <div>
                     <div style={{
                       fontFamily: 'Rajdhani, sans-serif',
@@ -1168,7 +972,7 @@ export default function EventoPage() {
                   </div>
                 )}
 
-                {!evento.inscription_price && !evento.inscription_price_cyberpoints && (
+                {!evento.inscription_price && (!evento.inscription_price_cyberpoints || evento.inscription_price_cyberpoints === 0) && (
                   <div>
                     <div style={{
                       fontFamily: 'Rajdhani, sans-serif',
@@ -1222,16 +1026,16 @@ export default function EventoPage() {
                 )}
               </div>
 
-              {/* Botão de Inscrição - AGORA COM FUNCIONALIDADE */}
-              <button 
+              {/* Botão de Inscrição */}
+              <button
                 onClick={registerForEvent}
                 disabled={registrationLoading}
                 style={{
                   width: '100%',
                   marginTop: '30px',
                   padding: '15px',
-                  background: registrationLoading 
-                    ? 'linear-gradient(135deg, #666 0%, #444 100%)' 
+                  background: registrationLoading
+                    ? 'linear-gradient(135deg, #666 0%, #444 100%)'
                     : 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
                   border: 'none',
                   borderRadius: '10px',
@@ -1256,9 +1060,9 @@ export default function EventoPage() {
                     e.currentTarget.style.boxShadow = 'none';
                   }
                 }}>
-                {registrationLoading 
-                  ? 'PROCESSANDO...' 
-                  : evento.inscription_price_cyberpoints > 0 
+                {registrationLoading
+                  ? 'PROCESSANDO...'
+                  : evento.inscription_price_cyberpoints > 0
                     ? `Inscrever-se Agora (${evento.inscription_price_cyberpoints} CyberPoints)`
                     : 'Inscrever-se Agora (GRÁTIS)'}
               </button>
@@ -1308,351 +1112,6 @@ export default function EventoPage() {
                   />
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Grid de Regras e Cronograma */}
-          {((evento.rules && evento.rules.length > 0) || (evento.schedule && evento.schedule.length > 0)) && (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-              gap: '30px',
-              marginTop: '30px',
-            }}>
-              {/* Regras */}
-              {evento.rules && evento.rules.length > 0 && (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-                  border: '2px solid rgba(0, 217, 255, 0.4)',
-                  borderRadius: '16px',
-                  padding: isMobile ? '25px' : '35px',
-                }}>
-                  <h3 style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: '#00d9ff',
-                    marginBottom: '20px',
-                  }}>📋 Regras</h3>
-
-                  <ul style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                  }}>
-                    {evento.rules.map((rule, idx) => (
-                      <li key={idx} style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '1rem',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        padding: '10px 15px',
-                        background: 'rgba(0, 217, 255, 0.05)',
-                        border: '1px solid rgba(0, 217, 255, 0.2)',
-                        borderRadius: '8px',
-                      }}>
-                        • {rule}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Cronograma */}
-              {evento.schedule && evento.schedule.length > 0 && (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(255, 0, 234, 0.05) 100%)',
-                  border: '2px solid rgba(0, 217, 255, 0.4)',
-                  borderRadius: '16px',
-                  padding: isMobile ? '25px' : '35px',
-                }}>
-                  <h3 style={{
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: '#00d9ff',
-                    marginBottom: '20px',
-                  }}>⏰ Cronograma</h3>
-
-                  <ul style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    margin: 0,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                  }}>
-                    {evento.schedule.map((item, idx) => (
-                      <li key={idx} style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '1rem',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        padding: '10px 15px',
-                        background: 'rgba(0, 217, 255, 0.05)',
-                        border: '1px solid rgba(0, 217, 255, 0.2)',
-                        borderRadius: '8px',
-                      }}>
-                        • {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Seção de Apostas em Jogadores Vencedores */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(0, 217, 255, 0.15) 100%)',
-            border: '2px solid rgba(138, 43, 226, 0.4)',
-            borderRadius: '20px',
-            padding: isMobile ? '30px 20px' : '40px',
-            margin: '50px auto',
-            maxWidth: '1000px',
-            boxShadow: '0 0 30px rgba(138, 43, 226, 0.3)',
-          }}>
-            <h2 style={{
-              fontFamily: 'Rajdhani, sans-serif',
-              fontSize: isMobile ? '1.8rem' : '2.5rem',
-              fontWeight: 700,
-              color: '#00d9ff',
-              textAlign: 'center',
-              marginBottom: '30px',
-              textShadow: '0 0 20px rgba(0, 217, 255, 0.6)',
-            }}>🎯 Aposte no Vencedor!</h2>
-
-            <p style={{
-              fontFamily: 'Rajdhani, sans-serif',
-              fontSize: '1.1rem',
-              color: 'rgba(255, 255, 255, 0.9)',
-              textAlign: 'center',
-              marginBottom: '30px',
-              lineHeight: '1.6',
-            }}>
-              Faça sua aposta em qual jogador ou equipe você acha que vai vencer este evento!
-              Ganhe CyberPoints extras se seu palpite estiver correto!
-            </p>
-
-            {/* Opções de Aposta */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-              gap: '20px',
-              marginBottom: '30px',
-            }}>
-              {eventParticipants.length > 0 ? (
-                eventParticipants.map((option) => (
-                  <div
-                    key={option.id}
-                    style={{
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      border: '2px solid rgba(0, 217, 255, 0.3)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      position: 'relative',
-                      overflow: 'hidden',
-                    }}
-                    onClick={() => setSelectedBet(option.id)}
-                  >
-                    {/* Efeito de seleção */}
-                    {selectedBet === option.id && (
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        border: '3px solid #00d9ff',
-                        borderRadius: '12px',
-                        pointerEvents: 'none',
-                        boxShadow: '0 0 20px rgba(0, 217, 255, 0.8)',
-                      }} />
-                    )}
-
-                    <div style={{
-                      width: '80px',
-                      height: '80px',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)',
-                      margin: '0 auto 15px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '2rem',
-                      overflow: 'hidden',
-                    }}>
-                      <img
-                        src="/default-avatar.png"
-                        alt={option.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(e) => e.target.src='/default-avatar.png'}
-                      />
-                    </div>
-
-                    <h3 style={{
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontSize: '1.2rem',
-                      fontWeight: 700,
-                      color: '#fff',
-                      marginBottom: '10px',
-                    }}>{option.name}</h3>
-
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      gap: '10px',
-                      marginBottom: '15px',
-                    }}>
-                      <span style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '0.9rem',
-                        color: '#aaa',
-                      }}>Odd:</span>
-                      <span style={{
-                        fontFamily: 'Rajdhani, sans-serif',
-                        fontSize: '1.3rem',
-                        fontWeight: 700,
-                        color: '#00d9ff',
-                        textShadow: '0 0 10px rgba(0, 217, 255, 0.6)',
-                      }}>{option.odds}</span>
-                    </div>
-
-                    <button style={{
-                      background: selectedBet === option.id
-                        ? 'linear-gradient(135deg, #00d9ff 0%, #0099cc 100%)'
-                        : 'rgba(0, 217, 255, 0.1)',
-                      border: '2px solid #00d9ff',
-                      color: selectedBet === option.id ? '#000' : '#00d9ff',
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontWeight: 700,
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                    }}>
-                      {selectedBet === option.id ? 'Selecionado' : 'Apostar'}
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div style={{
-                  gridColumn: '1 / -1',
-                  textAlign: 'center',
-                  padding: '40px',
-                  color: '#aaa',
-                  fontFamily: 'Rajdhani, sans-serif',
-                  fontSize: '1.2rem',
-                }}>
-                  Nenhum participante confirmado para este evento ainda.
-                </div>
-              )}
-            </div>
-
-            {/* Formulário de Aposta */}
-            <div style={{
-              background: 'rgba(0, 0, 0, 0.3)',
-              border: '1px solid rgba(0, 217, 255, 0.2)',
-              borderRadius: '12px',
-              padding: '25px',
-              marginTop: '20px',
-            }}>
-              <div style={{
-                display: 'flex',
-                flexDirection: isMobile ? 'column' : 'row',
-                alignItems: 'center',
-                gap: '20px',
-              }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{
-                    display: 'block',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    color: '#00d9ff',
-                    marginBottom: '10px',
-                  }}>Quantidade de CyberPoints para apostar:</label>
-                  <div style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    border: '2px solid rgba(0, 217, 255, 0.3)',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                  }}>
-                    10 CyberPoints
-                  </div>
-                  <div style={{
-                    fontSize: '0.8rem',
-                    color: '#aaa',
-                    marginTop: '5px',
-                  }}>Aposta fixa de 10 CyberPoints | Seu saldo: {userPoints} CyberPoints</div>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <label style={{
-                    display: 'block',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '1rem',
-                    color: '#00d9ff',
-                    marginBottom: '10px',
-                  }}>Como Funciona:</label>
-                  <div style={{
-                    background: 'rgba(0, 217, 255, 0.1)',
-                    border: '2px solid rgba(0, 217, 255, 0.3)',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    fontFamily: 'Rajdhani, sans-serif',
-                    fontSize: '0.9rem',
-                    color: '#00d9ff',
-                    lineHeight: '1.5',
-                  }}>
-                    <p style={{ margin: '0 0 8px 0' }}>• Você aposta 10 CyberPoints no jogador</p>
-                    <p style={{ margin: '0 0 8px 0' }}>• Se ele vencer, 75% do total apostado por todos os apostadores de todos os jogadores será dividido entre os acertadores</p>
-                    <p style={{ margin: '0 0 0 0' }}>• O valor exato só é conhecido após o evento</p>
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  height: '100%'
-                }}>
-                  <button
-                    disabled={!selectedBet || userPoints < 10}
-                    onClick={placeBet}
-                    style={{
-                      background: !selectedBet || userPoints < 10
-                        ? 'rgba(255, 0, 234, 0.2)'
-                        : 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
-                      border: '2px solid #ff00ea',
-                      color: !selectedBet || userPoints < 10
-                        ? '#666'
-                        : '#fff',
-                      padding: '12px 25px',
-                      borderRadius: '8px',
-                      fontFamily: 'Rajdhani, sans-serif',
-                      fontWeight: 700,
-                      fontSize: '1rem',
-                      cursor: !selectedBet || userPoints < 10
-                        ? 'not-allowed'
-                        : 'pointer',
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    Confirmar Aposta (10 CyberPoints)
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
 

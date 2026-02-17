@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import AccessLogsView from '../components/AccessLogsView';
-import ProductImageUploader from '../components/ProductImageUploader';
-import Model3DUploader from '../components/Model3DUploader';
 import MissionsManager from '../components/MissionsManager';
 import { stopAudio } from '../utils/audioPlayer';
 import { allProducts } from '../data/lojaData';
@@ -82,7 +80,8 @@ const AdminPanel3 = ({ onNavigate }) => {
     name: '',
     description: '',
     image_url: '',
-    rarity: 'common'
+    icon_url: '',
+    rarity: 'comum'
   });
   const [badgeImageFile, setBadgeImageFile] = useState(null);
   const [badgeImagePreview, setBadgeImagePreview] = useState('');
@@ -114,26 +113,13 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [productForm, setProductForm] = useState({
     name: '',
     category: 'geek',
-    type: 'Action Figures',
     price: '',
     image_url: '',
-    hover_image_url: '',
     description: '',
-    stock: 0,
-    detailed_description: '',
-    features: '',
-    dimensions: '',
-    weight: '',
-    brand: '',
-    warranty: '',
-    material: '',
-    images: [], // Array de imagens adicionais
-    model_3d: '', // URL do modelo 3D .glb
-    reward_points: '' // CyberPoints customizados
+    stock: 0
   });
-  const [productImages, setProductImages] = useState([]); // Estado separado para gerenciar upload
-  const [product3DModel, setProduct3DModel] = useState(null); // Estado para modelo 3D
-  const [useModelAsCover, setUseModelAsCover] = useState(true); // Usar modelo 3D como capa
+  const [productImageFile, setProductImageFile] = useState(null);
+  const [productImagePreview, setProductImagePreview] = useState('');
 
   // Banners
   const [banners, setBanners] = useState([]);
@@ -148,9 +134,7 @@ const AdminPanel3 = ({ onNavigate }) => {
     image_url: '',
     link_url: '',
     order: 0,
-    original_price: '',
-    final_price: '',
-    reward_points: '' // CyberPoints do banner
+    active: true
   });
 
   // Eventos
@@ -163,25 +147,12 @@ const AdminPanel3 = ({ onNavigate }) => {
     title: '',
     description: '',
     date: '',
-    time: '',
-    prize: '',
-    inscription_info: '',
     inscription_price: '',
-    inscription_price_cyberpoints: '',
     max_participants: '',
     type: 'Torneio',
-    image_url: '',
-    rules: '',
-    schedule: '',
-    reward_points: '', // CyberPoints do evento
-    // Campos para torneio ao vivo
-    is_live: false,
+    status: 'pending',
     game_name: '',
-    stream_link: '',
-    current_scores: '',
-    ranking: '',
-    participants: '',
-    live_comments: ''
+    image_url: ''
   });
 
   // Estados para upload de imagem do evento
@@ -282,11 +253,14 @@ const AdminPanel3 = ({ onNavigate }) => {
   const [showLiveForm, setShowLiveForm] = useState(false);
   const [liveFormPosition, setLiveFormPosition] = useState({ x: 30, y: 120 });
   const [liveForm, setLiveForm] = useState({
-    titulo: '',
-    descricao: '',
-    link_live: '',
-    evento_id: '',
-    status: 'draft' // Mudança importante: padrão agora é 'draft' para não aparecer imediatamente
+    title: '',
+    description: '',
+    thumbnail_url: '',
+    stream_url: '',
+    viewer_count: 0,
+    status: 'draft',
+    game_name: '',
+    started_at: ''
   });
 
   // Preview Modal
@@ -613,14 +587,74 @@ const AdminPanel3 = ({ onNavigate }) => {
       setProducts(data || []);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
-      setProducts([]); // Garantir que sempre seja um array
+      setProducts([]);
     }
+  };
+
+  // Função para upload de imagem do produto para o Supabase Storage
+  const uploadProductImageToStorage = async (file, productId) => {
+    if (!file) return null;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPEG, PNG, GIF)');
+      return null;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB');
+      return null;
+    }
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `products/${productId || 'new'}/product_image_${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem do produto:', error);
+      return null;
+    }
+  };
+
+  // Função para manipular o upload de imagem do produto
+  const handleProductImageUpload = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecione um arquivo de imagem válido (JPEG, PNG, GIF)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB');
+      return;
+    }
+
+    setProductImageFile(file);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setProductImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   // Função para importar produtos do lojaData.js para o banco
   const importProductsFromLojaData = async () => {
     try {
-      // Verificar se já existem produtos na tabela
       const { data: existingProducts } = await supabase
         .from('products')
         .select('id')
@@ -635,13 +669,10 @@ const AdminPanel3 = ({ onNavigate }) => {
       const productsToInsert = allProducts.map(product => ({
         name: product.name,
         category: product.category,
-        type: product.type,
         price: parseFloat(product.price.replace('R$ ', '').replace(',', '.')),
         image_url: product.image,
-        hover_image_url: product.hoverImage,
         description: product.description,
-        stock: Math.floor(Math.random() * 50) + 10, // Stock aleatório entre 10-59
-        active: true
+        stock: Math.floor(Math.random() * 50) + 10
       }));
 
       const { data, error } = await supabase
@@ -651,7 +682,7 @@ const AdminPanel3 = ({ onNavigate }) => {
 
       if (error) throw error;
 
-      await loadProducts(); // Recarregar lista
+      await loadProducts();
       alert(`${data.length} produtos importados com sucesso do lojaData.js!`);
     } catch (error) {
       console.error('Erro ao importar produtos:', error);
@@ -659,153 +690,40 @@ const AdminPanel3 = ({ onNavigate }) => {
     }
   };
 
-  // Função auxiliar para fazer upload de imagens para o Supabase Storage
-  const uploadImagesToStorage = async (images, productId) => {
-    const uploadedUrls = [];
-
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i];
-      if (!image.file) continue; // Pular se já foi feito upload
-
-      const fileExt = image.file.name.split('.').pop();
-      const fileName = `products/${productId}/image_${i + 1}_${Date.now()}.${fileExt}`;
-
-      try {
-        const { data, error } = await supabase.storage
-          .from('product-images')
-          .upload(fileName, image.file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (error) throw error;
-
-        // Obter URL pública
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(fileName);
-
-        uploadedUrls.push({
-          url: publicUrl,
-          order: i + 1
-        });
-      } catch (error) {
-        console.error(`Erro ao fazer upload da imagem ${i + 1}:`, error);
-      }
-    }
-
-    return uploadedUrls;
-  };
-
-  // Função para fazer upload de modelo 3D para o Supabase Storage
-  const upload3DModelToStorage = async (modelFile, productId) => {
-    if (!modelFile) return null;
-
-    const fileName = `products/${productId}/model_${Date.now()}.glb`;
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('product-3d-models')
-        .upload(fileName, modelFile, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'model/gltf-binary'
-        });
-
-      if (error) throw error;
-
-      // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-3d-models')
-        .getPublicUrl(fileName);
-
-      return publicUrl;
-    } catch (error) {
-      console.error('Erro ao fazer upload do modelo 3D:', error);
-      return null;
-    }
-  };
-
   const handleAddProduct = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Fazer upload das imagens primeiro se houver
-      let uploadedUrls = [];
       let finalImageUrl = productForm.image_url;
-      let finalHoverImageUrl = productForm.hover_image_url;
-      let model3DUrl = null;
 
-      // Inserir produto temporariamente para obter ID
+      // Se houver imagem local para upload, fazer upload
+      if (productImageFile) {
+        const uploadedImageUrl = await uploadProductImageToStorage(productImageFile, null);
+        if (uploadedImageUrl) {
+          finalImageUrl = uploadedImageUrl;
+        }
+      }
+
+      // Inserir produto
       const { data, error } = await supabase
         .from('products')
         .insert([{
-          ...productForm,
+          name: productForm.name,
+          category: productForm.category,
           price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0,
-          reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null,
-          weight: productForm.weight ? parseInt(productForm.weight) : null,
-          images: [] // Inicialmente vazio
+          image_url: finalImageUrl,
+          description: productForm.description
         }])
         .select();
 
       if (error) throw error;
 
-      const newProductId = data[0].id;
-
-      // Fazer upload do modelo 3D se houver
-      if (product3DModel) {
-        model3DUrl = await upload3DModelToStorage(product3DModel, newProductId);
-      }
-
-      // Fazer upload das imagens se houver
-      if (productImages.length > 0) {
-        uploadedUrls = await uploadImagesToStorage(productImages, newProductId);
-      }
-
-      // LÓGICA DE PRIORIDADE PARA IMAGEM DE CAPA:
-      // 1ª Prioridade: Modelo 3D (se marcado para usar como capa)
-      // 2ª Prioridade: Links manuais (image_url e hover_image_url)
-      // 3ª Prioridade: Primeira e segunda imagens do array
-
-      if (model3DUrl && useModelAsCover) {
-        // Usar modelo 3D como capa
-        finalImageUrl = model3DUrl;
-        // Hover usa segunda imagem ou link manual
-        if (!finalHoverImageUrl && uploadedUrls.length > 0) {
-          finalHoverImageUrl = uploadedUrls[0].url;
-        }
-      } else {
-        // Fallback para links manuais ou imagens do array
-        if (!finalImageUrl && uploadedUrls.length > 0) {
-          finalImageUrl = uploadedUrls[0].url;
-        }
-        if (!finalHoverImageUrl && uploadedUrls.length > 1) {
-          finalHoverImageUrl = uploadedUrls[1].url;
-        }
-      }
-
-      // Atualizar produto com todas as informações
-      const { error: updateError } = await supabase
-        .from('products')
-        .update({
-          images: uploadedUrls,
-          image_url: finalImageUrl,
-          hover_image_url: finalHoverImageUrl,
-          model_3d: model3DUrl
-        })
-        .eq('id', newProductId);
-
-      if (updateError) {
-        console.error('Erro ao salvar informações do produto:', updateError);
-      }
-
-      await loadProducts(); // Recarregar lista do banco
-      setShowProductForm(false); // Fechar formulário
+      await loadProducts();
+      setShowProductForm(false);
       resetProductForm();
-      setProductImages([]);
-      setProduct3DModel(null);
-      setUseModelAsCover(true);
+      setProductImageFile(null);
+      setProductImagePreview('');
       alert('Produto adicionado com sucesso!');
     } catch (error) {
       console.error('Erro ao adicionar produto:', error);
@@ -819,82 +737,36 @@ const AdminPanel3 = ({ onNavigate }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Obter todas as imagens na ordem atual (existentes + novas)
-      let updatedImages = [];
-
-      // Processar todas as imagens na ordem atual do estado productImages
-      for (let i = 0; i < productImages.length; i++) {
-        const img = productImages[i];
-        if (img.uploaded) {
-          // Imagem já existe, manter URL
-          updatedImages.push({ url: img.url, order: i + 1 });
-        } else if (img.file) {
-          // Nova imagem, fazer upload
-          const uploaded = await uploadImagesToStorage([img], editingProduct);
-          if (uploaded.length > 0) {
-            updatedImages.push({ url: uploaded[0].url, order: i + 1 });
-          }
-        }
-      }
-
-      // Fazer upload do modelo 3D se houver um novo
-      let model3DUrl = productForm.model_3d; // Manter URL existente
-      if (product3DModel) {
-        const newModel3DUrl = await upload3DModelToStorage(product3DModel, editingProduct);
-        if (newModel3DUrl) {
-          model3DUrl = newModel3DUrl;
-        }
-      }
-
-      // LÓGICA DE PRIORIDADE PARA IMAGEM DE CAPA:
-      // 1ª Prioridade: Modelo 3D (se marcado para usar como capa)
-      // 2ª Prioridade: Links manuais (image_url e hover_image_url)
-      // 3ª Prioridade: Primeira e segunda imagens do array
-
       let finalImageUrl = productForm.image_url;
-      let finalHoverImageUrl = productForm.hover_image_url;
 
-      if (model3DUrl && useModelAsCover) {
-        // Usar modelo 3D como capa
-        finalImageUrl = model3DUrl;
-        // Hover usa segunda imagem ou link manual ou primeira imagem
-        if (!finalHoverImageUrl && updatedImages.length > 0) {
-          finalHoverImageUrl = updatedImages[0].url;
-        }
-      } else {
-        // Fallback para links manuais ou imagens do array
-        if (!finalImageUrl && updatedImages.length > 0) {
-          finalImageUrl = updatedImages[0].url;
-        }
-        if (!finalHoverImageUrl && updatedImages.length > 1) {
-          finalHoverImageUrl = updatedImages[1].url;
+      // Se houver imagem local para upload, fazer upload
+      if (productImageFile) {
+        const uploadedImageUrl = await uploadProductImageToStorage(productImageFile, editingProduct);
+        if (uploadedImageUrl) {
+          finalImageUrl = uploadedImageUrl;
         }
       }
 
       const { error } = await supabase
         .from('products')
         .update({
-          ...productForm,
+          name: productForm.name,
+          category: productForm.category,
           price: parsePriceToNumber(productForm.price),
           stock: parseInt(productForm.stock) || 0,
-          reward_points: productForm.reward_points ? parseInt(productForm.reward_points) : null,
-          weight: productForm.weight ? parseInt(productForm.weight) : null,
-          images: updatedImages,
           image_url: finalImageUrl,
-          hover_image_url: finalHoverImageUrl,
-          model_3d: model3DUrl
+          description: productForm.description
         })
         .eq('id', editingProduct);
 
       if (error) throw error;
 
-      await loadProducts(); // Recarregar lista do banco
+      await loadProducts();
       setEditingProduct(null);
-      setShowProductForm(false); // Fechar formulário
+      setShowProductForm(false);
       resetProductForm();
-      setProductImages([]);
-      setProduct3DModel(null);
-      setUseModelAsCover(true);
+      setProductImageFile(null);
+      setProductImagePreview('');
       alert('Produto atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar produto:', error);
@@ -927,25 +799,11 @@ const AdminPanel3 = ({ onNavigate }) => {
     setProductForm({
       name: '',
       category: 'geek',
-      type: 'Action Figures',
       price: '',
       image_url: '',
-      hover_image_url: '',
       description: '',
-      stock: 0,
-      detailed_description: '',
-      features: '',
-      dimensions: '',
-      weight: '',
-      brand: '',
-      warranty: '',
-      material: '',
-      images: [],
-      model_3d: ''
+      stock: 0
     });
-    setProductImages([]);
-    setProduct3DModel(null);
-    setUseModelAsCover(true);
   };
 
   // FORMATAÇÃO AUTOMÁTICA
@@ -969,43 +827,9 @@ const AdminPanel3 = ({ onNavigate }) => {
     return isNaN(number) ? 0 : number;
   };
 
-  const formatDimensions = (value) => {
-    // Remove tudo exceto números e x
-    const cleaned = value.replace(/[^\d]/g, '');
-    if (!cleaned) return '';
-
-    // Divide em partes (até 3 números)
-    const parts = [];
-    for (let i = 0; i < cleaned.length && parts.length < 3; i += 2) {
-      parts.push(cleaned.substr(i, 2));
-    }
-
-    return parts.join(' x ');
-  };
-
-  const formatWeight = (value) => {
-    // Remove tudo exceto números
-    const numbers = value.replace(/\D/g, '');
-    if (!numbers) return '';
-
-    return numbers + 'g';
-  };
-
   const handlePriceChange = (value) => {
     const formatted = formatPrice(value);
     setProductForm({ ...productForm, price: formatted });
-  };
-
-  const handleDimensionsChange = (value) => {
-    // Permite apenas números e x, depois formata
-    const clean = value.replace(/[^\d]/g, '');
-    setProductForm({ ...productForm, dimensions: clean });
-  };
-
-  const handleWeightChange = (value) => {
-    // Remove tudo exceto números
-    const numbers = value.replace(/\D/g, '');
-    setProductForm({ ...productForm, weight: numbers });
   };
 
   // DRAG AND DROP FUNCTIONS
@@ -1078,17 +902,13 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleAddBanner = async (e) => {
     e.preventDefault();
     try {
-      // Mapear os dados do formulário para a estrutura do banco
       const bannerData = {
         title: bannerForm.title,
         discount: bannerForm.discount,
         description: bannerForm.description,
         image_url: bannerForm.image_url,
         link_url: bannerForm.link_url,
-        "order": parseInt(bannerForm.order || 0),
-        original_price: bannerForm.original_price,
-        final_price: bannerForm.final_price,
-        reward_points: bannerForm.reward_points ? parseInt(bannerForm.reward_points) : null,
+        order: parseInt(bannerForm.order || 0),
         active: true
       };
 
@@ -1099,8 +919,8 @@ const AdminPanel3 = ({ onNavigate }) => {
 
       if (error) throw error;
 
-      await loadBanners(); // Recarregar lista do banco
-      setShowBannerForm(false); // Fechar formulário
+      await loadBanners();
+      setShowBannerForm(false);
       resetBannerForm();
       alert('Banner adicionado com sucesso!');
     } catch (error) {
@@ -1112,19 +932,14 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleUpdateBanner = async (e) => {
     e.preventDefault();
     try {
-      // Mapear os dados do formulário para a estrutura do banco
       const bannerData = {
         title: bannerForm.title,
         discount: bannerForm.discount,
         description: bannerForm.description,
         image_url: bannerForm.image_url,
         link_url: bannerForm.link_url,
-        "order": parseInt(bannerForm.order || 0),
-        original_price: bannerForm.original_price,
-        final_price: bannerForm.final_price,
-        reward_points: bannerForm.reward_points ? parseInt(bannerForm.reward_points) : null,
-        active: true,
-        updated_at: new Date().toISOString()
+        order: parseInt(bannerForm.order || 0),
+        active: true
       };
 
       const { error } = await supabase
@@ -1134,9 +949,9 @@ const AdminPanel3 = ({ onNavigate }) => {
 
       if (error) throw error;
 
-      await loadBanners(); // Recarregar lista do banco
+      await loadBanners();
       setEditingBanner(null);
-      setShowBannerForm(false); // Fechar formulário
+      setShowBannerForm(false);
       resetBannerForm();
       alert('Banner atualizado com sucesso!');
     } catch (error) {
@@ -1172,8 +987,7 @@ const AdminPanel3 = ({ onNavigate }) => {
       image_url: '',
       link_url: '',
       order: 0,
-      original_price: '',
-      final_price: ''
+      active: true
     });
   };
 
@@ -1202,107 +1016,62 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleAddEvent = async (e) => {
     e.preventDefault();
     try {
-      // Converter regras e cronograma de texto para array
-      const rulesArray = eventForm.rules ? eventForm.rules.split('\n').filter(r => r.trim()) : [];
-      const scheduleArray = eventForm.schedule ? eventForm.schedule.split('\n').filter(s => s.trim()) : [];
-
-      // Converter placar, ranking e participantes de texto para array
-      const scoresArray = eventForm.current_scores ? eventForm.current_scores.split('\n').filter(s => s.trim()) : [];
-      const rankingArray = eventForm.ranking ? eventForm.ranking.split('\n').filter(r => r.trim()) : [];
-      const participantsArray = eventForm.participants ? eventForm.participants.split('\n').filter(p => p.trim()) : [];
-
-      // Preparar dados do evento
       let imageUrl = eventForm.image_url || '/images/default-event.png';
 
       // Se houver imagem local para upload, fazer upload
       if (eventImageFile) {
-        // Primeiro criar o evento para obter o ID
         const { data: eventData, error: insertError } = await supabase
           .from('events')
           .insert([{
             title: eventForm.title,
-            slug: eventForm.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
             description: eventForm.description || 'Evento sem descrição',
             type: eventForm.type || 'Torneio',
-            date: eventForm.date || null, // Nome correto da coluna: date - pode ser nulo
-            time: eventForm.time || null, // Adicionando o campo de hora - pode ser nulo
-            prize: eventForm.prize || null,
-            inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
-            inscription_price: eventForm.inscription_price || null,
+            status: eventForm.status || 'pending',
+            date: eventForm.date || null,
+            inscription_price: eventForm.inscription_price ? parseInt(eventForm.inscription_price) : null,
             max_participants: parseInt(eventForm.max_participants) || null,
-            image_url: '/images/default-event.png', // Placeholder temporário
-            rules: rulesArray,
-            schedule: scheduleArray,
-            reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
-            is_live: eventForm.is_live || false,
             game_name: eventForm.game_name || null,
-            stream_link: eventForm.stream_link || null,
-            current_scores: scoresArray,
-            ranking: rankingArray,
-            participants: participantsArray,
-            live_comments: eventForm.live_comments || null,
-            active: true // Nome correto da coluna: active
+            image_url: '/images/default-event.png'
           }])
           .select()
           .single();
 
         if (insertError) throw insertError;
 
-        // Fazer upload da imagem com o ID do evento
         const uploadedImageUrl = await uploadEventImageToStorage(eventImageFile, eventData.id);
         if (uploadedImageUrl) {
-          // Atualizar o evento com a URL da imagem
           const { error: updateError } = await supabase
             .from('events')
             .update({ image_url: uploadedImageUrl })
             .eq('id', eventData.id);
 
           if (updateError) throw updateError;
-
           imageUrl = uploadedImageUrl;
         }
-      } else {
-        // Se não houver imagem local, usar a URL fornecida ou padrão
-        imageUrl = eventForm.image_url || '/images/default-event.png';
       }
 
-      // Se o evento já foi criado (sem imagem local), apenas atualizar a lista
       if (!eventImageFile) {
         const { data, error } = await supabase
           .from('events')
           .insert([{
             title: eventForm.title,
-            slug: eventForm.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
             description: eventForm.description || 'Evento sem descrição',
             type: eventForm.type || 'Torneio',
-            date: eventForm.date || null, // Nome correto da coluna: date - pode ser nulo
-            time: eventForm.time || null, // Adicionando o campo de hora - pode ser nulo
-            prize: eventForm.prize || null,
-            inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
-            inscription_price: eventForm.inscription_price || null,
+            status: eventForm.status || 'pending',
+            date: eventForm.date || null,
+            inscription_price: eventForm.inscription_price ? parseInt(eventForm.inscription_price) : null,
             max_participants: parseInt(eventForm.max_participants) || null,
-            image_url: imageUrl,
-            rules: rulesArray,
-            schedule: scheduleArray,
-            reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
-            is_live: eventForm.is_live || false,
             game_name: eventForm.game_name || null,
-            stream_link: eventForm.stream_link || null,
-            current_scores: scoresArray,
-            ranking: rankingArray,
-            participants: participantsArray,
-            live_comments: eventForm.live_comments || null,
-            active: true // Nome correto da coluna: active
+            image_url: imageUrl
           }])
           .select();
 
         if (error) throw error;
       }
 
-      await loadEvents(); // Recarregar lista do banco
-      setShowEventForm(false); // Fechar formulário
+      await loadEvents();
+      setShowEventForm(false);
       resetEventForm();
-      // Limpar imagem de evento
       setEventImageFile(null);
       setEventImagePreview('');
       alert('Evento adicionado com sucesso!');
@@ -1315,54 +1084,25 @@ const AdminPanel3 = ({ onNavigate }) => {
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
     try {
-      // Converter regras e cronograma de texto para array
-      const rulesArray = eventForm.rules ? eventForm.rules.split('\n').filter(r => r.trim()) : [];
-      const scheduleArray = eventForm.schedule ? eventForm.schedule.split('\n').filter(s => s.trim()) : [];
-
-      // Converter placar, ranking e participantes de texto para array
-      const scoresArray = eventForm.current_scores ? eventForm.current_scores.split('\n').filter(s => s.trim()) : [];
-      const rankingArray = eventForm.ranking ? eventForm.ranking.split('\n').filter(r => r.trim()) : [];
-      const participantsArray = eventForm.participants ? eventForm.participants.split('\n').filter(p => p.trim()) : [];
-
-      // Preparar dados do evento
       let imageUrl = eventForm.image_url || '/images/default-event.png';
 
-      // Se houver imagem local para upload, fazer upload
       if (eventImageFile) {
-        // Fazer upload da imagem com o ID do evento
         const uploadedImageUrl = await uploadEventImageToStorage(eventImageFile, editingEvent);
         if (uploadedImageUrl) {
           imageUrl = uploadedImageUrl;
         }
-      } else {
-        // Se não houver imagem local, usar a URL fornecida ou padrão
-        imageUrl = eventForm.image_url || '/images/default-event.png';
       }
 
-      // Mapear os dados do formulário para a estrutura do banco
       const eventData = {
         title: eventForm.title,
         description: eventForm.description || 'Evento sem descrição',
         type: eventForm.type || 'Torneio',
-        date: eventForm.date || null, // Nome correto da coluna: date - pode ser nulo
-        time: eventForm.time || null, // Adicionando o campo de hora - pode ser nulo
-        prize: eventForm.prize || null,
-        inscription_info: eventForm.inscription_info || `Vagas: ${eventForm.max_participants || 'Ilimitadas'}`,
-        inscription_price: eventForm.inscription_price || null,
-        inscription_price_cyberpoints: eventForm.inscription_price_cyberpoints || null, // Adicionando o campo de preço em CyberPoints
+        status: eventForm.status || 'pending',
+        date: eventForm.date || null,
+        inscription_price: eventForm.inscription_price ? parseInt(eventForm.inscription_price) : null,
         max_participants: parseInt(eventForm.max_participants) || null,
-        image_url: imageUrl,
-        rules: rulesArray,
-        schedule: scheduleArray,
-        reward_points: eventForm.reward_points ? parseInt(eventForm.reward_points) : null,
-        is_live: eventForm.is_live || false,
         game_name: eventForm.game_name || null,
-        stream_link: eventForm.stream_link || null,
-        current_scores: scoresArray,
-        ranking: rankingArray,
-        participants: participantsArray,
-        live_comments: eventForm.live_comments || null,
-        active: true // Nome correto da coluna: active
+        image_url: imageUrl
       };
 
       const { error } = await supabase
@@ -1372,11 +1112,10 @@ const AdminPanel3 = ({ onNavigate }) => {
 
       if (error) throw error;
 
-      await loadEvents(); // Recarregar lista do banco
+      await loadEvents();
       setEditingEvent(null);
-      setShowEventForm(false); // Fechar formulário
+      setShowEventForm(false);
       resetEventForm();
-      // Limpar imagem de evento
       setEventImageFile(null);
       setEventImagePreview('');
       alert('Evento atualizado com sucesso!');
@@ -1410,25 +1149,13 @@ const AdminPanel3 = ({ onNavigate }) => {
       title: '',
       description: '',
       date: '',
-      time: '',
-      prize: '',
-      inscription_info: '',
       inscription_price: '',
       max_participants: '',
       type: 'Torneio',
-      image_url: '',
-      rules: '',
-      schedule: '',
-      reward_points: '',
-      is_live: false,
+      status: 'pending',
       game_name: '',
-      stream_link: '',
-      current_scores: '',
-      ranking: '',
-      participants: '',
-      live_comments: ''
+      image_url: ''
     });
-    // Limpar estados de imagem
     setEventImageFile(null);
     setEventImagePreview('');
   };
@@ -1653,10 +1380,7 @@ const AdminPanel3 = ({ onNavigate }) => {
       console.log('Carregando lives...');
       const { data, error } = await supabase
         .from('lives')
-        .select(`
-          *,
-          events (title, image_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -1668,7 +1392,7 @@ const AdminPanel3 = ({ onNavigate }) => {
       setLives(data || []);
     } catch (error) {
       console.error('Erro ao carregar lives:', error);
-      setLives([]); // Garantir que sempre seja um array
+      setLives([]);
     }
   };
 
@@ -1676,29 +1400,16 @@ const AdminPanel3 = ({ onNavigate }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Preparar dados da live
       const liveData = {
-        titulo: liveForm.titulo,
-        descricao: liveForm.descricao,
-        link_live: liveForm.link_live,
-        evento_id: liveForm.evento_id ? parseInt(liveForm.evento_id) : null,
-        status: liveForm.status
+        title: liveForm.title,
+        description: liveForm.description,
+        thumbnail_url: liveForm.thumbnail_url,
+        stream_url: liveForm.stream_url,
+        viewer_count: parseInt(liveForm.viewer_count) || 0,
+        status: liveForm.status,
+        game_name: liveForm.game_name,
+        started_at: liveForm.started_at || new Date().toISOString()
       };
-
-      // Se um evento foi selecionado, pegar a imagem do evento
-      if (liveForm.evento_id) {
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('image_url')
-          .eq('id', liveForm.evento_id)
-          .single();
-
-        if (eventError) {
-          console.error('Erro ao buscar imagem do evento:', eventError);
-        } else if (eventData && eventData.image_url) {
-          liveData.imagem_evento = eventData.image_url;
-        }
-      }
 
       const { data, error } = await supabase
         .from('lives')
@@ -1707,8 +1418,8 @@ const AdminPanel3 = ({ onNavigate }) => {
 
       if (error) throw error;
 
-      await loadLives(); // Recarregar lista do banco
-      setShowLiveForm(false); // Fechar formulário
+      await loadLives();
+      setShowLiveForm(false);
       resetLiveForm();
       alert('Live adicionada com sucesso!');
     } catch (error) {
@@ -1723,32 +1434,16 @@ const AdminPanel3 = ({ onNavigate }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Preparar dados da live
       const liveData = {
-        titulo: liveForm.titulo,
-        descricao: liveForm.descricao,
-        link_live: liveForm.link_live,
-        evento_id: liveForm.evento_id ? parseInt(liveForm.evento_id) : null,
-        status: liveForm.status
+        title: liveForm.title,
+        description: liveForm.description,
+        thumbnail_url: liveForm.thumbnail_url,
+        stream_url: liveForm.stream_url,
+        viewer_count: parseInt(liveForm.viewer_count) || 0,
+        status: liveForm.status,
+        game_name: liveForm.game_name,
+        started_at: liveForm.started_at
       };
-
-      // Se um evento foi selecionado, pegar a imagem do evento
-      if (liveForm.evento_id) {
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('image_url')
-          .eq('id', liveForm.evento_id)
-          .single();
-
-        if (eventError) {
-          console.error('Erro ao buscar imagem do evento:', eventError);
-        } else if (eventData && eventData.image_url) {
-          liveData.imagem_evento = eventData.image_url;
-        }
-      } else {
-        // Se nenhum evento for selecionado, limpar a imagem
-        liveData.imagem_evento = null;
-      }
 
       const { error } = await supabase
         .from('lives')
@@ -1757,9 +1452,9 @@ const AdminPanel3 = ({ onNavigate }) => {
 
       if (error) throw error;
 
-      await loadLives(); // Recarregar lista do banco
+      await loadLives();
       setEditingLive(null);
-      setShowLiveForm(false); // Fechar formulário
+      setShowLiveForm(false);
       resetLiveForm();
       alert('Live atualizada com sucesso!');
     } catch (error) {
@@ -1791,11 +1486,14 @@ const AdminPanel3 = ({ onNavigate }) => {
 
   const resetLiveForm = () => {
     setLiveForm({
-      titulo: '',
-      descricao: '',
-      link_live: '',
-      evento_id: '',
-      status: 'draft'
+      title: '',
+      description: '',
+      thumbnail_url: '',
+      stream_url: '',
+      viewer_count: 0,
+      status: 'draft',
+      game_name: '',
+      started_at: ''
     });
   };
 
@@ -2274,18 +1972,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                         </div>
 
                         <div className="form-group">
-                          <label>Tipo</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: Action Figures"
-                            value={productForm.type}
-                            onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="form-row">
-                        <div className="form-group">
                           <label>💰 Preço</label>
                           <input
                             type="text"
@@ -2298,257 +1984,94 @@ const AdminPanel3 = ({ onNavigate }) => {
                             Digite apenas números (ex: 15000 = R$ 150,00)
                           </small>
                         </div>
-
-                        <div className="form-group">
-                          <label>Estoque</label>
-                          <input
-                            type="number"
-                            placeholder="0"
-                            value={productForm.stock}
-                            onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                            required
-                          />
-                        </div>
                       </div>
 
                       <div className="form-group">
-                        <label>🖼️ URL da Imagem de Capa (Opcional)</label>
+                        <label>Estoque</label>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={productForm.stock}
+                          onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>🖼️ URL da Imagem (Opcional)</label>
                         <input
                           type="url"
                           placeholder="https://exemplo.com/imagem.jpg"
                           value={productForm.image_url}
                           onChange={(e) => setProductForm({ ...productForm, image_url: e.target.value })}
                         />
-                        <small style={{ color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>
-                          💡 Se não preencher, a 1ª imagem do upload será usada como capa
-                        </small>
                         {productForm.image_url && (
                           <div className="image-preview">
-                            <img
-                              src={productForm.image_url}
-                              alt="Preview"
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextElementSibling.style.display = 'block';
-                              }}
-                              onLoad={(e) => {
-                                e.target.style.display = 'block';
-                                if (e.target.nextElementSibling) {
-                                  e.target.nextElementSibling.style.display = 'none';
-                                }
-                              }}
-                            />
-                            <div className="preview-error" style={{ display: 'none' }}>
-                              ❌ Não foi possível carregar a imagem
-                            </div>
+                            <img src={productForm.image_url} alt="Preview" style={{ maxWidth: '200px', marginTop: '10px', borderRadius: '8px' }} />
                           </div>
                         )}
                       </div>
 
                       <div className="form-group">
-                        <label>✨ URL da Imagem Hover (Opcional)</label>
-                        <input
-                          type="url"
-                          placeholder="https://exemplo.com/imagem-hover.jpg"
-                          value={productForm.hover_image_url}
-                          onChange={(e) => setProductForm({ ...productForm, hover_image_url: e.target.value })}
-                        />
-                        <small style={{ color: 'rgba(0, 255, 157, 0.8)', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>
-                          💡 Se não preencher, a 2ª imagem do upload será usada no hover
-                        </small>
-                      </div>
-
-                      {/* Componente de Upload de Múltiplas Imagens */}
-                      <div style={{ background: 'rgba(0, 255, 157, 0.05)', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid rgba(0, 255, 157, 0.2)' }}>
-                        <p style={{ margin: '0 0 10px 0', color: '#00ff9d', fontWeight: '600', fontSize: '0.9rem' }}>
-                          📌 IMPORTANTE - Ordem das Imagens:
-                        </p>
-                        <ul style={{ margin: 0, paddingLeft: '20px', color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>
-                          <li>Arraste as imagens para reordená-las</li>
-                          <li><strong>1ª imagem</strong> = Imagem de Capa (se URL não preenchida)</li>
-                          <li><strong>2ª imagem</strong> = Imagem de Hover (se URL não preenchida)</li>
-                          <li><strong>Demais imagens</strong> = Galeria na página de detalhes</li>
-                        </ul>
-                      </div>
-                      <ProductImageUploader
-                        images={productImages}
-                        onChange={setProductImages}
-                        maxImages={9}
-                      />
-
-                      <Model3DUploader
-                        onModelChange={setProduct3DModel}
-                        currentModel={productForm.model_3d ? { url: productForm.model_3d } : null}
-                        maxSizeMB={20}
-                      />
-
-                      {(product3DModel || productForm.model_3d) && (
-                        <div className="form-group" style={{
-                          background: 'rgba(0, 217, 255, 0.1)',
-                          border: '2px solid rgba(0, 217, 255, 0.3)',
-                          borderRadius: '10px',
-                          padding: '15px',
-                          marginTop: '15px'
-                        }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={useModelAsCover}
-                              onChange={(e) => setUseModelAsCover(e.target.checked)}
-                              style={{
-                                width: '20px',
-                                height: '20px',
-                                cursor: 'pointer',
-                                accentColor: '#00d9ff'
-                              }}
-                            />
-                            <span style={{ fontSize: '1rem', fontWeight: '600', color: '#00d9ff' }}>
-                              🎯 Usar Modelo 3D como Imagem de Capa
-                            </span>
+                        <label>📁 Upload de Imagem (Opcional)</label>
+                        <div className="image-upload-area" style={{
+                          border: '2px dashed rgba(0, 255, 157, 0.5)',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          textAlign: 'center',
+                          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                          marginBottom: '15px'
+                        }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = '#00ff9d';
+                          }}
+                          onDragLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(0, 255, 157, 0.5)';
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.style.borderColor = 'rgba(0, 255, 157, 0.5)';
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              handleProductImageUpload(e.dataTransfer.files[0]);
+                            }
+                          }}
+                        >
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleProductImageUpload(e.target.files[0]);
+                              }
+                            }}
+                            style={{ display: 'none' }}
+                            id="product-image-upload"
+                          />
+                          <label htmlFor="product-image-upload" style={{ cursor: 'pointer', color: '#00ff9d', fontSize: '1rem' }}>
+                            {productImagePreview ? (
+                              <div>
+                                <img src={productImagePreview} alt="Prévia" style={{ maxWidth: '100px', maxHeight: '100px', borderRadius: '8px', marginBottom: '10px', display: 'block', margin: '0 auto 10px' }} />
+                                <p>Clique ou arraste para substituir</p>
+                              </div>
+                            ) : (
+                              <div>
+                                <p>📁 Clique ou arraste uma imagem aqui</p>
+                                <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>PNG, JPG, GIF até 5MB</p>
+                              </div>
+                            )}
                           </label>
-                          <p style={{
-                            margin: '10px 0 0 30px',
-                            fontSize: '0.9rem',
-                            color: 'rgba(255, 255, 255, 0.7)',
-                            lineHeight: '1.5'
-                          }}>
-                            <strong>Prioridade de Capa:</strong><br />
-                            1️⃣ Modelo 3D (se marcado)<br />
-                            2️⃣ Links manuais de imagem<br />
-                            3️⃣ Primeira imagem do array
-                          </p>
                         </div>
-                      )}
+                      </div>
 
                       <div className="form-group">
                         <label>Descrição Curta</label>
                         <textarea
-                          placeholder="Descrição breve do produto (exibida nos cards)..."
+                          placeholder="Descrição breve do produto..."
                           value={productForm.description}
                           onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                           rows="3"
                           required
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>📝 Descrição Detalhada</label>
-                        <textarea
-                          placeholder="Descrição completa com todos os detalhes do produto..."
-                          value={productForm.detailed_description}
-                          onChange={(e) => setProductForm({ ...productForm, detailed_description: e.target.value })}
-                          rows="6"
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>✨ Características (separe por linha)</label>
-                        <textarea
-                          placeholder="Exemplo:\nMaterial premium\nEdição limitada\nArticulações móveis\nColecionável autêntico"
-                          value={productForm.features}
-                          onChange={(e) => setProductForm({ ...productForm, features: e.target.value })}
-                          rows="5"
-                        />
-                      </div>
-
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>📏 Dimensões (A x L x P em cm)</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: 20 x 15 x 10"
-                            value={productForm.dimensions ? productForm.dimensions.match(/.{1,2}/g)?.join(' x ') || productForm.dimensions : ''}
-                            onChange={(e) => handleDimensionsChange(e.target.value)}
-                          />
-                          <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
-                            Digite apenas números (ex: 201510 = 20 x 15 x 10)
-                          </small>
-                        </div>
-                        <div className="form-group">
-                          <label>⚖️ Peso (gramas)</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: 500"
-                            value={productForm.weight ? productForm.weight + 'g' : ''}
-                            onChange={(e) => handleWeightChange(e.target.value)}
-                          />
-                          <small style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
-                            Digite apenas números (ex: 500 = 500g)
-                          </small>
-                        </div>
-                      </div>
-
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>🏷️ Marca</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: Hot Toys, Funko, etc."
-                            value={productForm.brand}
-                            onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label>🧱 Material</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: Plástico ABS, PVC, Resina"
-                            value={productForm.material}
-                            onChange={(e) => setProductForm({ ...productForm, material: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label>🛡️ Garantia</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: 90 dias, 1 ano"
-                          value={productForm.warranty}
-                          onChange={(e) => setProductForm({ ...productForm, warranty: e.target.value })}
-                        />
-                      </div>
-
-                      {/* CyberPoints Field */}
-                      <div className="form-group" style={{
-                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
-                        border: '2px solid rgba(102, 126, 234, 0.4)',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        marginTop: '20px'
-                      }}>
-                        <label style={{
-                          color: '#667eea',
-                          fontWeight: 'bold',
-                          fontSize: '16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          🎮 CyberPoints (Opcional)
-                        </label>
-                        <small style={{
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontSize: '0.85rem',
-                          display: 'block',
-                          marginTop: '5px',
-                          marginBottom: '10px'
-                        }}>
-                          Deixe vazio para usar regra padrão (R$ 50 = 2 pontos)
-                        </small>
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder="Ex: 100 pontos"
-                          value={productForm.reward_points}
-                          onChange={(e) => setProductForm({ ...productForm, reward_points: e.target.value })}
-                          style={{
-                            background: 'rgba(0, 0, 0, 0.3)',
-                            border: '2px solid rgba(102, 126, 234, 0.5)',
-                            borderRadius: '8px'
-                          }}
                         />
                       </div>
 
@@ -2642,19 +2165,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                                   alt={product.name}
                                   loading="lazy"
                                   decoding="async"
-                                  onLoad={(e) => {
-                                    e.target.style.display = 'block';
-                                    if (e.target.nextElementSibling) {
-                                      e.target.nextElementSibling.style.display = 'none';
-                                    }
-                                  }}
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    if (e.target.nextElementSibling) {
-                                      e.target.nextElementSibling.style.display = 'flex';
-                                    }
-                                  }}
-                                  style={{ display: 'block' }}
                                 />
                               ) : null}
                               <div className="no-image" style={{ display: product.image_url ? 'none' : 'flex' }}>
@@ -2662,40 +2172,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                               </div>
                               <div className="image-label">Principal</div>
                             </div>
-
-                            <div className="image-container hover-image">
-                              {product.hover_image_url ? (
-                                <img
-                                  src={product.hover_image_url}
-                                  alt={`${product.name} - Hover`}
-                                  loading="lazy"
-                                  decoding="async"
-                                  onLoad={(e) => {
-                                    e.target.style.display = 'block';
-                                    if (e.target.nextElementSibling) {
-                                      e.target.nextElementSibling.style.display = 'none';
-                                    }
-                                  }}
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    if (e.target.nextElementSibling) {
-                                      e.target.nextElementSibling.style.display = 'flex';
-                                    }
-                                  }}
-                                  style={{ display: 'block' }}
-                                />
-                              ) : null}
-                              <div className="no-image" style={{ display: product.hover_image_url ? 'none' : 'flex' }}>
-                                📷
-                              </div>
-                              <div className="image-label">Hover</div>
-                            </div>
                           </div>
                           <div className="product-info">
                             <h4>{product.name}</h4>
                             <div className="product-meta">
                               <span className="category">{product.category}</span>
-                              {product.type && <span className="type">{product.type}</span>}
                             </div>
                             <div className="product-price">R$ {parseFloat(product.price).toFixed(2)}</div>
                             <div className="product-stock">
@@ -2715,34 +2196,11 @@ const AdminPanel3 = ({ onNavigate }) => {
                             <button
                               onClick={() => {
                                 setEditingProduct(product.id);
-                                // Formatar price para exibição
                                 const formattedProduct = {
                                   ...product,
-                                  price: product.price ? formatPrice((product.price * 100).toString()) : '',
-                                  images: product.images || [],
-                                  model_3d: product.model_3d || ''
+                                  price: product.price ? formatPrice((product.price * 100).toString()) : ''
                                 };
                                 setProductForm(formattedProduct);
-
-                                // Carregar imagens existentes para o uploader
-                                if (product.images && Array.isArray(product.images)) {
-                                  const existingImages = product.images.map((img, index) => ({
-                                    url: img.url,
-                                    order: img.order || index + 1,
-                                    uploaded: true
-                                  }));
-                                  setProductImages(existingImages);
-                                } else {
-                                  setProductImages([]);
-                                }
-
-                                // Resetar modelo 3D (usuário pode fazer novo upload se quiser)
-                                setProduct3DModel(null);
-
-                                // Verificar se modelo 3D está sendo usado como capa
-                                const isUsingModelAsCover = product.model_3d && product.image_url === product.model_3d;
-                                setUseModelAsCover(isUsingModelAsCover);
-
                                 setShowProductForm(true);
                                 setProductFormPosition({ x: 30, y: 120 });
                               }}
@@ -2879,28 +2337,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                         </div>
                       </div>
 
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>💰 De: (Preço Original)</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: R$ 299,99"
-                            value={bannerForm.original_price}
-                            onChange={(e) => setBannerForm({ ...bannerForm, original_price: e.target.value })}
-                          />
-                        </div>
-
-                        <div className="form-group">
-                          <label>✨ Por apenas: (Preço Final)</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: R$ 199,99"
-                            value={bannerForm.final_price}
-                            onChange={(e) => setBannerForm({ ...bannerForm, final_price: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
                       <div className="form-group">
                         <label>Descrição</label>
                         <textarea
@@ -2921,13 +2357,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                         />
                         {bannerForm.image_url && (
                           <div className="image-preview">
-                            <img
-                              src={bannerForm.image_url}
-                              alt="Preview"
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => e.target.style.display = 'none'}
-                            />
+                            <img src={bannerForm.image_url} alt="Preview" style={{ maxWidth: '100%', marginTop: '10px', borderRadius: '8px' }} />
                           </div>
                         )}
                       </div>
@@ -2939,47 +2369,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                           placeholder="https://exemplo.com/pagina"
                           value={bannerForm.link_url}
                           onChange={(e) => setBannerForm({ ...bannerForm, link_url: e.target.value })}
-                        />
-                      </div>
-
-                      {/* CyberPoints Field */}
-                      <div className="form-group" style={{
-                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15))',
-                        border: '2px solid rgba(102, 126, 234, 0.4)',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        marginTop: '20px'
-                      }}>
-                        <label style={{
-                          color: '#667eea',
-                          fontWeight: 'bold',
-                          fontSize: '16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}>
-                          🎮 CyberPoints (Opcional)
-                        </label>
-                        <small style={{
-                          color: 'rgba(255, 255, 255, 0.6)',
-                          fontSize: '0.85rem',
-                          display: 'block',
-                          marginTop: '5px',
-                          marginBottom: '10px'
-                        }}>
-                          Pontos promocionais especiais deste banner
-                        </small>
-                        <input
-                          type="number"
-                          min="0"
-                          placeholder="Ex: 500 pontos de bônus"
-                          value={bannerForm.reward_points}
-                          onChange={(e) => setBannerForm({ ...bannerForm, reward_points: e.target.value })}
-                          style={{
-                            background: 'rgba(0, 0, 0, 0.3)',
-                            border: '2px solid rgba(102, 126, 234, 0.5)',
-                            borderRadius: '8px'
-                          }}
                         />
                       </div>
 
@@ -3089,8 +2478,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                                   image_url: banner.image_url || '',
                                   link_url: banner.link_url || '',
                                   order: banner.order || 0,
-                                  original_price: banner.original_price || '',
-                                  final_price: banner.final_price || ''
+                                  active: true
                                 });
                                 setShowBannerForm(true);
                                 setBannerFormPosition({ x: 30, y: 120 });
@@ -3167,26 +2555,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                         />
                       </div>
 
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>Data (opcional)</label>
-                          <input
-                            type="date"
-                            value={eventForm.date}
-                            onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
-                          />
-                          <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Deixe em branco se a data ainda não estiver definida</small>
-                        </div>
-
-                        <div className="form-group">
-                          <label>Horário (opcional)</label>
-                          <input
-                            type="time"
-                            value={eventForm.time}
-                            onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
-                          />
-                          <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Deixe em branco se o horário ainda não estiver definido</small>
-                        </div>
+                      <div className="form-group">
+                        <label>Data (opcional)</label>
+                        <input
+                          type="date"
+                          value={eventForm.date}
+                          onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                        />
+                        <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>Deixe em branco se a data ainda não estiver definida</small>
                       </div>
 
                       <div className="form-row">
@@ -3205,34 +2581,27 @@ const AdminPanel3 = ({ onNavigate }) => {
                         </div>
 
                         <div className="form-group">
+                          <label>Status</label>
+                          <select
+                            value={eventForm.status}
+                            onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                          >
+                            <option value="pending">⏳ Pendente</option>
+                            <option value="active">🟢 Ativo</option>
+                            <option value="completed">✅ Concluído</option>
+                            <option value="cancelled">❌ Cancelado</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
                           <label>Max Participantes</label>
                           <input
                             type="number"
                             placeholder="16"
                             value={eventForm.max_participants}
                             onChange={(e) => setEventForm({ ...eventForm, max_participants: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Prêmio</label>
-                        <input
-                          type="text"
-                          placeholder="Ex: Produto da loja + troféu"
-                          value={eventForm.prize}
-                          onChange={(e) => setEventForm({ ...eventForm, prize: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>Informações de Inscrição</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: Inscrições abertas até 15/01"
-                            value={eventForm.inscription_info}
-                            onChange={(e) => setEventForm({ ...eventForm, inscription_info: e.target.value })}
                           />
                         </div>
 
@@ -3248,32 +2617,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                       </div>
 
                       <div className="form-group">
-                        <label>Valor da Inscrição em CyberPoints</label>
+                        <label>🎮 Nome do Jogo</label>
                         <input
-                          type="number"
-                          placeholder="Ex: 100 (deixe em branco para gratuito em CyberPoints)"
-                          value={eventForm.inscription_price_cyberpoints}
-                          onChange={(e) => setEventForm({ ...eventForm, inscription_price_cyberpoints: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Regras (uma por linha)</label>
-                        <textarea
-                          placeholder="Equipes de 5 jogadores&#10;Formato de eliminatórias duplas&#10;Idade mínima: 16 anos"
-                          value={eventForm.rules}
-                          onChange={(e) => setEventForm({ ...eventForm, rules: e.target.value })}
-                          rows={5}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>Cronograma (um item por linha)</label>
-                        <textarea
-                          placeholder="Fase de Grupos: 20/01 - 10:00&#10;Quartas de Final: 20/01 - 14:00&#10;Semifinais: 20/01 - 17:00"
-                          value={eventForm.schedule}
-                          onChange={(e) => setEventForm({ ...eventForm, schedule: e.target.value })}
-                          rows={5}
+                          type="text"
+                          placeholder="Ex: League of Legends, CS:GO, FIFA 25"
+                          value={eventForm.game_name}
+                          onChange={(e) => setEventForm({ ...eventForm, game_name: e.target.value })}
                         />
                       </div>
 
@@ -3285,8 +2634,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                           padding: '20px',
                           textAlign: 'center',
                           backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                          marginBottom: '15px',
-                          transition: 'border-color 0.3s ease'
+                          marginBottom: '15px'
                         }}
                           onDragOver={(e) => {
                             e.preventDefault();
@@ -3314,25 +2662,10 @@ const AdminPanel3 = ({ onNavigate }) => {
                             style={{ display: 'none' }}
                             id="event-image-upload"
                           />
-                          <label htmlFor="event-image-upload" style={{
-                            cursor: 'pointer',
-                            color: '#ffd700',
-                            fontSize: '1rem'
-                          }}>
+                          <label htmlFor="event-image-upload" style={{ cursor: 'pointer', color: '#ffd700', fontSize: '1rem' }}>
                             {eventImagePreview ? (
                               <div>
-                                <img
-                                  src={eventImagePreview}
-                                  alt="Prévia da imagem do evento"
-                                  style={{
-                                    maxWidth: '100px',
-                                    maxHeight: '100px',
-                                    borderRadius: '8px',
-                                    marginBottom: '10px',
-                                    display: 'block',
-                                    margin: '0 auto 10px'
-                                  }}
-                                />
+                                <img src={eventImagePreview} alt="Prévia" style={{ maxWidth: '100px', maxHeight: '100px', borderRadius: '8px', marginBottom: '10px', display: 'block', margin: '0 auto 10px' }} />
                                 <p>Clique ou arraste para substituir</p>
                               </div>
                             ) : (
@@ -3349,17 +2682,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                           value={eventForm.image_url}
                           onChange={(e) => setEventForm({ ...eventForm, image_url: e.target.value })}
                         />
-                        {!eventImagePreview && eventForm.image_url && (
-                          <div className="image-preview">
-                            <img
-                              src={eventForm.image_url}
-                              alt="Preview"
-                              loading="lazy"
-                              decoding="async"
-                              onError={(e) => e.target.style.display = 'none'}
-                            />
-                          </div>
-                        )}
                       </div>
 
                       <div className="form-group">
@@ -3371,208 +2693,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                           rows={4}
                           required
                         />
-                      </div>
-
-                      {/* Campo CyberPoints */}
-                      <div style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
-                        border: '2px solid rgba(255, 255, 255, 0.1)'
-                      }}>
-                        <label style={{
-                          color: '#fff',
-                          fontWeight: 'bold',
-                          display: 'block',
-                          marginBottom: '8px',
-                          fontSize: '14px',
-                          textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}>
-                          🎁 CyberPoints (Pontos de Recompensa)
-                        </label>
-                        <input
-                          type="number"
-                          placeholder="Ex: 100 pontos (opcional)"
-                          value={eventForm.reward_points}
-                          onChange={(e) => setEventForm({ ...eventForm, reward_points: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            border: '2px solid rgba(255, 255, 255, 0.3)',
-                            fontSize: '14px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            color: '#333'
-                          }}
-                        />
-                        <small style={{
-                          color: '#fff',
-                          display: 'block',
-                          marginTop: '6px',
-                          fontSize: '12px',
-                          opacity: '0.9'
-                        }}>
-                          Deixe em branco para usar o padrão (R$ 50 = 2 pontos)
-                        </small>
-                      </div>
-
-                      {/* Seção Torneio Ao Vivo */}
-                      <div style={{
-                        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
-                        border: '2px solid rgba(255, 255, 255, 0.1)',
-                        marginTop: '20px'
-                      }}>
-                        <div style={{ marginBottom: '15px' }}>
-                          <label style={{
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            fontSize: '16px',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                          }}>
-                            <input
-                              type="checkbox"
-                              checked={eventForm.is_live}
-                              onChange={(e) => setEventForm({ ...eventForm, is_live: e.target.checked })}
-                              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                            />
-                            🔴 Torneio Acontecendo Agora (Ao Vivo)
-                          </label>
-                          <small style={{
-                            color: '#fff',
-                            display: 'block',
-                            marginTop: '6px',
-                            fontSize: '12px',
-                            opacity: '0.9',
-                            marginLeft: '26px'
-                          }}>
-                            Marque para exibir este torneio na seção "Torneio Atual"
-                          </small>
-                        </div>
-
-                        {eventForm.is_live && (
-                          <>
-                            <div className="form-group" style={{ marginBottom: '12px' }}>
-                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🎮 Nome do Jogo</label>
-                              <input
-                                type="text"
-                                placeholder="Ex: League of Legends, CS:GO, FIFA 25"
-                                value={eventForm.game_name}
-                                onChange={(e) => setEventForm({ ...eventForm, game_name: e.target.value })}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px',
-                                  borderRadius: '8px',
-                                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                                  fontSize: '14px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  color: '#333'
-                                }}
-                              />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '12px' }}>
-                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📺 Link de Transmissão</label>
-                              <input
-                                type="url"
-                                placeholder="https://youtube.com/... ou https://twitch.tv/..."
-                                value={eventForm.stream_link}
-                                onChange={(e) => setEventForm({ ...eventForm, stream_link: e.target.value })}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px',
-                                  borderRadius: '8px',
-                                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                                  fontSize: '14px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  color: '#333'
-                                }}
-                              />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '12px' }}>
-                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>📊 Placar Atual (um por linha)</label>
-                              <textarea
-                                placeholder="Time A 2 x 1 Time B&#10;Time C 3 x 0 Time D"
-                                value={eventForm.current_scores}
-                                onChange={(e) => setEventForm({ ...eventForm, current_scores: e.target.value })}
-                                rows={3}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px',
-                                  borderRadius: '8px',
-                                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                                  fontSize: '14px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  color: '#333'
-                                }}
-                              />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '12px' }}>
-                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>🏆 Ranking (um por linha)</label>
-                              <textarea
-                                placeholder="1º - Time A (15 pontos)&#10;2º - Time B (12 pontos)&#10;3º - Time C (10 pontos)"
-                                value={eventForm.ranking}
-                                onChange={(e) => setEventForm({ ...eventForm, ranking: e.target.value })}
-                                rows={4}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px',
-                                  borderRadius: '8px',
-                                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                                  fontSize: '14px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  color: '#333'
-                                }}
-                              />
-                            </div>
-
-                            <div className="form-group" style={{ marginBottom: '12px' }}>
-                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>👥 Participantes (um por linha)</label>
-                              <textarea
-                                placeholder="Time A&#10;Time B&#10;Time C&#10;Jogador Solo 1"
-                                value={eventForm.participants}
-                                onChange={(e) => setEventForm({ ...eventForm, participants: e.target.value })}
-                                rows={4}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px',
-                                  borderRadius: '8px',
-                                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                                  fontSize: '14px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  color: '#333'
-                                }}
-                              />
-                            </div>
-
-                            <div className="form-group">
-                              <label style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>💬 Comentários</label>
-                              <textarea
-                                placeholder="Atualizações sobre o andamento do torneio..."
-                                value={eventForm.live_comments}
-                                onChange={(e) => setEventForm({ ...eventForm, live_comments: e.target.value })}
-                                rows={3}
-                                style={{
-                                  width: '100%',
-                                  padding: '10px',
-                                  borderRadius: '8px',
-                                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                                  fontSize: '14px',
-                                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                                  color: '#333'
-                                }}
-                              />
-                            </div>
-                          </>
-                        )}
                       </div>
 
                       <div className="form-actions">
@@ -3655,19 +2775,21 @@ const AdminPanel3 = ({ onNavigate }) => {
 
                           <div className="event-content">
                             <div className="event-header">
-                              <div className="event-type">
-                                {event.type === 'tournament' && '🏆'}
-                                {event.type === 'workshop' && '🎓'}
-                                {event.type === 'launch' && '🚀'}
-                                {event.type === 'promo' && '🎉'}
-                              </div>
+                              <span className="event-type">
+                                {event.type === 'Torneio' && '🏆'}
+                                {event.type === 'Corujão' && '🦉'}
+                                {event.type === 'Rush Play' && '⚡'}
+                                {event.type === 'Campeonato' && '🏅'}
+                                {event.type === 'Outro' && '🎮'}
+                              </span>
                               <h4>{event.title}</h4>
                             </div>
 
-                            <div className="event-datetime">
-                              <span className="date">📅 {new Date(event.date).toLocaleDateString('pt-BR')}</span>
-                              <span className="time">⏰ {event.time}</span>
-                            </div>
+                            {event.date && (
+                              <div className="event-datetime">
+                                <span className="date">📅 {new Date(event.date).toLocaleDateString('pt-BR')}</span>
+                              </div>
+                            )}
 
                             {event.max_participants && (
                               <div className="event-participants">
@@ -3675,9 +2797,24 @@ const AdminPanel3 = ({ onNavigate }) => {
                               </div>
                             )}
 
-                            {event.prize && (
-                              <div className="event-prize">
-                                🎁 {event.prize}
+                            {event.inscription_price && (
+                              <div className="event-inscription">
+                                💰 Inscrição: {typeof event.inscription_price === 'number' ? `R$ ${event.inscription_price.toFixed(2)}` : event.inscription_price}
+                              </div>
+                            )}
+
+                            {event.game_name && (
+                              <div className="event-game">
+                                🎮 {event.game_name}
+                              </div>
+                            )}
+
+                            {event.status && (
+                              <div className="event-status">
+                                {event.status === 'pending' && '⏳ Pendente'}
+                                {event.status === 'active' && '🟢 Ativo'}
+                                {event.status === 'completed' && '✅ Concluído'}
+                                {event.status === 'cancelled' && '❌ Cancelado'}
                               </div>
                             )}
 
@@ -3700,24 +2837,12 @@ const AdminPanel3 = ({ onNavigate }) => {
                                     title: event.title || '',
                                     description: event.description || '',
                                     date: event.date || '',
-                                    time: event.time || '',
-                                    prize: event.prize || '',
-                                    inscription_info: event.inscription_info || '',
                                     inscription_price: event.inscription_price || '',
-                                    inscription_price_cyberpoints: event.inscription_price_cyberpoints || '',
                                     max_participants: event.max_participants || '',
                                     type: event.type || 'Torneio',
-                                    image_url: event.image_url || '',
-                                    rules: Array.isArray(event.rules) ? event.rules.join('\n') : '',
-                                    schedule: Array.isArray(event.schedule) ? event.schedule.join('\n') : '',
-                                    reward_points: event.reward_points || '',
-                                    is_live: event.is_live || false,
+                                    status: event.status || 'pending',
                                     game_name: event.game_name || '',
-                                    stream_link: event.stream_link || '',
-                                    current_scores: Array.isArray(event.current_scores) ? event.current_scores.join('\n') : '',
-                                    ranking: Array.isArray(event.ranking) ? event.ranking.join('\n') : '',
-                                    participants: Array.isArray(event.participants) ? event.participants.join('\n') : '',
-                                    live_comments: event.live_comments || ''
+                                    image_url: event.image_url || ''
                                   });
                                   setShowEventForm(true);
                                   setEventFormPosition({ x: 30, y: 120 });
@@ -4062,8 +3187,8 @@ const AdminPanel3 = ({ onNavigate }) => {
                         <input
                           type="text"
                           placeholder="Ex: GLOBAL TOURNAMENT 2026"
-                          value={liveForm.titulo}
-                          onChange={(e) => setLiveForm({ ...liveForm, titulo: e.target.value })}
+                          value={liveForm.title}
+                          onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })}
                           required
                         />
                       </div>
@@ -4071,21 +3196,67 @@ const AdminPanel3 = ({ onNavigate }) => {
                       <div className="form-group">
                         <label>Descrição</label>
                         <textarea
-                          placeholder="Subtítulo abaixo do título..."
-                          value={liveForm.descricao}
-                          onChange={(e) => setLiveForm({ ...liveForm, descricao: e.target.value })}
+                          placeholder="Descrição da live..."
+                          value={liveForm.description}
+                          onChange={(e) => setLiveForm({ ...liveForm, description: e.target.value })}
                           rows={3}
                         />
                       </div>
 
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>🎮 Nome do Jogo</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: League of Legends, CS:GO"
+                            value={liveForm.game_name}
+                            onChange={(e) => setLiveForm({ ...liveForm, game_name: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>👥 Viewers</label>
+                          <input
+                            type="number"
+                            placeholder="0"
+                            value={liveForm.viewer_count}
+                            onChange={(e) => setLiveForm({ ...liveForm, viewer_count: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
                       <div className="form-group">
-                        <label>Link da Live</label>
+                        <label>📺 URL da Live</label>
                         <input
                           type="url"
                           placeholder="https://twitch.tv/usuario ou https://youtube.com/watch?v=..."
-                          value={liveForm.link_live}
-                          onChange={(e) => setLiveForm({ ...liveForm, link_live: e.target.value })}
+                          value={liveForm.stream_url}
+                          onChange={(e) => setLiveForm({ ...liveForm, stream_url: e.target.value })}
                           required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>🖼️ URL da Thumbnail</label>
+                        <input
+                          type="url"
+                          placeholder="https://exemplo.com/thumbnail.jpg"
+                          value={liveForm.thumbnail_url}
+                          onChange={(e) => setLiveForm({ ...liveForm, thumbnail_url: e.target.value })}
+                        />
+                        {liveForm.thumbnail_url && (
+                          <div className="image-preview">
+                            <img src={liveForm.thumbnail_url} alt="Thumbnail" style={{ maxWidth: '200px', marginTop: '10px', borderRadius: '8px' }} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label>Data de Início</label>
+                        <input
+                          type="datetime-local"
+                          value={liveForm.started_at ? liveForm.started_at.substring(0, 16) : ''}
+                          onChange={(e) => setLiveForm({ ...liveForm, started_at: e.target.value })}
                         />
                       </div>
 
@@ -4095,32 +3266,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                           value={liveForm.status}
                           onChange={(e) => setLiveForm({ ...liveForm, status: e.target.value })}
                         >
-                          <option value="active">Active (Visível)</option>
-                          <option value="draft">Draft (Oculto)</option>
-                          <option value="scheduled">Scheduled (Oculto)</option>
-                          <option value="completed">Completed (Oculto)</option>
-                          <option value="cancelled">Cancelled (Oculto)</option>
+                          <option value="active">🟢 Active (Visível)</option>
+                          <option value="draft">📝 Draft (Oculto)</option>
+                          <option value="scheduled">📅 Scheduled (Oculto)</option>
+                          <option value="completed">✅ Completed (Oculto)</option>
+                          <option value="cancelled">❌ Cancelled (Oculto)</option>
                         </select>
                         <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
                           Apenas "active" torna a live visível publicamente
-                        </small>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Atribuir Evento</label>
-                        <select
-                          value={liveForm.evento_id}
-                          onChange={(e) => setLiveForm({ ...liveForm, evento_id: e.target.value })}
-                        >
-                          <option value="">Selecione um evento (opcional)</option>
-                          {events.map(event => (
-                            <option key={event.id} value={event.id}>
-                              {event.title}
-                            </option>
-                          ))}
-                        </select>
-                        <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
-                          Ao selecionar um evento, a imagem do evento será associada à live
                         </small>
                       </div>
 
@@ -4146,7 +3299,7 @@ const AdminPanel3 = ({ onNavigate }) => {
                   </div>
                 )}
 
-                {/* Botão para mostrar form quando escondido */}
+                {/* Bot��o para mostrar form quando escondido */}
                 {!showLiveForm && (
                   <button
                     onClick={() => {
@@ -4178,19 +3331,15 @@ const AdminPanel3 = ({ onNavigate }) => {
                     {lives
                       .filter(live =>
                         searchLive === '' ||
-                        live.nome_jogo.toLowerCase().includes(searchLive.toLowerCase()) ||
-                        live.descricao?.toLowerCase().includes(searchLive.toLowerCase())
+                        live.game_name?.toLowerCase().includes(searchLive.toLowerCase()) ||
+                        live.title?.toLowerCase().includes(searchLive.toLowerCase()) ||
+                        live.description?.toLowerCase().includes(searchLive.toLowerCase())
                       )
                       .map(live => (
                         <div key={live.id} className="live-card">
                           <div className="live-image">
-                            {live.imagem_evento ? (
-                              <img
-                                src={live.imagem_evento}
-                                alt={live.nome_jogo}
-                                loading="lazy"
-                                decoding="async"
-                              />
+                            {live.thumbnail_url ? (
+                              <img src={live.thumbnail_url} alt={live.title} loading="lazy" decoding="async" />
                             ) : (
                               <div className="no-image">🎮</div>
                             )}
@@ -4198,7 +3347,7 @@ const AdminPanel3 = ({ onNavigate }) => {
 
                           <div className="live-info">
                             <div className="live-header">
-                              <h4>{live.titulo}</h4>
+                              <h4>{live.title}</h4>
                               <span className={`status-badge status-${live.status}`}>
                                 {live.status === 'active' && '🟢 Ativo'}
                                 {live.status === 'draft' && '📝 Rascunho'}
@@ -4208,20 +3357,20 @@ const AdminPanel3 = ({ onNavigate }) => {
                               </span>
                             </div>
 
-                            {live.descricao && (
-                              <div className="live-description">
-                                {live.descricao}
-                              </div>
+                            {live.description && (
+                              <div className="live-description">{live.description}</div>
                             )}
 
-                            {live.events && live.events.title && (
-                              <div className="live-event">
-                                📅 Evento: {live.events.title}
-                              </div>
+                            {live.game_name && (
+                              <div className="live-game">🎮 {live.game_name}</div>
+                            )}
+
+                            {live.viewer_count !== undefined && (
+                              <div className="live-viewers">👥 {live.viewer_count} viewers</div>
                             )}
 
                             <div className="live-link">
-                              <a href={live.link_live} target="_blank" rel="noopener noreferrer">📺 ASSISTIR AGORA</a>
+                              <a href={live.stream_url} target="_blank" rel="noopener noreferrer">📺 ASSISTIR AGORA</a>
                             </div>
                           </div>
 
@@ -4230,11 +3379,14 @@ const AdminPanel3 = ({ onNavigate }) => {
                               onClick={() => {
                                 setEditingLive(live.id);
                                 setLiveForm({
-                                  titulo: live.titulo || '',
-                                  descricao: live.descricao || '',
-                                  link_live: live.link_live || '',
-                                  evento_id: live.evento_id || '',
-                                  status: live.status || 'draft'
+                                  title: live.title || '',
+                                  description: live.description || '',
+                                  thumbnail_url: live.thumbnail_url || '',
+                                  stream_url: live.stream_url || '',
+                                  viewer_count: live.viewer_count || 0,
+                                  status: live.status || 'draft',
+                                  game_name: live.game_name || '',
+                                  started_at: live.started_at || ''
                                 });
                                 setShowLiveForm(true);
                                 setLiveFormPosition({ x: 30, y: 120 });
@@ -4285,11 +3437,9 @@ const AdminPanel3 = ({ onNavigate }) => {
                       setBadgeForm({
                         name: '',
                         description: '',
-                        icon: '🏆',
                         image_url: '',
-                        rarity: 'common',
-                        points_required: 0,
-                        active: true
+                        icon_url: '',
+                        rarity: 'comum'
                       });
                       setShowBadgeForm(true);
                       setBadgeFormPosition({ x: 30, y: 120 });
@@ -4319,15 +3469,9 @@ const AdminPanel3 = ({ onNavigate }) => {
                               alt={badge.name}
                               loading="lazy"
                               decoding="async"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }} />
+                            />
                           ) : (
-                            <div className="icon-placeholder" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge.icon}</div>
-                          )}
-                          {!badge.image_url && (
-                            <div className="icon-placeholder" style={{ display: 'none', alignItems: 'center', justifyContent: 'center' }}>{badge.icon}</div>
+                            <div className="icon-placeholder">🎖️</div>
                           )}
                         </div>
 
@@ -4340,9 +3484,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                           <div className="badge-meta">
                             <span className={`rarity-${badge.rarity}`}>⭐ {badge.rarity}</span>
                             <span className="users-count">👥 {badge.user_count} usuários</span>
-                            <span className={`status-${badge.active ? 'active' : 'inactive'}`}>
-                              {badge.active ? '🟢 Ativo' : '🔴 Inativo'}
-                            </span>
                           </div>
                         </div>
                       </div>
@@ -4355,7 +3496,8 @@ const AdminPanel3 = ({ onNavigate }) => {
                               name: badge.name || '',
                               description: badge.description || '',
                               image_url: badge.image_url || '',
-                              rarity: badge.rarity || 'common'
+                              icon_url: badge.icon_url || '',
+                              rarity: badge.rarity || 'comum'
                             });
                             setShowBadgeForm(true);
                             setBadgeFormPosition({ x: 30, y: 120 });
@@ -4542,10 +3684,10 @@ const AdminPanel3 = ({ onNavigate }) => {
                     value={badgeForm.rarity}
                     onChange={(e) => setBadgeForm({ ...badgeForm, rarity: e.target.value })}
                   >
-                    <option value="common">Comum</option>
-                    <option value="rare">Raro</option>
-                    <option value="epic">Épico</option>
-                    <option value="legendary">Lendário</option>
+                    <option value="comum">Comum</option>
+                    <option value="rara">Rara</option>
+                    <option value="epica">Épica</option>
+                    <option value="lendaria">Lendária</option>
                   </select>
                 </div>
 
@@ -4639,7 +3781,8 @@ const AdminPanel3 = ({ onNavigate }) => {
                           name: '',
                           description: '',
                           image_url: '',
-                          rarity: 'common'
+                          icon_url: '',
+                          rarity: 'comum'
                         });
                       }}
                       className="btn-secondary"
@@ -4787,15 +3930,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                         loading="lazy"
                         decoding="async"
                       />
-                      {previewData.hover_image_url && (
-                        <img
-                          src={previewData.hover_image_url}
-                          alt={`${previewData.name} - Hover`}
-                          className="product-image-preview hover"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      )}
                     </div>
                     <div className="product-info-preview">
                       <span className="product-category-preview">
@@ -4828,12 +3962,6 @@ const AdminPanel3 = ({ onNavigate }) => {
                       {previewData.description && (
                         <p className="banner-description-preview">{previewData.description}</p>
                       )}
-                      {previewData.original_price && previewData.final_price && (
-                        <div className="banner-price-preview">
-                          <span className="original-price-preview">{previewData.original_price}</span>
-                          <span className="final-price-preview">{previewData.final_price}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                   <p className="preview-note">💡 Esta é uma prévia de como o banner aparecerá na loja</p>
@@ -4852,11 +3980,8 @@ const AdminPanel3 = ({ onNavigate }) => {
                     <div className="event-info-preview">
                       <h3 className="event-title-preview">{previewData.title}</h3>
                       <p className="event-date-preview">📅 {previewData.date}</p>
-                      {previewData.prize && (
-                        <p className="event-prize-preview">🏆 {previewData.prize}</p>
-                      )}
-                      {previewData.inscription_info && (
-                        <p className="event-inscription-preview">✍️ {previewData.inscription_info}</p>
+                      {previewData.inscription_price && (
+                        <p className="event-inscription-preview">💰 Inscrição: {typeof previewData.inscription_price === 'number' ? `R$ ${previewData.inscription_price.toFixed(2)}` : previewData.inscription_price}</p>
                       )}
                     </div>
                   </div>

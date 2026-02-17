@@ -234,6 +234,10 @@ export default function GamerWorld() {
   const [searchProduct, setSearchProduct] = useState('');
   const [addedToCart, setAddedToCart] = useState(null);
 
+  // Estados para lives
+  const [lives, setLives] = useState([]);
+  const [loadingLives, setLoadingLives] = useState(false);
+
   // Função para adicionar ao carrinho
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
@@ -304,7 +308,17 @@ export default function GamerWorld() {
           return;
         }
 
-        setStoreProducts(products || []);
+        // Filtrar campos obsoletos e usar apenas campos válidos
+        const formattedProducts = (products || []).map(product => ({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          image: product.image_url,
+          category: product.category || 'gamer',
+        }));
+
+        setStoreProducts(formattedProducts);
       } catch (error) {
         console.error('Erro ao conectar com banco:', error);
         // Fallback para localStorage
@@ -343,21 +357,18 @@ export default function GamerWorld() {
       date: '20 de Janeiro, 2025',
       prize: 'R$ 15.000',
       inscription: 'Inscrições abertas até 15/01',
-      slug: 'league-of-legends',
       type: 'Torneio',
     },
     {
       title: 'Corujão CS:GO Noturno',
       date: '05 de Fevereiro, 2025',
       inscription: 'Inscrições abertas até 25/01',
-      slug: 'csgo-corujao',
       type: 'Corujão',
     },
     {
       title: 'Rush Play Valorant',
       date: '15 de Fevereiro, 2025',
       inscription: 'Inscrições abertas até 05/02',
-      slug: 'valorant-rush',
       type: 'Rush Play',
     },
     {
@@ -365,21 +376,18 @@ export default function GamerWorld() {
       date: '28 de Fevereiro, 2025',
       prize: 'R$ 12.000',
       inscription: 'Inscrições abertas até 20/02',
-      slug: 'free-fire-battle',
       type: 'Torneio',
     },
     {
       title: 'Corujão Fortnite Night',
       date: '10 de Março, 2025',
       inscription: 'Inscrições abertas até 01/03',
-      slug: 'fortnite-corujao',
       type: 'Corujão',
     },
     {
       title: 'Rush Play Rocket League',
       date: '22 de Março, 2025',
       inscription: 'Inscrições abertas até 15/03',
-      slug: 'rocket-league-rush',
       type: 'Rush Play',
     },
   ];
@@ -405,18 +413,23 @@ export default function GamerWorld() {
 
       if (events && events.length > 0) {
         // Converter eventos do banco para o formato esperado
+        // Nova estrutura: id (UUID), title, description, date (TIMESTAMPTZ), prize, image_url, inscription_price, game_name, type, status
         const formattedEvents = events.map(event => ({
+          id: event.id, // UUID
           title: event.title,
           date: event.date ? new Date(event.date).toLocaleDateString('pt-BR', {
             day: 'numeric',
             month: 'long',
             year: 'numeric'
           }) : 'Data ainda não determinada',
-          time: event.time || null, // Adicionando o campo de horário
+          time: event.time || null,
           prize: event.prize || '',
-          inscription: `Inscrições abertas`,
-          slug: event.slug, // Usar o slug do banco de dados
+          inscription: event.inscription_price ? `Inscrição: ${event.inscription_price}` : 'Inscrições abertas',
+          inscriptionPrice: event.inscription_price,
+          gameName: event.game_name,
           type: event.type || 'Torneio',
+          status: event.status || 'upcoming',
+          imageUrl: event.image_url,
         }));
 
         setDisplayEvents(formattedEvents);
@@ -446,6 +459,56 @@ export default function GamerWorld() {
 
   useEffect(() => {
     loadEvents();
+  }, []);
+
+  // Carregar lives do banco de dados
+  useEffect(() => {
+    const loadLives = async () => {
+      setLoadingLives(true);
+      try {
+        const { data: livesData, error } = await supabase
+          .from('lives')
+          .select('*')
+          .eq('status', 'live')
+          .order('started_at', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao carregar lives:', error);
+          setLives([]);
+          return;
+        }
+
+        // Formatar lives para exibição
+        const formattedLives = (livesData || []).map(live => ({
+          id: live.id,
+          title: live.title,
+          description: live.description,
+          thumbnailUrl: live.thumbnail_url,
+          streamUrl: live.stream_url,
+          viewerCount: live.viewer_count || 0,
+          status: live.status,
+          gameName: live.game_name,
+          startedAt: live.started_at,
+        }));
+
+        setLives(formattedLives);
+      } catch (error) {
+        console.error('Erro ao conectar com banco:', error);
+        setLives([]);
+      } finally {
+        setLoadingLives(false);
+      }
+    };
+
+    loadLives();
+
+    // Recarregar lives quando a aba voltar ao foco
+    const handleFocus = () => {
+      loadLives();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   useEffect(() => {
@@ -2250,7 +2313,7 @@ export default function GamerWorld() {
                     </div>
 
                     {/* Botão Saiba Mais */}
-                    <Link to={`/evento/${event.slug}`} style={{ textDecoration: 'none' }}>
+                    <Link to={`/evento/${event.id}`} style={{ textDecoration: 'none' }}>
                       <button style={{
                         fontFamily: 'Rajdhani, sans-serif',
                         fontSize: isMobile ? '0.95rem' : '1.1rem',
@@ -3665,6 +3728,315 @@ export default function GamerWorld() {
         </section>
       )}
 
+      {/* Seção Lives - Transmissões Ao Vivo */}
+      {!isMobile && lives.length > 0 && (
+        <section id="lives" style={{
+          padding: '100px 48px',
+          background: 'linear-gradient(180deg, #000 0%, #0a0a1a 100%)',
+          borderTop: '1px solid rgba(255, 0, 234, 0.3)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* Background animado */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'radial-gradient(circle at 30% 50%, rgba(255, 0, 234, 0.08) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(0, 217, 255, 0.08) 0%, transparent 50%)',
+            animation: 'gradientMove 15s ease-in-out infinite',
+            zIndex: 0,
+          }} />
+
+          <div style={{ maxWidth: '1400px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+            {/* Tag line superior */}
+            <div style={{
+              fontFamily: 'Courier New, monospace',
+              fontSize: '0.9rem',
+              color: '#ff00ea',
+              textAlign: 'center',
+              marginBottom: '10px',
+              letterSpacing: '3px',
+              opacity: 0.8,
+              animation: 'fadeIn 1s ease-out',
+            }}>// LIVE NOW</div>
+
+            <h2 style={{
+              fontFamily: 'Rajdhani, sans-serif',
+              fontWeight: 700,
+              fontSize: '3.5rem',
+              color: '#ff00ea',
+              textAlign: 'center',
+              marginBottom: '15px',
+              letterSpacing: '4px',
+              textShadow: '0 0 30px rgba(255, 0, 234, 0.8), 0 0 60px rgba(255, 0, 234, 0.4)',
+              wordWrap: 'break-word',
+              textTransform: 'uppercase',
+              animation: 'glowPulse 3s ease-in-out infinite',
+            }}>
+              <span style={{ color: '#ff00ea' }}>Lives</span> em Andamento
+            </h2>
+
+            {/* Linha decorativa */}
+            <div style={{
+              width: '150px',
+              height: '3px',
+              background: 'linear-gradient(90deg, transparent, #ff00ea, transparent)',
+              margin: '0 auto 50px',
+              boxShadow: '0 0 15px #ff00ea',
+              animation: 'expandWidth 1.5s ease-out',
+            }} />
+
+            {/* Grid de Lives */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+              gap: '30px',
+              padding: '0',
+            }}>
+              {lives.map((live) => (
+                <div
+                  key={live.id}
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255, 0, 234, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%)',
+                    border: '2px solid rgba(255, 0, 234, 0.4)',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    position: 'relative',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-10px)';
+                    e.currentTarget.style.borderColor = '#ff00ea';
+                    e.currentTarget.style.boxShadow = '0 20px 50px rgba(255, 0, 234, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.borderColor = 'rgba(255, 0, 234, 0.4)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  {/* Badge AO VIVO */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '15px',
+                    left: '15px',
+                    background: 'linear-gradient(135deg, #ff0000, #cc0000)',
+                    color: '#fff',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    fontFamily: 'Rajdhani, sans-serif',
+                    zIndex: 2,
+                    boxShadow: '0 4px 15px rgba(255, 0, 0, 0.6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    animation: 'livePulse 1.5s ease-in-out infinite',
+                  }}>
+                    <span style={{
+                      width: '8px',
+                      height: '8px',
+                      background: '#fff',
+                      borderRadius: '50%',
+                      display: 'inline-block',
+                    }} />
+                    AO VIVO
+                  </div>
+
+                  {/* Contador de viewers */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '15px',
+                    right: '15px',
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    color: '#fff',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    fontFamily: 'Rajdhani, sans-serif',
+                    zIndex: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    <span>👁️</span>
+                    {live.viewerCount.toLocaleString('pt-BR')}
+                  </div>
+
+                  {/* Thumbnail */}
+                  <div style={{
+                    width: '100%',
+                    height: '220px',
+                    position: 'relative',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    overflow: 'hidden',
+                  }}>
+                    {live.thumbnailUrl ? (
+                      <img
+                        src={live.thumbnailUrl}
+                        alt={live.title}
+                        loading="lazy"
+                        decoding="async"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'linear-gradient(135deg, rgba(255, 0, 234, 0.2), rgba(0, 217, 255, 0.2))',
+                        color: '#fff',
+                        fontSize: '4rem',
+                      }}>
+                        🎮
+                      </div>
+                    )}
+
+                    {/* Overlay gradiente */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '60%',
+                      background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.8) 0%, transparent 100%)',
+                    }} />
+                  </div>
+
+                  {/* Informações */}
+                  <div style={{
+                    padding: '20px',
+                  }}>
+                    {/* Nome do jogo */}
+                    {live.gameName && (
+                      <div style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '0.85rem',
+                        color: '#00d9ff',
+                        textTransform: 'uppercase',
+                        letterSpacing: '2px',
+                        fontWeight: 600,
+                        marginBottom: '8px',
+                      }}>
+                        🎯 {live.gameName}
+                      </div>
+                    )}
+
+                    {/* Título */}
+                    <h3 style={{
+                      fontFamily: 'Rajdhani, sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1.4rem',
+                      color: '#fff',
+                      marginBottom: '10px',
+                      wordWrap: 'break-word',
+                      lineHeight: '1.3',
+                    }}>{live.title}</h3>
+
+                    {/* Descrição */}
+                    {live.description && (
+                      <p style={{
+                        fontFamily: 'Rajdhani, sans-serif',
+                        fontSize: '0.95rem',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        marginBottom: '15px',
+                        wordWrap: 'break-word',
+                        lineHeight: '1.5',
+                        maxHeight: '4.5em',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                      }}>{live.description}</p>
+                    )}
+
+                    {/* Botão Assistir */}
+                    {live.streamUrl && (
+                      <a
+                        href={live.streamUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        <button style={{
+                          width: '100%',
+                          padding: '14px',
+                          background: 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)',
+                          border: 'none',
+                          borderRadius: '10px',
+                          color: '#fff',
+                          fontFamily: 'Rajdhani, sans-serif',
+                          fontWeight: 700,
+                          fontSize: '1.05rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          boxShadow: '0 5px 20px rgba(255, 0, 234, 0.4)',
+                        }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, #ff1aeb 0%, #e600d1 100%)';
+                            e.currentTarget.style.transform = 'scale(1.02)';
+                            e.currentTarget.style.boxShadow = '0 8px 30px rgba(255, 0, 234, 0.6)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, #ff00ea 0%, #cc00ba 100%)';
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = '0 5px 20px rgba(255, 0, 234, 0.4)';
+                          }}
+                        >
+                          ▶️ Assistir Agora
+                        </button>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Estilos de animação para lives */}
+          <style>{`
+            @keyframes livePulse {
+              0%, 100% {
+                box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+                transform: scale(1);
+              }
+              50% {
+                box-shadow: 0 0 25px rgba(255, 0, 0, 0.9);
+                transform: scale(1.05);
+              }
+            }
+
+            @keyframes gradientMove {
+              0%, 100% {
+                background-position: 0% 50%;
+              }
+              50% {
+                background-position: 100% 50%;
+              }
+            }
+          `}</style>
+        </section>
+      )}
+
       {/* Seção Loja Gamer */}
       <section id="loja" style={{
         padding: isMobile ? '60px 20px 20px 20px' : '10px 48px',
@@ -3897,7 +4269,7 @@ export default function GamerWorld() {
                         </div>
                       )}
 
-                      {/* Imagem ou Modelo 3D do produto */}
+                      {/* Imagem do produto */}
                       <div
                         style={{
                           width: '100%',
@@ -3912,143 +4284,45 @@ export default function GamerWorld() {
                           position: 'relative',
                         }}
                       >
-                        {(() => {
-                          // Detectar se é um dispositivo móvel
-                          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-                          if (product.model_3d && !isMobile) {
-                            // Em desktop, mostrar o modelo 3D
-                            return (
-                              <>
-                                <model-viewer
-                                  src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                                  data-src={product.model_3d?.replace('https://tvukdcbvqweechmawdac.supabase.co/storage/v1/object/public/product-3d-models/', '/models/3d/') || product.model_3d}
-                                  alt={`Modelo 3D de ${product.name}`}
-                                  shadow-intensity="1"
-                                  disable-pan
-                                  disable-zoom
-                                  camera-orbit="90deg 75deg 2.5m"
-                                  field-of-view="30deg"
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    background: 'rgba(0, 0, 0, 0.1)',
-                                    borderRadius: '12px',
-                                  }}
-                                  onLoad={(e) => {
-                                    e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.target.setAttribute('auto-rotate', '');
-                                    e.target.setAttribute('rotation-per-second', '60deg');
-                                    e.target.setAttribute('camera-controls', '');
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.target.removeAttribute('auto-rotate');
-                                    e.target.removeAttribute('camera-controls');
-                                    e.target.setAttribute('camera-orbit', '90deg 75deg 2.5m');
-                                  }}
-                                />
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '10px',
-                                  right: '10px',
-                                  background: 'linear-gradient(135deg, #00d9ff, #0099cc)',
-                                  color: '#fff',
-                                  padding: '6px 12px',
-                                  borderRadius: '20px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                  boxShadow: '0 4px 15px rgba(0, 217, 255, 0.5)',
-                                  zIndex: 2,
-                                }}>
-                                  🎮 3D
-                                </div>
-                              </>
-                            );
-                          } else if (product.model_3d && isMobile) {
-                            // Em mobile, mostrar imagem padrão em vez do modelo 3D
-                            return (
-                              <>
-                                <img
-                                  src={product.image}
-                                  alt={product.name}
-                                  loading="lazy"
-                                  decoding="async"
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    transition: 'transform 0.3s ease',
-                                  }}
-                                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                />
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '10px',
-                                  right: '10px',
-                                  background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
-                                  color: '#fff',
-                                  padding: '6px 12px',
-                                  borderRadius: '20px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  fontFamily: 'Rajdhani, sans-serif',
-                                  boxShadow: '0 4px 15px rgba(255, 107, 107, 0.5)',
-                                  zIndex: 2,
-                                }}>
-                                  📱 3D OFF
-                                </div>
-                              </>
-                            );
-                          } else if (product.images && product.images.length > 0) {
-                            // Se não tiver modelo 3D mas tiver imagens
-                            return (
-                              <img
-                                src={isMobile ? null : product.images[0]} // Não carrega imagens em mobile até ser visível
-                                data-src={product.images[0]}
-                                alt={product.name}
-                                loading="lazy"
-                                decoding="async"
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  transition: 'transform 0.3s ease',
-                                }}
-                                onLoad={(e) => {
-                                  // Carrega a imagem somente quando visível em mobile
-                                  if (isMobile) {
-                                    const rect = e.target.getBoundingClientRect();
-                                    if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
-                                      e.target.src = e.target.dataset.src;
-                                      e.target.removeAttribute('data-src');
-                                    }
-                                  }
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                              />
-                            );
-                          } else {
-                            // Se não tiver modelo 3D nem imagens
-                            return (
-                              <div style={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#666',
-                                fontSize: '3rem',
-                              }}>
-                                📦
-                              </div>
-                            );
-                          }
-                        })()}
+                        {product.image ? (
+                          <img
+                            src={isMobile ? null : product.image}
+                            data-src={product.image}
+                            alt={product.name}
+                            loading="lazy"
+                            decoding="async"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              transition: 'transform 0.3s ease',
+                            }}
+                            onLoad={(e) => {
+                              // Carrega a imagem somente quando visível em mobile
+                              if (isMobile) {
+                                const rect = e.target.getBoundingClientRect();
+                                if (rect.top >= 0 && rect.bottom <= window.innerHeight) {
+                                  e.target.src = e.target.dataset.src;
+                                  e.target.removeAttribute('data-src');
+                                }
+                              }
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#666',
+                            fontSize: '3rem',
+                          }}>
+                            📦
+                          </div>
+                        )}
                       </div>
 
                       <h3 style={{
